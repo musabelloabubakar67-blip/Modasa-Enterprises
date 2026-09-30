@@ -1,0 +1,24 @@
+import type { StaffRole } from "@/lib/roles";
+
+export type NavItem = {
+  href: string;
+  label: string;
+  roles: readonly StaffRole[];
+  /** Planned but not built yet; shown greyed out so staff can see what's coming. */
+  soon?: boolean;
+};
+
+const ALL: readonly StaffRole[] = ["owner", "manager", "cashier", "warehouse"];
+
+export const NAV_ITEMS: NavItem[] = [
+  { href: "/app", label: "Home", roles: ALL },
+  { href: "/app/pos", label: "Point of sale", roles: ["owner", "manager", "cashier"], soon: true },
+  { href: "/app/stock", label: "Stock", roles: ALL, soon: true },
+  { href: "/app/transfers", label: "Transfers", roles: ALL, soon: true },
+  { href: "/app/products", label: "Products", roles: ["owner", "manager"], soon: true },
+  { href: "/app/settings", label: "Settings", roles: ["owner"] },
+];
+
+export function navFor(role: StaffRole) {
+  return NAV_ITEMS.filter((item) => item.roles.includes(role));
+}

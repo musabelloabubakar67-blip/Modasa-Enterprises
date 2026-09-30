@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Retail Operations
 
-## Getting Started
+Stock, transfers and point of sale for a retailer with several shops and warehouses. Built first for
+Modasa Enterprises; everything business-specific (name, locations, staff, currency, receipt text) lives
+in the database, not the code, so the same codebase can be set up for another retailer.
 
-First, run the development server:
+Stack: Next.js 16 (App Router) · Supabase (PostgreSQL, Auth, Storage) · Tailwind CSS 4 · TypeScript.
+
+## Run locally
+
+Requires Docker Desktop (running) and Node 22+ (Node 20 works for now, but `supabase-js` is dropping
+support for it; use Node 22 LTS for deployment).
 
 ```bash
+npm install
+npx supabase start          # first run downloads images; prints the local keys
+cp .env.example .env.local  # fill in the keys from `npx supabase status`
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000. On first run you're sent to `/setup` to create the owner account.
+The local seed (`supabase/seed.sql`) adds 3 shops and 2 warehouses.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Useful commands:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command | What it does |
+| --- | --- |
+| `npx supabase db reset` | Rebuild the local database from migrations + seed (deletes local data) |
+| `npm run db:types` | Regenerate TypeScript types after changing the schema |
+| `npm run typecheck` / `npm run lint` / `npm run format` | Checks and formatting |
+| Studio: http://127.0.0.1:54323 | Browse the local database |
 
-## Learn More
+## How it's organised
 
-To learn more about Next.js, take a look at the following resources:
+- `supabase/migrations/` – database schema and row-level security. Every table has RLS on; the
+  database itself enforces who can see and change what.
+- `src/proxy.ts` – refreshes the login session and keeps signed-out users out of `/app`.
+- `src/lib/auth.ts` – `requireStaff([...roles])`, called at the top of every staff page and server action.
+- `src/lib/supabase/admin.ts` – service-role client. Bypasses RLS; only used after an explicit permission
+  check (creating staff logins, first-run setup, reading public business details).
+- `src/app/app/` – the staff area. `src/app/` root is reserved for the future public storefront.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Roles
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Role | Access |
+| --- | --- |
+| Owner | Everything, including settings, locations and staff |
+| Manager | Day-to-day operations across all locations |
+| Cashier | One shop: sales and receiving transfers |
+| Warehouse staff | One warehouse: receiving, storing and dispatching stock |
 
-## Deploy on Vercel
+## Build plan
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. **Foundation** – setup, sign-in, roles, locations, business settings ✅
+2. Products – categories, units, variants, photos, CSV import
+3. Stock – per-location stock from a movement ledger, receiving, damage write-offs, audit log
+4. Transfers – request → dispatch → receive between any two locations
+5. Point of sale – sales, discounts, deposits, stock lookup at other locations, receipts, wallpaper calculator
+6. Demo data
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Later: owner dashboard, delivery management, online storefront, payments.
