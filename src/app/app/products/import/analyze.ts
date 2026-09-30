@@ -2,6 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/lib/supabase/database.types";
 import { parseMoney } from "@/lib/money";
+import { fetchAll } from "@/lib/supabase/fetch-all";
 import type { ImportRow } from "./columns";
 
 export type RowResult = {
@@ -37,17 +38,6 @@ type Parsed = {
   coverage?: number;
   barcode?: string;
 };
-
-/** Reads every row of a table, working around the API's 1000-row page limit. */
-async function fetchAll<T>(fetchPage: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>) {
-  const all: T[] = [];
-  for (let from = 0; ; from += 1000) {
-    const { data, error } = await fetchPage(from, from + 999);
-    if (error) throw error;
-    all.push(...(data ?? []));
-    if (!data || data.length < 1000) return all;
-  }
-}
 
 const lower = (s: string) => s.trim().toLowerCase();
 

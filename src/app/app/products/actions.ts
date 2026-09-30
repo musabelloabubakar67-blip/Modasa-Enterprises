@@ -82,6 +82,7 @@ const productSchema = z.object({
   unit_id: z.uuid({ error: "Choose a unit." }),
   description: z.string().max(2000).optional(),
   is_active: z.enum(["on"]).optional(),
+  track_batches: z.enum(["on"]).optional(),
   skus: z
     .string()
     .transform((s, ctx) => {
@@ -123,7 +124,7 @@ export async function saveProduct(_prev: ProductActionState, formData: FormData)
     return { error: "Please fix the highlighted SKU fields.", skuErrors };
   }
 
-  const { id, name, category_id, unit_id, description, is_active } = parsed.data;
+  const { id, name, category_id, unit_id, description, is_active, track_batches } = parsed.data;
   const supabase = await createClient();
   const { data: productId, error } = await supabase.rpc("save_product", {
     payload: {
@@ -133,6 +134,7 @@ export async function saveProduct(_prev: ProductActionState, formData: FormData)
       unit_id,
       description: description ?? null,
       is_active: is_active === "on",
+      track_batches: track_batches === "on",
       skus: skus.data,
     },
   });

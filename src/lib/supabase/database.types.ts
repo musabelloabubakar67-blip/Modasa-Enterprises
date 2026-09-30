@@ -20,6 +20,139 @@ export type Database = {
   };
   public: {
     Tables: {
+      adjustment_lines: {
+        Row: {
+          adjustment_id: string;
+          batch: string;
+          id: string;
+          quantity: number;
+          reason: string | null;
+          sku_id: string;
+          sort_order: number;
+          system_quantity: number;
+        };
+        Insert: {
+          adjustment_id: string;
+          batch?: string;
+          id?: string;
+          quantity: number;
+          reason?: string | null;
+          sku_id: string;
+          sort_order?: number;
+          system_quantity?: number;
+        };
+        Update: {
+          adjustment_id?: string;
+          batch?: string;
+          id?: string;
+          quantity?: number;
+          reason?: string | null;
+          sku_id?: string;
+          sort_order?: number;
+          system_quantity?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "adjustment_lines_adjustment_id_fkey";
+            columns: ["adjustment_id"];
+            isOneToOne: false;
+            referencedRelation: "adjustments";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "adjustment_lines_sku_id_fkey";
+            columns: ["sku_id"];
+            isOneToOne: false;
+            referencedRelation: "skus";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "adjustment_lines_sku_id_fkey";
+            columns: ["sku_id"];
+            isOneToOne: false;
+            referencedRelation: "stock_overview";
+            referencedColumns: ["sku_id"];
+          },
+        ];
+      };
+      adjustments: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          kind: Database["public"]["Enums"]["adjustment_kind"];
+          location_id: string;
+          note: string | null;
+          number: string;
+          review_note: string | null;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+          status: Database["public"]["Enums"]["adjustment_status"];
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          kind: Database["public"]["Enums"]["adjustment_kind"];
+          location_id: string;
+          note?: string | null;
+          number?: string;
+          review_note?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          status?: Database["public"]["Enums"]["adjustment_status"];
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          kind?: Database["public"]["Enums"]["adjustment_kind"];
+          location_id?: string;
+          note?: string | null;
+          number?: string;
+          review_note?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          status?: Database["public"]["Enums"]["adjustment_status"];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "adjustments_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "adjustments_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "staff_directory";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "adjustments_location_id_fkey";
+            columns: ["location_id"];
+            isOneToOne: false;
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "adjustments_reviewed_by_fkey";
+            columns: ["reviewed_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "adjustments_reviewed_by_fkey";
+            columns: ["reviewed_by"];
+            isOneToOne: false;
+            referencedRelation: "staff_directory";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       business_settings: {
         Row: {
           address: string | null;
@@ -146,6 +279,13 @@ export type Database = {
             referencedRelation: "products";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "product_images_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "stock_overview";
+            referencedColumns: ["product_id"];
+          },
         ];
       };
       products: {
@@ -157,6 +297,7 @@ export type Database = {
           is_active: boolean;
           name: string;
           search_text: string;
+          track_batches: boolean;
           unit_id: string;
           updated_at: string;
         };
@@ -168,6 +309,7 @@ export type Database = {
           is_active?: boolean;
           name: string;
           search_text?: string;
+          track_batches?: boolean;
           unit_id: string;
           updated_at?: string;
         };
@@ -179,6 +321,7 @@ export type Database = {
           is_active?: boolean;
           name?: string;
           search_text?: string;
+          track_batches?: boolean;
           unit_id?: string;
           updated_at?: string;
         };
@@ -240,6 +383,216 @@ export type Database = {
           },
         ];
       };
+      receipt_costs: {
+        Row: {
+          receipt_id: string;
+          sku_id: string;
+          unit_cost_kobo: number;
+        };
+        Insert: {
+          receipt_id: string;
+          sku_id: string;
+          unit_cost_kobo: number;
+        };
+        Update: {
+          receipt_id?: string;
+          sku_id?: string;
+          unit_cost_kobo?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "receipt_costs_receipt_id_fkey";
+            columns: ["receipt_id"];
+            isOneToOne: false;
+            referencedRelation: "receipts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "receipt_costs_sku_id_fkey";
+            columns: ["sku_id"];
+            isOneToOne: false;
+            referencedRelation: "skus";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "receipt_costs_sku_id_fkey";
+            columns: ["sku_id"];
+            isOneToOne: false;
+            referencedRelation: "stock_overview";
+            referencedColumns: ["sku_id"];
+          },
+        ];
+      };
+      receipt_lines: {
+        Row: {
+          batch: string;
+          id: string;
+          quantity: number;
+          receipt_id: string;
+          sku_id: string;
+          sort_order: number;
+        };
+        Insert: {
+          batch?: string;
+          id?: string;
+          quantity: number;
+          receipt_id: string;
+          sku_id: string;
+          sort_order?: number;
+        };
+        Update: {
+          batch?: string;
+          id?: string;
+          quantity?: number;
+          receipt_id?: string;
+          sku_id?: string;
+          sort_order?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "receipt_lines_receipt_id_fkey";
+            columns: ["receipt_id"];
+            isOneToOne: false;
+            referencedRelation: "receipts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "receipt_lines_sku_id_fkey";
+            columns: ["sku_id"];
+            isOneToOne: false;
+            referencedRelation: "skus";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "receipt_lines_sku_id_fkey";
+            columns: ["sku_id"];
+            isOneToOne: false;
+            referencedRelation: "stock_overview";
+            referencedColumns: ["sku_id"];
+          },
+        ];
+      };
+      receipts: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          location_id: string;
+          note: string | null;
+          number: string;
+          posted_at: string | null;
+          posted_by: string | null;
+          received_on: string;
+          status: Database["public"]["Enums"]["receipt_status"];
+          supplier_name: string | null;
+          supplier_reference: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          location_id: string;
+          note?: string | null;
+          number?: string;
+          posted_at?: string | null;
+          posted_by?: string | null;
+          received_on?: string;
+          status?: Database["public"]["Enums"]["receipt_status"];
+          supplier_name?: string | null;
+          supplier_reference?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          location_id?: string;
+          note?: string | null;
+          number?: string;
+          posted_at?: string | null;
+          posted_by?: string | null;
+          received_on?: string;
+          status?: Database["public"]["Enums"]["receipt_status"];
+          supplier_name?: string | null;
+          supplier_reference?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "receipts_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "receipts_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "staff_directory";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "receipts_location_id_fkey";
+            columns: ["location_id"];
+            isOneToOne: false;
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "receipts_posted_by_fkey";
+            columns: ["posted_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "receipts_posted_by_fkey";
+            columns: ["posted_by"];
+            isOneToOne: false;
+            referencedRelation: "staff_directory";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      reorder_levels: {
+        Row: {
+          location_id: string;
+          reorder_level: number;
+          sku_id: string;
+        };
+        Insert: {
+          location_id: string;
+          reorder_level: number;
+          sku_id: string;
+        };
+        Update: {
+          location_id?: string;
+          reorder_level?: number;
+          sku_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "reorder_levels_location_id_fkey";
+            columns: ["location_id"];
+            isOneToOne: false;
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "reorder_levels_sku_id_fkey";
+            columns: ["sku_id"];
+            isOneToOne: false;
+            referencedRelation: "skus";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "reorder_levels_sku_id_fkey";
+            columns: ["sku_id"];
+            isOneToOne: false;
+            referencedRelation: "stock_overview";
+            referencedColumns: ["sku_id"];
+          },
+        ];
+      };
       sku_costs: {
         Row: {
           cost_kobo: number;
@@ -263,6 +616,13 @@ export type Database = {
             isOneToOne: true;
             referencedRelation: "skus";
             referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "sku_costs_sku_id_fkey";
+            columns: ["sku_id"];
+            isOneToOne: true;
+            referencedRelation: "stock_overview";
+            referencedColumns: ["sku_id"];
           },
         ];
       };
@@ -323,6 +683,137 @@ export type Database = {
             referencedRelation: "products";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "skus_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "stock_overview";
+            referencedColumns: ["product_id"];
+          },
+        ];
+      };
+      stock_levels: {
+        Row: {
+          batch: string;
+          location_id: string;
+          quantity: number;
+          sku_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          batch?: string;
+          location_id: string;
+          quantity?: number;
+          sku_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          batch?: string;
+          location_id?: string;
+          quantity?: number;
+          sku_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "stock_levels_location_id_fkey";
+            columns: ["location_id"];
+            isOneToOne: false;
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "stock_levels_sku_id_fkey";
+            columns: ["sku_id"];
+            isOneToOne: false;
+            referencedRelation: "skus";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "stock_levels_sku_id_fkey";
+            columns: ["sku_id"];
+            isOneToOne: false;
+            referencedRelation: "stock_overview";
+            referencedColumns: ["sku_id"];
+          },
+        ];
+      };
+      stock_movements: {
+        Row: {
+          batch: string;
+          created_at: string;
+          created_by: string | null;
+          id: number;
+          location_id: string;
+          note: string | null;
+          quantity: number;
+          reference_id: string | null;
+          reference_type: string | null;
+          sku_id: string;
+          type: Database["public"]["Enums"]["movement_type"];
+        };
+        Insert: {
+          batch?: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: never;
+          location_id: string;
+          note?: string | null;
+          quantity: number;
+          reference_id?: string | null;
+          reference_type?: string | null;
+          sku_id: string;
+          type: Database["public"]["Enums"]["movement_type"];
+        };
+        Update: {
+          batch?: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: never;
+          location_id?: string;
+          note?: string | null;
+          quantity?: number;
+          reference_id?: string | null;
+          reference_type?: string | null;
+          sku_id?: string;
+          type?: Database["public"]["Enums"]["movement_type"];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "stock_movements_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "stock_movements_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "staff_directory";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "stock_movements_location_id_fkey";
+            columns: ["location_id"];
+            isOneToOne: false;
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "stock_movements_sku_id_fkey";
+            columns: ["sku_id"];
+            isOneToOne: false;
+            referencedRelation: "skus";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "stock_movements_sku_id_fkey";
+            columns: ["sku_id"];
+            isOneToOne: false;
+            referencedRelation: "stock_overview";
+            referencedColumns: ["sku_id"];
+          },
         ];
       };
       units: {
@@ -357,19 +848,117 @@ export type Database = {
       };
     };
     Views: {
-      [_ in never]: never;
+      sku_location_stock: {
+        Row: {
+          location_id: string | null;
+          quantity: number | null;
+          sku_id: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "stock_levels_location_id_fkey";
+            columns: ["location_id"];
+            isOneToOne: false;
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "stock_levels_sku_id_fkey";
+            columns: ["sku_id"];
+            isOneToOne: false;
+            referencedRelation: "skus";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "stock_levels_sku_id_fkey";
+            columns: ["sku_id"];
+            isOneToOne: false;
+            referencedRelation: "stock_overview";
+            referencedColumns: ["sku_id"];
+          },
+        ];
+      };
+      staff_directory: {
+        Row: {
+          full_name: string | null;
+          id: string | null;
+          role: Database["public"]["Enums"]["staff_role"] | null;
+        };
+        Insert: {
+          full_name?: string | null;
+          id?: string | null;
+          role?: Database["public"]["Enums"]["staff_role"] | null;
+        };
+        Update: {
+          full_name?: string | null;
+          id?: string | null;
+          role?: Database["public"]["Enums"]["staff_role"] | null;
+        };
+        Relationships: [];
+      };
+      stock_overview: {
+        Row: {
+          category_id: string | null;
+          code: string | null;
+          is_low: boolean | null;
+          product_id: string | null;
+          product_name: string | null;
+          search_text: string | null;
+          sku_id: string | null;
+          sort_order: number | null;
+          total_quantity: number | null;
+          track_batches: boolean | null;
+          unit: string | null;
+          variant_label: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Functions: {
+      apply_stock_movement: {
+        Args: {
+          p_batch: string;
+          p_location_id: string;
+          p_note: string;
+          p_quantity: number;
+          p_reference_id: string;
+          p_reference_type: string;
+          p_sku_id: string;
+          p_type: Database["public"]["Enums"]["movement_type"];
+        };
+        Returns: undefined;
+      };
+      approve_adjustment: { Args: { p_adjustment_id: string; p_review_note?: string }; Returns: undefined };
+      assert_can_act_at: { Args: { p_location_id: string }; Returns: undefined };
+      cancel_receipt: { Args: { p_receipt_id: string }; Returns: undefined };
       current_staff_location: { Args: Record<PropertyKey, never>; Returns: string };
       current_staff_role: { Args: Record<PropertyKey, never>; Returns: Database["public"]["Enums"]["staff_role"] };
       import_products: { Args: { products: Json }; Returns: number };
       is_manager_or_owner: { Args: Record<PropertyKey, never>; Returns: boolean };
       is_owner: { Args: Record<PropertyKey, never>; Returns: boolean };
+      post_receipt: { Args: { p_receipt_id: string }; Returns: undefined };
       refresh_product_search_text: { Args: { p_product_id: string }; Returns: undefined };
+      reject_adjustment: { Args: { p_adjustment_id: string; p_review_note: string }; Returns: undefined };
       save_product: { Args: { payload: Json }; Returns: string };
+      save_receipt: { Args: { payload: Json }; Returns: string };
+      set_reorder_level: { Args: { p_level: number; p_location_id: string; p_sku_id: string }; Returns: undefined };
+      submit_adjustment: { Args: { payload: Json }; Returns: string };
     };
     Enums: {
+      adjustment_kind: "opening" | "count" | "damage";
+      adjustment_status: "pending" | "approved" | "rejected";
       location_kind: "shop" | "warehouse";
+      movement_type:
+        "opening" | "receipt" | "transfer_out" | "transfer_in" | "sale" | "return" | "damage" | "count_correction";
+      receipt_status: "draft" | "posted" | "cancelled";
       staff_role: "owner" | "manager" | "cashier" | "warehouse";
       unit_coverage: "none" | "roll" | "area";
     };
@@ -482,7 +1071,20 @@ export const Constants = {
   },
   public: {
     Enums: {
+      adjustment_kind: ["opening", "count", "damage"],
+      adjustment_status: ["pending", "approved", "rejected"],
       location_kind: ["shop", "warehouse"],
+      movement_type: [
+        "opening",
+        "receipt",
+        "transfer_out",
+        "transfer_in",
+        "sale",
+        "return",
+        "damage",
+        "count_correction",
+      ],
+      receipt_status: ["draft", "posted", "cancelled"],
       staff_role: ["owner", "manager", "cashier", "warehouse"],
       unit_coverage: ["none", "roll", "area"],
     },

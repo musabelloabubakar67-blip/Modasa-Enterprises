@@ -92,3 +92,41 @@ with inserted as (
 )
 insert into public.sku_costs (sku_id, cost_kobo)
 select i.id, (s.cost * 100)::bigint from inserted i join demo_skus s on s.code = i.code where s.cost is not null;
+
+-- Demo stock. Wallpaper and tiles track batches; the rest don't.
+update public.products set track_batches = true where name in ('Wallpaper ALLWP-001', 'Vinyl Floor Tiles');
+
+create temporary table demo_stock (code text, location text, batch text, qty numeric);
+insert into demo_stock values
+  ('CRUG-001', 'WH-A', '', 18), ('CRUG-001', 'SH1', '', 3), ('CRUG-001', 'SH2', '', 2),
+  ('CRUG-002', 'WH-A', '', 12), ('CRUG-002', 'SH1', '', 2), ('CRUG-002', 'SH3', '', 1),
+  ('CRUG-003', 'WH-A', '', 6), ('CRUG-003', 'SH2', '', 1),
+  ('CRUG-004', 'WH-B', '', 4),
+  ('CRUG-005', 'WH-B', '', 10), ('CRUG-005', 'SH1', '', 2),
+  ('CRUG-006', 'WH-B', '', 7), ('CRUG-006', 'SH3', '', 1),
+  ('ALLWP-001A', 'WH-A', '2304', 40), ('ALLWP-001A', 'WH-A', '2311', 25), ('ALLWP-001A', 'SH1', '2304', 6),
+  ('ALLWP-001A', 'SH2', '2311', 4),
+  ('ALLWP-001B', 'WH-A', '2306', 30), ('ALLWP-001B', 'SH1', '2306', 5),
+  ('ALLWP-001C', 'WH-A', '2302', 22), ('ALLWP-001C', 'SH3', '2302', 3),
+  ('ALLWP-001G', 'WH-B', '2401', 12),
+  ('VL-68001', 'WH-B', 'L118', 60), ('VL-68001', 'SH2', 'L118', 8),
+  ('VL-68012', 'WH-B', 'L121', 45),
+  ('VL-68013', 'WH-B', 'L119', 30), ('VL-68013', 'SH3', 'L119', 5),
+  ('16395-5', 'WH-A', '', 9), ('16395-5', 'SH1', '', 2),
+  ('16395-9', 'WH-A', '', 4), ('16395-10', 'WH-A', '', 3), ('16395-10', 'SH2', '', 1),
+  ('GJ0070', 'WH-B', '', 8), ('GJ0070', 'SH1', '', 2), ('GJ0070-1', 'WH-B', '', 5),
+  ('SP-26-BLK', 'WH-A', '', 6), ('SP-26-WHT', 'WH-A', '', 4), ('SP-26-WHT', 'SH3', '', 1),
+  ('T3-7G', 'WH-B', '', 10), ('T3-7G', 'SH2', '', 2), ('T3-14G', 'WH-B', '', 8), ('T3-36C', 'WH-B', '', 5),
+  ('528-2B', 'WH-A', '', 24), ('528-2B', 'SH1', '', 4), ('528-4H', 'WH-A', '', 18), ('528-4H', 'SH3', '', 3),
+  ('LX21-KC12S', 'WH-B', '', 30), ('LX21-KC12S', 'SH1', '', 5), ('LX21-KC12S', 'SH2', '', 4),
+  ('HM-1', 'WH-A', '', 50), ('HM-1', 'SH1', '', 10), ('HM-1', 'SH2', '', 8), ('HM-1', 'SH3', '', 1),
+  ('HM-4', 'WH-A', '', 20), ('HM-4', 'SH3', '', 2);
+
+select public.apply_stock_movement(s.id, l.id, d.batch, d.qty, 'opening', null, null, 'Demo opening stock')
+from demo_stock d join public.skus s on s.code = d.code join public.locations l on l.code = d.location;
+
+-- A few reorder levels so the low-stock view has something to show.
+insert into public.reorder_levels (sku_id, location_id, reorder_level)
+select s.id, l.id, r.level
+from (values ('CRUG-002', 'SH3', 2), ('HM-1', 'SH3', 3), ('CRUG-004', 'WH-B', 5), ('LX21-KC12S', 'SH1', 3)) as r(code, loc, level)
+join public.skus s on s.code = r.code join public.locations l on l.code = r.loc;

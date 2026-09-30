@@ -10,11 +10,13 @@
     "format": "prettier --write src",
     "typecheck": "tsc --noEmit",
     "db:types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts && prettier --write src/lib/supabase/database.types.ts",
-    "dev:users": "node scripts/dev-users.mjs"
+    "dev:users": "node scripts/dev-users.mjs",
+    "test:db": "node scripts/test-db-rules.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.109.0",
+    "jsbarcode": "^3.12.3",
     "next": "16.3.8",
     "papaparse": "^5.7.0",
     "react": "19.2.8",

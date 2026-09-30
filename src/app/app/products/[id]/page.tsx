@@ -21,7 +21,7 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
   const { data: product, error } = await supabase
     .from("products")
     .select(
-      `id, name, category_id, unit_id, description, is_active,
+      `id, name, category_id, unit_id, description, is_active, track_batches,
        categories(name), units(name, abbreviation),
        skus(id, code, variant_label, price_kobo, promo_price_kobo, barcode, roll_width_cm, roll_length_cm,
             coverage_m2, is_active, sort_order, sku_costs(cost_kobo)),

@@ -2,23 +2,9 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import Papa from "papaparse";
-import { readSheet } from "read-excel-file/browser";
+import { readGrid, type Grid } from "@/lib/spreadsheet";
 import { IMPORT_COLUMNS, matchColumn, type ImportColumn, type ImportRow } from "./columns";
 import { commitImport, previewImport, type PreviewResult } from "./actions";
-
-type Grid = unknown[][];
-
-async function readGrid(file: File): Promise<Grid> {
-  if (/\.xlsx$/i.test(file.name)) return readSheet(file);
-  if (/\.(csv|txt)$/i.test(file.name)) {
-    const text = await file.text();
-    // Keep blank lines so row numbers match what people see in Excel; empty rows are skipped later.
-    const result = Papa.parse<string[]>(text.replace(/^\uFEFF/, ""));
-    return result.data;
-  }
-  throw new Error("Choose a .csv or .xlsx file. (Old .xls files: open in Excel and save as .xlsx first.)");
-}
 
 /** Finds the heading row (sheets often have a title above it) and turns the rest into rows. */
 function gridToRows(grid: Grid): { rows: ImportRow[]; ignored: string[]; missing: string[] } {

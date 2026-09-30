@@ -29,7 +29,8 @@ Useful commands:
 | Command | What it does |
 | --- | --- |
 | `npx supabase db reset` | Rebuild the local database from migrations + seed (deletes local data) |
-| `npm run dev:users` | Create local test accounts after a reset |
+| `npm run dev:users` | Create local test accounts (owner, Shop 1 cashier, Warehouse A staff) after a reset |
+| `npm run test:db` | Check the database's security and stock rules (run on a freshly reset database) |
 | `npm run db:types` | Regenerate TypeScript types after changing the schema |
 | `npm run typecheck` / `npm run lint` / `npm run format` | Checks and formatting |
 | Studio: http://127.0.0.1:54323 | Browse the local database |
@@ -56,20 +57,35 @@ Useful commands:
   blank optional cells leave existing values unchanged. The whole file is saved in one transaction.
 - Units with *coverage* (Roll → width × length; Box → m² per box) feed the wallpaper/tile calculator at the till.
 
+## Stock
+
+- **Stock is never edited directly.** Every change is a row in `stock_movements` (append-only), written only by
+  database functions that also update `stock_levels` in the same transaction and refuse to go below zero.
+- Stock is kept per SKU, location and **batch**. Products with *Track batches* on (wallpaper, tiles) must have a
+  batch number when received; `''` means "no batch".
+- **Deliveries** (`receipts`) are received at warehouses only, as drafts, then posted. Posting adds stock and makes
+  each line's unit cost the SKU's cost price. Posted deliveries are locked; fix mistakes with an adjustment.
+- **Adjustments**: opening stock, counts and damage write-offs. Floor staff submit, managers approve; managers'
+  own entries apply immediately. A count stores what the system showed at the time, so approving it later
+  applies only the difference and doesn't undo sales made in between.
+- Labels print a CODE128 barcode of the SKU's barcode (or code) on A4 sticker sheets or 50×30 mm thermal labels.
+- Staff names in history come from `staff_directory` (names only), so floor staff never see colleagues' contact
+  details. Dates are shown in Africa/Lagos time (`src/lib/dates.ts`).
+
 ## Roles
 
 | Role | Access |
 | --- | --- |
 | Owner | Everything, including settings, locations and staff |
 | Manager | Day-to-day operations across all locations |
-| Cashier | One shop: sales and receiving transfers |
-| Warehouse staff | One warehouse: receiving, storing and dispatching stock |
+| Cashier | One shop: sales, receiving transfers, reporting counts and damage (manager approves) |
+| Warehouse staff | One warehouse: receiving deliveries, labels, reporting counts and damage (manager approves) |
 
 ## Build plan
 
 1. **Foundation** – setup, sign-in, roles, locations, business settings ✅
 2. **Products** – categories, units, products & SKUs, sale/cost prices, photos, CSV/Excel import ✅
-3. Stock – per-location stock from a movement ledger, receiving, damage write-offs, audit log
+3. **Stock** – movement ledger, batches, deliveries, counts & write-offs with approval, history, labels ✅
 4. Transfers – request → dispatch → receive between any two locations
 5. Point of sale – sales, discounts, deposits, stock lookup at other locations, receipts, wallpaper calculator
 6. Demo data

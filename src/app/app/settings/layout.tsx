@@ -1,5 +1,11 @@
 import { requireStaff } from "@/lib/auth";
-import { SettingsTabs } from "./settings-tabs";
+import { SectionTabs } from "@/components/section-tabs";
+
+const TABS = [
+  { href: "/app/settings", label: "Business", exact: true },
+  { href: "/app/settings/locations", label: "Locations" },
+  { href: "/app/settings/staff", label: "Staff" },
+];
 
 export default async function SettingsLayout({ children }: LayoutProps<"/app/settings">) {
   await requireStaff(["owner"]);
@@ -7,7 +13,7 @@ export default async function SettingsLayout({ children }: LayoutProps<"/app/set
   return (
     <div className="max-w-4xl">
       <h1 className="text-2xl font-semibold">Settings</h1>
-      <SettingsTabs />
+      <SectionTabs tabs={TABS} />
       <div className="mt-6">{children}</div>
     </div>
   );

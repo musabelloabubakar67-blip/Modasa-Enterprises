@@ -13,6 +13,7 @@ export type ProductFormData = {
   unit_id: string;
   description: string | null;
   is_active: boolean;
+  track_batches: boolean;
   skus: {
     id: string;
     code: string;
@@ -150,6 +151,21 @@ export function ProductForm({
                   defaultValue={product?.description ?? ""}
                 />
               </Field>
+              <label className="flex items-start gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  name="track_batches"
+                  className="mt-1"
+                  defaultChecked={product?.track_batches ?? unit?.coverage === "roll"}
+                />
+                <span>
+                  Track batches
+                  <span className="text-muted block text-xs">
+                    For items whose shade can differ between production runs (wallpaper, tiles). Staff record the batch
+                    number when receiving, and the till warns before mixing batches in one sale.
+                  </span>
+                </span>
+              </label>
               {product && (
                 <label className="flex items-center gap-2 text-sm">
                   <input type="checkbox" name="is_active" defaultChecked={product.is_active} />

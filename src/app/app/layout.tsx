@@ -12,7 +12,7 @@ export default async function StaffLayout({ children }: LayoutProps<"/app">) {
 
   return (
     <div className="flex flex-1 flex-col md:flex-row">
-      <aside className="border-border bg-surface border-b md:w-60 md:shrink-0 md:border-r md:border-b-0">
+      <aside className="border-border bg-surface border-b md:w-60 md:shrink-0 md:border-r md:border-b-0 print:hidden">
         <div className="flex items-start justify-between gap-2 px-4 py-4">
           <div className="min-w-0">
             <p className="truncate font-semibold">{business.name}</p>
@@ -34,7 +34,7 @@ export default async function StaffLayout({ children }: LayoutProps<"/app">) {
           </button>
         </form>
       </aside>
-      <main className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
+      <main className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8 print:p-0">{children}</main>
     </div>
   );
 }

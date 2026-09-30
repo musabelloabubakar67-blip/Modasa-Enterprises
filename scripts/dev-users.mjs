@@ -1,4 +1,4 @@
-// Creates local test accounts (owner + Shop 1 cashier) from the DEV_* values in .env.local.
+// Creates local test accounts (owner, Shop 1 cashier, Warehouse A staff) from the DEV_* values in .env.local.
 // Local development only: refuses to run against anything but a local Supabase.
 import fs from "node:fs";
 
@@ -22,14 +22,22 @@ const headers = {
   "Content-Type": "application/json",
 };
 
-const [shop] = await (await fetch(`${url}/rest/v1/locations?code=eq.SH1&select=id`, { headers })).json();
+const locationId = async (code) =>
+  (await (await fetch(`${url}/rest/v1/locations?code=eq.${code}&select=id`, { headers })).json())[0]?.id;
+const shop = { id: await locationId("SH1") };
+const warehouse = { id: await locationId("WH-A") };
 
 const users = [
   { email: env.DEV_OWNER_EMAIL, password: env.DEV_OWNER_PASSWORD, meta: { full_name: "Test Owner", role: "owner" } },
   {
     email: env.DEV_CASHIER_EMAIL,
     password: env.DEV_CASHIER_PASSWORD,
-    meta: { full_name: "Test Cashier", role: "cashier", location_id: shop?.id },
+    meta: { full_name: "Test Cashier", role: "cashier", location_id: shop.id },
+  },
+  {
+    email: env.DEV_WAREHOUSE_EMAIL,
+    password: env.DEV_WAREHOUSE_PASSWORD,
+    meta: { full_name: "Test Warehouse", role: "warehouse", location_id: warehouse.id },
   },
 ];
 
