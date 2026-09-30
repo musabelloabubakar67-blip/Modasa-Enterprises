@@ -1,38 +1,60 @@
 "use client";
 
-import { createContext, startTransition, useActionState, useContext, useEffect, useRef } from "react";
+import {
+  createContext,
+  startTransition,
+  useActionState,
+  useContext,
+  useEffect,
+  useRef,
+  useSyncExternalStore,
+} from "react";
 import { initialActionState, type ActionState } from "@/lib/forms";
 
-type ServerAction = (prev: ActionState, formData: FormData) => Promise<ActionState>;
+type ServerAction<S extends ActionState> = (prev: S, formData: FormData) => Promise<S>;
 
 const PendingContext = createContext(false);
+const noopSubscribe = () => () => {};
 
 /**
  * Form bound to a server action. Unlike a plain `<form action>`, it keeps what the user typed
  * when the action returns an error, and only clears itself on success if `resetOnSuccess` is set.
  */
-export function ActionForm({
+export function ActionForm<S extends ActionState = ActionState>({
   action,
   resetOnSuccess = false,
   className,
   children,
 }: {
-  action: ServerAction;
+  action: ServerAction<S>;
   resetOnSuccess?: boolean;
   className?: string;
-  children: (state: ActionState) => React.ReactNode;
+  children: (state: S) => React.ReactNode;
 }) {
-  const [state, dispatch, pending] = useActionState(action, initialActionState);
+  // useActionState can't infer through the generic; the action really does return S.
+  const [rawState, dispatch, pending] = useActionState(
+    action as unknown as ServerAction<ActionState>,
+    initialActionState,
+  );
+  const state = rawState as S;
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (resetOnSuccess && state.success) formRef.current?.reset();
+    // On long forms the problem may be off-screen: bring the first field error (or the message) into view.
+    if (state.error) {
+      const target =
+        formRef.current?.querySelector("[data-field-error]") ?? formRef.current?.querySelector("[role=alert]");
+      target?.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
   }, [state, resetOnSuccess]);
 
   return (
     <form
       ref={formRef}
       className={className}
+      // Never GET: if submitted before the page has loaded, fields must not end up in the URL.
+      method="post"
       onSubmit={(event) => {
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
@@ -54,8 +76,14 @@ export function SubmitButton({
   className?: string;
 }) {
   const pending = useContext(PendingContext);
+  // Disabled until the page is interactive, which also blocks submitting with Enter before then.
+  const hydrated = useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false,
+  );
   return (
-    <button type="submit" className={className} disabled={pending}>
+    <button type="submit" className={className} disabled={pending || !hydrated}>
       {pending ? pendingText : children}
     </button>
   );
@@ -99,7 +127,11 @@ export function Field({
       </label>
       {children}
       {hint && !error && <p className="text-muted mt-1 text-xs">{hint}</p>}
-      {error && <p className="text-danger mt-1 text-xs">{error}</p>}
+      {error && (
+        <p data-field-error className="text-danger mt-1 text-xs">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

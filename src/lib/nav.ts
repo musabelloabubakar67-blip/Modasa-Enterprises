@@ -15,7 +15,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/app/pos", label: "Point of sale", roles: ["owner", "manager", "cashier"], soon: true },
   { href: "/app/stock", label: "Stock", roles: ALL, soon: true },
   { href: "/app/transfers", label: "Transfers", roles: ALL, soon: true },
-  { href: "/app/products", label: "Products", roles: ["owner", "manager"], soon: true },
+  { href: "/app/products", label: "Products", roles: ALL },
   { href: "/app/settings", label: "Settings", roles: ["owner"] },
 ];
 
