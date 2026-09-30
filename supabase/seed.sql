@@ -130,3 +130,30 @@ insert into public.reorder_levels (sku_id, location_id, reorder_level)
 select s.id, l.id, r.level
 from (values ('CRUG-002', 'SH3', 2), ('HM-1', 'SH3', 3), ('CRUG-004', 'WH-B', 5), ('LX21-KC12S', 'SH1', 3)) as r(code, loc, level)
 join public.skus s on s.code = r.code join public.locations l on l.code = r.loc;
+
+-- Demo transfers: Shop 3 has asked Warehouse A for rugs; wallpaper is on its way to Shop 1.
+with t as (
+  insert into public.transfers (from_location_id, to_location_id, note)
+  select (select id from public.locations where code = 'WH-A'), (select id from public.locations where code = 'SH3'),
+         'Running low on 4 × 6 rugs'
+  returning id
+)
+insert into public.transfer_lines (transfer_id, sku_id, requested_quantity, sort_order)
+select t.id, s.id, q.qty, q.ord
+from t, (values ('CRUG-002', 3, 1), ('HM-1', 5, 2)) as q(code, qty, ord)
+join public.skus s on s.code = q.code;
+
+with t as (
+  insert into public.transfers (from_location_id, to_location_id, status, dispatched_at)
+  select (select id from public.locations where code = 'WH-A'), (select id from public.locations where code = 'SH1'),
+         'dispatched', now()
+  returning id, number
+), l as (
+  insert into public.transfer_lines (transfer_id, sku_id, requested_quantity)
+  select t.id, s.id, 6 from t, public.skus s where s.code = 'ALLWP-001A'
+), i as (
+  insert into public.transfer_items (transfer_id, sku_id, batch, dispatched_quantity)
+  select t.id, s.id, '2304', 6 from t, public.skus s where s.code = 'ALLWP-001A'
+)
+select public.apply_stock_movement(s.id, l.id, '2304', -6, 'transfer_out', 'transfer', t.id, t.number || ' → Shop 1')
+from t, public.skus s, public.locations l where s.code = 'ALLWP-001A' and l.code = 'WH-A';

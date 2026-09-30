@@ -816,6 +816,261 @@ export type Database = {
           },
         ];
       };
+      transfer_items: {
+        Row: {
+          batch: string;
+          dispatched_quantity: number;
+          id: string;
+          received_quantity: number | null;
+          shortage_reason: string | null;
+          sku_id: string;
+          sort_order: number;
+          transfer_id: string;
+        };
+        Insert: {
+          batch?: string;
+          dispatched_quantity: number;
+          id?: string;
+          received_quantity?: number | null;
+          shortage_reason?: string | null;
+          sku_id: string;
+          sort_order?: number;
+          transfer_id: string;
+        };
+        Update: {
+          batch?: string;
+          dispatched_quantity?: number;
+          id?: string;
+          received_quantity?: number | null;
+          shortage_reason?: string | null;
+          sku_id?: string;
+          sort_order?: number;
+          transfer_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "transfer_items_sku_id_fkey";
+            columns: ["sku_id"];
+            isOneToOne: false;
+            referencedRelation: "skus";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "transfer_items_sku_id_fkey";
+            columns: ["sku_id"];
+            isOneToOne: false;
+            referencedRelation: "stock_overview";
+            referencedColumns: ["sku_id"];
+          },
+          {
+            foreignKeyName: "transfer_items_transfer_id_fkey";
+            columns: ["transfer_id"];
+            isOneToOne: false;
+            referencedRelation: "transfers";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      transfer_lines: {
+        Row: {
+          id: string;
+          requested_quantity: number;
+          sku_id: string;
+          sort_order: number;
+          transfer_id: string;
+        };
+        Insert: {
+          id?: string;
+          requested_quantity: number;
+          sku_id: string;
+          sort_order?: number;
+          transfer_id: string;
+        };
+        Update: {
+          id?: string;
+          requested_quantity?: number;
+          sku_id?: string;
+          sort_order?: number;
+          transfer_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "transfer_lines_sku_id_fkey";
+            columns: ["sku_id"];
+            isOneToOne: false;
+            referencedRelation: "skus";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "transfer_lines_sku_id_fkey";
+            columns: ["sku_id"];
+            isOneToOne: false;
+            referencedRelation: "stock_overview";
+            referencedColumns: ["sku_id"];
+          },
+          {
+            foreignKeyName: "transfer_lines_transfer_id_fkey";
+            columns: ["transfer_id"];
+            isOneToOne: false;
+            referencedRelation: "transfers";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      transfers: {
+        Row: {
+          cancel_reason: string | null;
+          cancelled_at: string | null;
+          cancelled_by: string | null;
+          dispatch_note: string | null;
+          dispatched_at: string | null;
+          dispatched_by: string | null;
+          from_location_id: string;
+          has_shortage: boolean;
+          id: string;
+          note: string | null;
+          number: string;
+          received_at: string | null;
+          received_by: string | null;
+          requested_at: string;
+          requested_by: string | null;
+          shortage_resolution: string | null;
+          shortage_resolved_at: string | null;
+          shortage_resolved_by: string | null;
+          status: Database["public"]["Enums"]["transfer_status"];
+          to_location_id: string;
+        };
+        Insert: {
+          cancel_reason?: string | null;
+          cancelled_at?: string | null;
+          cancelled_by?: string | null;
+          dispatch_note?: string | null;
+          dispatched_at?: string | null;
+          dispatched_by?: string | null;
+          from_location_id: string;
+          has_shortage?: boolean;
+          id?: string;
+          note?: string | null;
+          number?: string;
+          received_at?: string | null;
+          received_by?: string | null;
+          requested_at?: string;
+          requested_by?: string | null;
+          shortage_resolution?: string | null;
+          shortage_resolved_at?: string | null;
+          shortage_resolved_by?: string | null;
+          status?: Database["public"]["Enums"]["transfer_status"];
+          to_location_id: string;
+        };
+        Update: {
+          cancel_reason?: string | null;
+          cancelled_at?: string | null;
+          cancelled_by?: string | null;
+          dispatch_note?: string | null;
+          dispatched_at?: string | null;
+          dispatched_by?: string | null;
+          from_location_id?: string;
+          has_shortage?: boolean;
+          id?: string;
+          note?: string | null;
+          number?: string;
+          received_at?: string | null;
+          received_by?: string | null;
+          requested_at?: string;
+          requested_by?: string | null;
+          shortage_resolution?: string | null;
+          shortage_resolved_at?: string | null;
+          shortage_resolved_by?: string | null;
+          status?: Database["public"]["Enums"]["transfer_status"];
+          to_location_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "transfers_cancelled_by_fkey";
+            columns: ["cancelled_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "transfers_cancelled_by_fkey";
+            columns: ["cancelled_by"];
+            isOneToOne: false;
+            referencedRelation: "staff_directory";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "transfers_dispatched_by_fkey";
+            columns: ["dispatched_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "transfers_dispatched_by_fkey";
+            columns: ["dispatched_by"];
+            isOneToOne: false;
+            referencedRelation: "staff_directory";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "transfers_from_location_id_fkey";
+            columns: ["from_location_id"];
+            isOneToOne: false;
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "transfers_received_by_fkey";
+            columns: ["received_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "transfers_received_by_fkey";
+            columns: ["received_by"];
+            isOneToOne: false;
+            referencedRelation: "staff_directory";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "transfers_requested_by_fkey";
+            columns: ["requested_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "transfers_requested_by_fkey";
+            columns: ["requested_by"];
+            isOneToOne: false;
+            referencedRelation: "staff_directory";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "transfers_shortage_resolved_by_fkey";
+            columns: ["shortage_resolved_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "transfers_shortage_resolved_by_fkey";
+            columns: ["shortage_resolved_by"];
+            isOneToOne: false;
+            referencedRelation: "staff_directory";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "transfers_to_location_id_fkey";
+            columns: ["to_location_id"];
+            isOneToOne: false;
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       units: {
         Row: {
           abbreviation: string;
@@ -896,6 +1151,36 @@ export type Database = {
         };
         Relationships: [];
       };
+      stock_in_transit: {
+        Row: {
+          location_id: string | null;
+          quantity: number | null;
+          sku_id: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "transfer_items_sku_id_fkey";
+            columns: ["sku_id"];
+            isOneToOne: false;
+            referencedRelation: "skus";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "transfer_items_sku_id_fkey";
+            columns: ["sku_id"];
+            isOneToOne: false;
+            referencedRelation: "stock_overview";
+            referencedColumns: ["sku_id"];
+          },
+          {
+            foreignKeyName: "transfers_to_location_id_fkey";
+            columns: ["location_id"];
+            isOneToOne: false;
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       stock_overview: {
         Row: {
           category_id: string | null;
@@ -937,16 +1222,22 @@ export type Database = {
         Returns: undefined;
       };
       approve_adjustment: { Args: { p_adjustment_id: string; p_review_note?: string }; Returns: undefined };
+      assert_at_either_end: { Args: { p_from: string; p_to: string }; Returns: undefined };
       assert_can_act_at: { Args: { p_location_id: string }; Returns: undefined };
       cancel_receipt: { Args: { p_receipt_id: string }; Returns: undefined };
+      cancel_transfer: { Args: { p_reason: string; p_transfer_id: string }; Returns: undefined };
+      create_transfer: { Args: { payload: Json }; Returns: string };
       current_staff_location: { Args: Record<PropertyKey, never>; Returns: string };
       current_staff_role: { Args: Record<PropertyKey, never>; Returns: Database["public"]["Enums"]["staff_role"] };
+      dispatch_transfer: { Args: { p_items: Json; p_note?: string; p_transfer_id: string }; Returns: undefined };
       import_products: { Args: { products: Json }; Returns: number };
       is_manager_or_owner: { Args: Record<PropertyKey, never>; Returns: boolean };
       is_owner: { Args: Record<PropertyKey, never>; Returns: boolean };
       post_receipt: { Args: { p_receipt_id: string }; Returns: undefined };
+      receive_transfer: { Args: { p_items: Json; p_transfer_id: string }; Returns: undefined };
       refresh_product_search_text: { Args: { p_product_id: string }; Returns: undefined };
       reject_adjustment: { Args: { p_adjustment_id: string; p_review_note: string }; Returns: undefined };
+      resolve_transfer_shortage: { Args: { p_resolution: string; p_transfer_id: string }; Returns: undefined };
       save_product: { Args: { payload: Json }; Returns: string };
       save_receipt: { Args: { payload: Json }; Returns: string };
       set_reorder_level: { Args: { p_level: number; p_location_id: string; p_sku_id: string }; Returns: undefined };
@@ -960,6 +1251,7 @@ export type Database = {
         "opening" | "receipt" | "transfer_out" | "transfer_in" | "sale" | "return" | "damage" | "count_correction";
       receipt_status: "draft" | "posted" | "cancelled";
       staff_role: "owner" | "manager" | "cashier" | "warehouse";
+      transfer_status: "requested" | "dispatched" | "received" | "cancelled";
       unit_coverage: "none" | "roll" | "area";
     };
     CompositeTypes: {
@@ -1086,6 +1378,7 @@ export const Constants = {
       ],
       receipt_status: ["draft", "posted", "cancelled"],
       staff_role: ["owner", "manager", "cashier", "warehouse"],
+      transfer_status: ["requested", "dispatched", "received", "cancelled"],
       unit_coverage: ["none", "roll", "area"],
     },
   },

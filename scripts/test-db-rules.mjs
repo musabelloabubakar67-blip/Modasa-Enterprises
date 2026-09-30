@@ -189,5 +189,107 @@ r = await owner("rpc/apply_stock_movement", {
 check("internal stock function can't be called", !r.ok, r.msg);
 check("cashier can't see deliveries", (await cashier("receipts?select=id")).data.length === 0);
 
+console.log("\n— Transfers —");
+r = await cashier("rpc/create_transfer", {
+  payload: { from_location_id: loc.SH2, to_location_id: loc.SH3, lines: [{ sku_id: sku["HM-1"], quantity: 1 }] },
+});
+check("cashier can't create transfers between other locations", !r.ok, r.msg);
+r = await cashier("rpc/create_transfer", {
+  payload: {
+    from_location_id: loc["WH-A"],
+    to_location_id: loc.SH1,
+    lines: [
+      { sku_id: sku["CRUG-001"], quantity: 4 },
+      { sku_id: sku["ALLWP-001B"], quantity: 3 },
+    ],
+  },
+});
+check("cashier requests stock for own shop", r.ok, r.msg);
+const transfer = r.data;
+r = await cashier("rpc/dispatch_transfer", {
+  p_transfer_id: transfer,
+  p_items: [{ sku_id: sku["CRUG-001"], quantity: 4 }],
+});
+check("cashier can't dispatch from the warehouse", !r.ok, r.msg);
+r = await wh("rpc/dispatch_transfer", { p_transfer_id: transfer, p_items: [{ sku_id: sku["HM-4"], quantity: 1 }] });
+check("only requested items can be sent", !r.ok, r.msg);
+r = await wh("rpc/dispatch_transfer", {
+  p_transfer_id: transfer,
+  p_items: [{ sku_id: sku["ALLWP-001B"], batch: "2306", quantity: 999 }],
+});
+check("can't send more than the warehouse has", !r.ok, r.msg);
+const whRugs = await level("CRUG-001", "WH-A");
+const whPaper = await level("ALLWP-001B", "WH-A", "2306");
+r = await wh("rpc/dispatch_transfer", {
+  p_transfer_id: transfer,
+  p_items: [
+    { sku_id: sku["CRUG-001"], quantity: 4 },
+    { sku_id: sku["ALLWP-001B"], batch: "2306", quantity: 3 },
+  ],
+});
+check("warehouse staff dispatch", r.ok, r.msg);
+check("stock left the warehouse", (await level("CRUG-001", "WH-A")) === whRugs - 4);
+check("batch left the warehouse", (await level("ALLWP-001B", "WH-A", "2306")) === whPaper - 3);
+const transit = (await cashier(`stock_in_transit?sku_id=eq.${sku["CRUG-001"]}&location_id=eq.${loc.SH1}`)).data;
+check("shows as in transit", Number(transit[0]?.quantity) === 4);
+r = await cashier("rpc/cancel_transfer", { p_transfer_id: transfer, p_reason: "x" });
+check("dispatched transfers can't be cancelled", !r.ok, r.msg);
+const items = (await cashier(`transfer_items?select=id,sku_id&transfer_id=eq.${transfer}`)).data;
+const rugItem = items.find((i) => i.sku_id === sku["CRUG-001"]).id;
+const paperItem = items.find((i) => i.sku_id === sku["ALLWP-001B"]).id;
+r = await wh("rpc/receive_transfer", {
+  p_transfer_id: transfer,
+  p_items: [
+    { item_id: rugItem, received_quantity: 4 },
+    { item_id: paperItem, received_quantity: 3 },
+  ],
+});
+check("warehouse can't receive at the shop", !r.ok, r.msg);
+r = await cashier("rpc/receive_transfer", {
+  p_transfer_id: transfer,
+  p_items: [
+    { item_id: rugItem, received_quantity: 3 },
+    { item_id: paperItem, received_quantity: 3 },
+  ],
+});
+check("a shortage needs a reason", !r.ok, r.msg);
+r = await cashier("rpc/receive_transfer", {
+  p_transfer_id: transfer,
+  p_items: [
+    { item_id: rugItem, received_quantity: 5 },
+    { item_id: paperItem, received_quantity: 3 },
+  ],
+});
+check("can't receive more than was sent", !r.ok, r.msg);
+const shopRugs = await level("CRUG-001", "SH1");
+r = await cashier("rpc/receive_transfer", {
+  p_transfer_id: transfer,
+  p_items: [
+    { item_id: rugItem, received_quantity: 3, reason: "One rug torn in the van" },
+    { item_id: paperItem, received_quantity: 3 },
+  ],
+});
+check("cashier receives with a shortage", r.ok, r.msg);
+check("only what arrived was added", (await level("CRUG-001", "SH1")) === shopRugs + 3);
+check("batch arrived at the shop", (await level("ALLWP-001B", "SH1", "2306")) >= 3);
+check(
+  "shortage flagged",
+  (await owner(`transfers?select=has_shortage&id=eq.${transfer}`)).data[0]?.has_shortage === true,
+);
+check(
+  "no longer in transit",
+  (await owner(`stock_in_transit?sku_id=eq.${sku["CRUG-001"]}&location_id=eq.${loc.SH1}`)).data.length === 0,
+);
+r = await cashier("rpc/resolve_transfer_shortage", { p_transfer_id: transfer, p_resolution: "Lost" });
+check("cashier can't resolve shortages", !r.ok, r.msg);
+r = await owner("rpc/resolve_transfer_shortage", { p_transfer_id: transfer, p_resolution: "Lost in transit" });
+check("owner resolves the shortage", r.ok, r.msg);
+r = await cashier("rpc/create_transfer", {
+  payload: { from_location_id: loc.SH1, to_location_id: loc["WH-A"], lines: [{ sku_id: sku["HM-1"], quantity: 1 }] },
+});
+check("shop can send back to a warehouse", r.ok, r.msg);
+r = await cashier("rpc/cancel_transfer", { p_transfer_id: r.data, p_reason: "Changed my mind" });
+check("unsent request can be cancelled", r.ok, r.msg);
+
 console.log(failures ? `\n${failures} check(s) FAILED` : "\nAll checks passed");
 process.exit(failures ? 1 : 0);

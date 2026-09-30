@@ -38,10 +38,13 @@ export default async function StockOverviewPage({ searchParams }: PageProps<"/ap
   if (error) throw error;
 
   const skuIds = rows.map((r) => r.sku_id!);
-  const [{ data: levels }, { data: reorders }] = await Promise.all([
+  const [{ data: levels }, { data: reorders }, { data: transit }] = await Promise.all([
     supabase.from("sku_location_stock").select("sku_id, location_id, quantity").in("sku_id", skuIds),
     supabase.from("reorder_levels").select("sku_id, location_id, reorder_level").in("sku_id", skuIds),
+    supabase.from("stock_in_transit").select("sku_id, quantity").in("sku_id", skuIds),
   ]);
+  const inTransit = new Map<string, number>();
+  transit?.forEach((t) => inTransit.set(t.sku_id!, (inTransit.get(t.sku_id!) ?? 0) + Number(t.quantity)));
   const qty = new Map(levels?.map((l) => [`${l.sku_id}|${l.location_id}`, Number(l.quantity)]));
   const reorder = new Map(reorders?.map((r) => [`${r.sku_id}|${r.location_id}`, Number(r.reorder_level)]));
 
@@ -124,13 +127,16 @@ export default async function StockOverviewPage({ searchParams }: PageProps<"/ap
                   {l.code}
                 </th>
               ))}
+              <th className="p-3 text-right font-medium whitespace-nowrap" title="Dispatched, not yet received">
+                In transit
+              </th>
               <th className="p-3 text-right font-medium">Total</th>
             </tr>
           </thead>
           <tbody className="divide-border divide-y">
             {rows.length === 0 && (
               <tr>
-                <td colSpan={locations.length + 2} className="text-muted p-6 text-center">
+                <td colSpan={locations.length + 3} className="text-muted p-6 text-center">
                   No items match.
                 </td>
               </tr>
@@ -162,17 +168,34 @@ export default async function StockOverviewPage({ searchParams }: PageProps<"/ap
                     </td>
                   );
                 })}
+                <td className="text-muted p-3 text-right tabular-nums">
+                  {inTransit.get(row.sku_id!) ? formatQty(inTransit.get(row.sku_id!)!) : "–"}
+                </td>
                 <td className="p-3 text-right font-medium tabular-nums">
-                  {formatQty(Number(row.total_quantity))} <span className="text-muted text-xs">{row.unit}</span>
+                  {formatQty(Number(row.total_quantity) + (inTransit.get(row.sku_id!) ?? 0))}{" "}
+                  <span className="text-muted text-xs">{row.unit}</span>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      {show === "low" && rows.length > 0 && (
+        <div className="card flex flex-wrap items-center gap-2 p-3 text-sm">
+          <span>Restock from a warehouse:</span>
+          {locations
+            .filter((l) => l.kind === "shop" && (manager || l.id === staff.locationId))
+            .map((l) => (
+              <Link key={l.id} href={`/app/transfers/new?to=${l.id}`} className="btn btn-secondary">
+                {l.name}
+              </Link>
+            ))}
+          <span className="text-muted text-xs">then use &ldquo;Add low-stock items&rdquo;.</span>
+        </div>
+      )}
       <p className="text-muted text-xs">
-        Red = at or below the reorder level for that location. Open an item to see batches, history and set reorder
-        levels.
+        Total includes stock in transit. Red = at or below the reorder level for that location. Open an item to see
+        batches, history and set reorder levels.
       </p>
 
       {totalPages > 1 && (

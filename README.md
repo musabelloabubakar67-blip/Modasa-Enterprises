@@ -72,6 +72,17 @@ Useful commands:
 - Staff names in history come from `staff_directory` (names only), so floor staff never see colleagues' contact
   details. Dates are shown in Africa/Lagos time (`src/lib/dates.ts`).
 
+## Transfers
+
+- Between any two locations. Floor staff can create transfers to or from their own location; managers any.
+- **Requested** (no stock change) → **dispatched** (stock leaves the source as `transfer_out` and shows as
+  *in transit*) → **received** (stock arrives as `transfer_in`). Only unsent requests can be cancelled.
+- Dispatch records exactly which batches were sent; the screen suggests a single batch that covers the
+  quantity so shops don't receive mixed shades, and warns when it has to split.
+- If fewer items arrive than were sent, the receiver must give a reason; only what arrived is added and the
+  transfer is flagged for a manager to resolve. No stock is lost from the books: it simply never arrived.
+- Restock suggestions bring a shop up to twice its reorder level, counting stock in transit and open requests.
+
 ## Roles
 
 | Role | Access |
@@ -86,7 +97,7 @@ Useful commands:
 1. **Foundation** – setup, sign-in, roles, locations, business settings ✅
 2. **Products** – categories, units, products & SKUs, sale/cost prices, photos, CSV/Excel import ✅
 3. **Stock** – movement ledger, batches, deliveries, counts & write-offs with approval, history, labels ✅
-4. Transfers – request → dispatch → receive between any two locations
+4. **Transfers** – request → dispatch → receive between any locations, batches, in transit, shortages ✅
 5. Point of sale – sales, discounts, deposits, stock lookup at other locations, receipts, wallpaper calculator
 6. Demo data
 

@@ -4,11 +4,13 @@ import { navFor } from "@/lib/nav";
 import { ROLE_LABELS } from "@/lib/roles";
 import { signOut } from "@/app/login/actions";
 import { NavLinks } from "./nav-links";
+import { getNavBadges } from "./nav-badges";
 
 export default async function StaffLayout({ children }: LayoutProps<"/app">) {
   const staff = await requireStaff();
   const business = await getBusinessSettings();
-  const items = navFor(staff.role);
+  const badges = await getNavBadges(staff);
+  const items = navFor(staff.role).map((item) => ({ ...item, badge: badges[item.href] }));
 
   return (
     <div className="flex flex-1 flex-col md:flex-row">
