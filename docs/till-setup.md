@@ -112,6 +112,20 @@ Plug it in; it types like a keyboard, so there's nothing to install. Then just s
 If scanning types the code but nothing is added, the scanner isn't sending Enter after the code: scan the
 "Add CR/Enter suffix" setup barcode in its manual.
 
+## Scanning with a phone, tablet or laptop camera (no scanner)
+
+Tap the **camera button** at the right of the search box. The back camera opens with an aiming box: hold the
+barcode flat inside it. Each item is added as soon as it's read (with a beep, and a buzz on phones), and the
+camera stays open for the next item; tap **Done** when finished. **Switch camera** and **Light** appear when
+the device has more than one camera or a torch.
+
+- The first time, the browser asks to use the camera: choose **Allow**. If it was blocked, allow the camera
+  for this site in the browser's site settings.
+- The camera only works on a secure address (`https://…`), which the live system will have.
+- It reads our own labels and most supplier barcodes (EAN/UPC, Code 128, Code 39, ITF, QR).
+- A dedicated scanner is still much faster for busy tills; the camera is best for tablets, stock counts and
+  the odd item.
+
 ## Test before opening (both options)
 
 Make a test sale, check the receipt and drawer, then return it from **Sales → the sale → Return items** so the

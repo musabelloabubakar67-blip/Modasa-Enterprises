@@ -1,8 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { searchSkus, type SkuOption } from "@/app/app/stock/actions";
 import { useBarcodeScanner } from "@/lib/use-barcode-scanner";
+import { CameraScanner } from "./camera-scanner";
+
+const noopSubscribe = () => () => {};
+const hasCamera = () => !!navigator.mediaDevices?.getUserMedia;
 
 /**
  * Search box for picking a SKU by name, code or barcode. Works with a USB/Bluetooth scanner:
@@ -67,15 +71,23 @@ export function SkuPicker({
     setMessage(`Nothing found for “${q}”.`);
   }
 
-  // A scan caught elsewhere on the page: look up that exact code (or barcode) only.
+  // A scan caught elsewhere on the page (or by the camera): look up that exact code or barcode only.
   async function onScan(code: string) {
     const found = await searchSkus(code);
-    const match = found.find(
-      (s) => s.code.toLowerCase() === code.toLowerCase() || s.barcode?.toLowerCase() === code.toLowerCase(),
-    );
-    if (match) return pick(match, { keepFocus: true });
-    setMessage(`Scanned “${code}” — no item has that code or barcode.`);
+    const lower = code.toLowerCase();
+    const match = found.find((s) => s.code.toLowerCase() === lower || s.barcode?.toLowerCase() === lower);
+    if (match) {
+      pick(match, { keepFocus: true });
+      return { ok: true, text: `Added: ${skuLabel(match)}` };
+    }
+    const text = `Scanned “${code}” — no item has that code or barcode.`;
+    setMessage(text);
+    return { ok: false, text };
   }
+
+  const cameraAvailable = useSyncExternalStore(noopSubscribe, hasCamera, () => false);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [cameraResult, setCameraResult] = useState<{ ok: boolean; text: string } | null>(null);
   useBarcodeScanner(onScan, captureScans);
 
   // A scanner can only type into the active window, so show whether this one is ready.
@@ -99,7 +111,7 @@ export function SkuPicker({
         <input
           ref={inputRef}
           data-scan-target
-          className="input pl-10"
+          className="input pr-24 pl-10"
           value={query}
           placeholder={placeholder}
           autoFocus={autoFocus}
@@ -129,6 +141,21 @@ export function SkuPicker({
           }}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
         />
+        {cameraAvailable && (
+          <button
+            type="button"
+            className="text-muted hover:text-accent absolute top-1/2 right-1 flex -translate-y-1/2 items-center gap-1 rounded-md px-2 py-1.5 text-xs"
+            onClick={() => {
+              setCameraResult(null);
+              setCameraOpen(true);
+            }}
+            aria-label="Scan with camera"
+            title="Scan with this device's camera"
+          >
+            <CameraIcon />
+            <span className="hidden sm:inline">Camera</span>
+          </button>
+        )}
         {/* Results drop down directly under the input. */}
         {open && query.trim() && (
           <ul
@@ -173,7 +200,23 @@ export function SkuPicker({
           {message}
         </p>
       )}
+      {cameraOpen && (
+        <CameraScanner
+          lastResult={cameraResult}
+          onClose={() => setCameraOpen(false)}
+          onCode={async (code) => setCameraResult(await onScan(code))}
+        />
+      )}
     </div>
+  );
+}
+
+function CameraIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M4 8h3l2-3h6l2 3h3v11H4z" strokeLinejoin="round" />
+      <circle cx="12" cy="13" r="3.5" />
+    </svg>
   );
 }
 
