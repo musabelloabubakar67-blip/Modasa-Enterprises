@@ -177,7 +177,7 @@ export function ReceiptForm({
 
       <section className="space-y-3">
         <h2 className="font-semibold">Items received</h2>
-        <SkuPicker onPick={addSku} placeholder="Search or scan an item to add…" />
+        <SkuPicker onPick={addSku} captureScans />
 
         {form.lines.length === 0 ? (
           <p className="card text-muted p-4 text-sm">No items yet. Search above or scan a barcode.</p>

@@ -221,7 +221,7 @@ export function Till({ shop, currency }: { shop: { id: string; name: string }; c
     <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
       {/* Cart */}
       <section className="space-y-3">
-        {stage === "cart" && <SkuPicker onPick={pick} autoFocus placeholder="Scan or search an item…" />}
+        {stage === "cart" && <SkuPicker onPick={pick} autoFocus captureScans />}
 
         {unavailable && (
           <div className="card space-y-2 border-amber-400 p-4 text-sm" role="status">

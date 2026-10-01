@@ -56,7 +56,7 @@ the till** and sign in with the cashier's account.
 
 | Keys | Does |
 | --- | --- |
-| Ctrl + Shift + S | Till settings (asks for the manager PIN when locked) |
+| Ctrl + Shift + S | Till settings (asks for the manager PIN when locked). Also the **Till settings** button at the top of the till. |
 | Ctrl + Shift + Q | Exit the till (asks for the manager PIN when locked) |
 
 ### Building the installer (developers)
@@ -100,9 +100,17 @@ Limits compared with the app: one printer only, the drawer opens on every receip
 
 ## Barcode scanner (both options)
 
-Plug it in; it types like a keyboard. Scan a product label into the till's search box and the item should be
-added straight away. If nothing happens until you press Enter, scan the "Add CR/Enter suffix" setup barcode in
-the scanner's manual.
+Plug it in; it types like a keyboard, so there's nothing to install. Then just scan:
+
+- The till shows **"Ready to scan"** under the search box. Scan an item and it's added to the sale, **wherever
+  the cursor is**: even if the cashier is typing the customer's name, the scan is recognised (scanners type far
+  faster than people), removed from that box, and the item added.
+- If it says **"Click anywhere on this window, then scan"**, another program is in front; click the till first.
+- An unknown barcode shows "no item has that code or barcode" instead of adding anything.
+- Scanning also works on Deliveries, Stock adjustments and Transfers.
+
+If scanning types the code but nothing is added, the scanner isn't sending Enter after the code: scan the
+"Add CR/Enter suffix" setup barcode in its manual.
 
 ## Test before opening (both options)
 

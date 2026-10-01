@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { desktopConfig, isDesktop, printRaw } from "@/lib/desktop";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { desktopConfig, isDesktop, openTillSettings, printRaw } from "@/lib/desktop";
 import { EscPos } from "@/lib/escpos";
 import { receiptToEscPos } from "@/lib/receipt-escpos";
 import { getReceiptForPrint, logDrawerOpen } from "@/app/app/sales/actions";
@@ -111,6 +111,29 @@ export function OpenDrawerButton({ locationId }: { locationId: string }) {
         Open drawer
       </button>
       {message && <span className="text-danger text-xs">{message}</span>}
+    </div>
+  );
+}
+
+const noopSubscribe = () => () => {};
+
+/** Shown only in the desktop till app: opens this PC's till settings (printer, drawer, server). */
+export function TillSettingsButton() {
+  // false while rendering on the server, then whether the page is inside the desktop app.
+  const desktop = useSyncExternalStore(noopSubscribe, isDesktop, () => false);
+  const [error, setError] = useState<string | null>(null);
+  if (!desktop) return null;
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        className="btn btn-secondary"
+        title="Printer, cash drawer and server for this PC (Ctrl+Shift+S)"
+        onClick={() => openTillSettings().catch((e) => setError(String(e)))}
+      >
+        Till settings
+      </button>
+      {error && <span className="text-danger text-xs">{error}</span>}
     </div>
   );
 }

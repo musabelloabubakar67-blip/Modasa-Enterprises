@@ -160,7 +160,7 @@ export function AdjustmentForm({
 
       <section className="space-y-3">
         <h2 className="font-semibold">Items</h2>
-        <SkuPicker onPick={addSku} />
+        <SkuPicker onPick={addSku} captureScans />
         {lines.length === 0 ? (
           <p className="card text-muted p-4 text-sm">No items yet. Search above or scan a barcode.</p>
         ) : (

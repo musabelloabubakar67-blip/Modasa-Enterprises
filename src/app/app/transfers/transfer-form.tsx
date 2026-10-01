@@ -145,7 +145,7 @@ export function TransferForm({
           )}
         </div>
         {info && <p className="text-muted text-sm">{info}</p>}
-        <SkuPicker onPick={(sku) => add(sku)} />
+        <SkuPicker onPick={(sku) => add(sku)} captureScans />
         {lines.length === 0 ? (
           <p className="card text-muted p-4 text-sm">No items yet.</p>
         ) : (

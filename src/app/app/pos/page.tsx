@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getActiveLocations, isManager } from "../stock/data";
 import { OpenTill } from "./open-till";
 import { Till } from "./till";
-import { OpenDrawerButton } from "@/components/receipt-printer";
+import { OpenDrawerButton, TillSettingsButton } from "@/components/receipt-printer";
 
 export default async function PosPage({ searchParams }: PageProps<"/app/pos">) {
   const staff = await requireStaff(["owner", "manager", "cashier"]);
@@ -86,6 +86,7 @@ export default async function PosPage({ searchParams }: PageProps<"/app/pos">) {
         </p>
         <div className="flex gap-2">
           <OpenDrawerButton locationId={shop.id} />
+          <TillSettingsButton />
           <Link href={`/app/sales?shop=${shop.id}`} className="btn btn-secondary">
             Today&apos;s sales
           </Link>
