@@ -1,0 +1,76 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f4ee;--surface:#fff;--ink:#1c1915;--muted:#6b665f;--line:#e2ded4;--accent:#9a6a2f;--sale:#a8261c;--tint:#ece7dd}
+*{box-sizing:border-box;margin:0}body{background:var(--bg);color:var(--ink);font:400 15px/1.6 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}img{display:block;width:100%;height:100%;object-fit:cover}
+.serif{font-family:"Playfair Display",Georgia,serif;font-weight:400}
+.caps{font-size:12px;letter-spacing:.14em;text-transform:uppercase}
+.wrap{max-width:1360px;margin:0 auto;padding:0 40px}
+.bar{background:var(--ink);color:#f3efe6;text-align:center;padding:9px}
+header{background:var(--bg);border-bottom:1px solid var(--line)}
+.head{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;height:76px}
+.logo{font-family:"Playfair Display",serif;font-size:28px;letter-spacing:.3em;text-indent:.3em}
+.search{border:1px solid var(--line);background:var(--surface);padding:10px 14px;width:300px;color:var(--muted);font-size:14px}
+.icons{display:flex;gap:26px;justify-content:flex-end;font-size:14px}
+nav{display:flex;justify-content:center;gap:44px;padding:14px 0 16px}nav a.sale{color:var(--sale)}
+.hero{position:relative;height:620px}.hero:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,16,12,.05),rgba(20,16,12,.45))}
+.hero .copy{position:absolute;z-index:1;left:0;right:0;bottom:72px;text-align:center;color:#fbf6ea}
+.hero h1{font-size:76px;line-height:1.02;font-style:italic;font-weight:400}
+.hero p{margin:14px 0 26px;font-size:16px;letter-spacing:.02em}
+.btn{display:inline-block;padding:15px 30px;background:var(--ink);color:#fbf6ea}.btn.light{background:#f3ead6;color:var(--ink)}
+section{padding:84px 0}.sec-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:30px}
+h2{font-size:34px}.link{border-bottom:1px solid var(--ink);padding-bottom:2px;font-size:14px}
+.cats{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}.cat .img{aspect-ratio:4/5;background:var(--tint)}
+.cat h3{margin-top:14px;font-size:20px}.cat .link{display:inline-block;margin-top:6px}
+.statement{border-top:1px solid var(--line);border-bottom:1px solid var(--line);text-align:center;padding:76px 40px}
+.statement p{font-size:38px;line-height:1.25;max-width:1050px;margin:0 auto}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}.card .img{aspect-ratio:1/1;background:var(--surface);position:relative}
+.tag{position:absolute;left:12px;top:12px;background:var(--surface);padding:5px 9px;font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+.tag.sale{background:var(--sale);color:#fff}
+.card h3{font:400 15px/1.4 Inter;margin-top:14px}.card .meta{color:var(--muted);font-size:13px}.price{margin-top:4px;font-size:15px}
+.price s{color:var(--muted);margin-right:8px}.price b{color:var(--sale);font-weight:500}
+.avail{margin-top:6px;font-size:12px;color:var(--muted)}.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#3d7a4e;margin-right:6px}
+.split{display:grid;grid-template-columns:1fr 1fr;background:var(--tint)}.split .img{min-height:520px}
+.split .txt{padding:80px;align-self:center}.split h2{font-size:44px;line-height:1.1;margin:14px 0 18px}.split p{color:var(--muted);max-width:420px;margin-bottom:28px}
+.shops{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}.shop .img{aspect-ratio:4/3}.shop h3{font-size:22px;margin-top:16px}.shop p{color:var(--muted);font-size:14px}
+footer{background:var(--ink);color:#cfc8ba;padding:64px 0 40px}.fgrid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px}
+footer h4{color:#f3efe6;margin-bottom:14px;font-weight:400}footer li{list-style:none;margin:8px 0;font-size:14px}ul{padding:0}
+</style></head><body>
+<div class="bar caps">Pay online · Collect in store today or delivery across Lagos</div>
+<header><div class="wrap">
+ <div class="head"><div class="search">Search rugs, wallpaper, furniture…</div><div class="logo">MODASA</div><div class="icons"><span>Our shops</span><span>WhatsApp</span><span>Cart (2)</span></div></div>
+ <nav class="caps"><a>New in</a><a>Rugs</a><a>Wallpaper</a><a>Flooring</a><a>Furniture</a><a>Décor</a><a>Kitchen &amp; Dining</a><a>Home essentials</a><a class="sale">Sale</a></nav>
+</div></header>
+<div class="hero"><img src="https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=1800&q=75" alt="">
+ <div class="copy"><h1 class="serif">The art of a<br>well-dressed room</h1><p>Hand-finished rugs, wallpaper and furniture, in stock at our Lagos shops.</p><a class="btn light caps">Shop new arrivals</a></div></div>
+<section><div class="wrap"><div class="sec-head"><h2 class="serif">Shop by category</h2><a class="link">View all</a></div>
+ <div class="cats">
+  <div class="cat"><div class="img"><img src="https://images.unsplash.com/photo-1600166898405-da9535204843?w=700&q=70"></div><h3 class="serif">Rugs</h3><a class="link">Shop all rugs</a></div>
+  <div class="cat"><div class="img"><img src="https://images.unsplash.com/photo-1615874959474-d609969a20ed?w=700&q=70"></div><h3 class="serif">Wallpaper</h3><a class="link">Shop all wallpaper</a></div>
+  <div class="cat"><div class="img"><img src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=700&q=70"></div><h3 class="serif">Furniture</h3><a class="link">Shop all furniture</a></div>
+  <div class="cat"><div class="img"><img src="https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=700&q=70"></div><h3 class="serif">Kitchen &amp; Dining</h3><a class="link">Shop all tableware</a></div>
+ </div></div></section>
+<div class="statement"><p class="serif">Thoughtfully chosen rugs, wall coverings and furnishings for every corner of your home.</p></div>
+<section><div class="wrap"><div class="sec-head"><h2 class="serif">Bestsellers</h2><a class="link">Shop bestsellers</a></div>
+ <div class="grid">
+  <div class="card"><div class="img"><img src="https://images.unsplash.com/photo-1578500494198-246f612d3b3d?w=600&q=70"><span class="tag sale">Sale</span></div><h3>Centre Rug – Turkey</h3><div class="meta">4 sizes · from 3 × 5</div><div class="price"><s>₦130,000</s><b>₦120,000</b></div><div class="avail"><span class="dot"></span>In stock at Lekki, Ikeja</div></div>
+  <div class="card"><div class="img"><img src="https://images.unsplash.com/photo-1567016432779-094069958ea5?w=600&q=70"></div><h3>2-in-1 Centre Table</h3><div class="meta">Black · Gold</div><div class="price">₦65,000 – ₦68,000</div><div class="avail"><span class="dot"></span>In stock at Lekki, Surulere</div></div>
+  <div class="card"><div class="img"><img src="https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=600&q=70"><span class="tag">New</span></div><h3>Ceramic Dishes</h3><div class="meta">3 finishes</div><div class="price">₦85,000 – ₦90,625</div><div class="avail"><span class="dot"></span>In stock at all shops</div></div>
+  <div class="card"><div class="img"><img src="https://images.unsplash.com/photo-1631679706909-1844bbd07221?w=600&q=70"></div><h3>Wallpaper ALLWP-001</h3><div class="meta">4 designs · per roll</div><div class="price">from ₦4,500</div><div class="avail">Available to order · 2–3 days</div></div>
+ </div></div></section>
+<div class="split"><div class="img"><img src="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1200&q=70"></div>
+ <div class="txt"><div class="caps" style="color:var(--accent)">Wallpaper calculator</div><h2 class="serif">How many rolls<br>do you need?</h2><p>Enter your wall sizes and we will work out the rolls, all from one batch, so the shade matches.</p><a class="btn caps">Try the calculator</a></div></div>
+<section><div class="wrap"><div class="sec-head"><h2 class="serif">Our shops</h2><a class="link">Directions &amp; opening hours</a></div>
+ <div class="shops">
+  <div class="shop"><div class="img"><img src="https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&q=70"></div><h3 class="serif">Lekki</h3><p>12 Admiralty Way, Lekki Phase 1 · Mon–Sat 9am–7pm</p></div>
+  <div class="shop"><div class="img"><img src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&q=70"></div><h3 class="serif">Ikeja</h3><p>45 Allen Avenue, Ikeja · Mon–Sat 9am–7pm</p></div>
+  <div class="shop"><div class="img"><img src="https://images.unsplash.com/photo-1540574163026-643ea20ade25?w=800&q=70"></div><h3 class="serif">Surulere</h3><p>8 Adeniran Ogunsanya Street · Mon–Sat 9am–7pm</p></div>
+ </div></div></section>
+<footer><div class="wrap"><div class="fgrid">
+ <div><div class="logo" style="color:#f3efe6;font-size:22px">MODASA</div><p style="margin-top:14px;max-width:320px;font-size:14px">Rugs, wallpaper, furniture and home décor. Three shops in Lagos.</p></div>
+ <div><h4 class="caps">Shop</h4><ul><li>Rugs</li><li>Wallpaper</li><li>Furniture</li><li>Sale</li></ul></div>
+ <div><h4 class="caps">Help</h4><ul><li>Delivery &amp; collection</li><li>Returns</li><li>Track your order</li></ul></div>
+ <div><h4 class="caps">Contact</h4><ul><li>WhatsApp us</li><li>Our shops</li><li>Mon–Sat 9am–7pm</li></ul></div>
+</div></div></footer>
+</body></html>

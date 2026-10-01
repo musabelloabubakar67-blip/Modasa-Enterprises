@@ -21,7 +21,7 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
   const { data: product, error } = await supabase
     .from("products")
     .select(
-      `id, name, category_id, unit_id, description, is_active, track_batches,
+      `id, name, slug, category_id, unit_id, description, is_active, track_batches, show_online, is_featured,
        categories(name), units(name, abbreviation),
        skus(id, code, variant_label, price_kobo, promo_price_kobo, barcode, roll_width_cm, roll_length_cm,
             coverage_m2, is_active, sort_order, sku_costs(cost_kobo)),
@@ -97,6 +97,14 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
       {(created || saved) && (
         <p role="status" className="bg-success/10 text-success mb-4 rounded-md px-3 py-2 text-sm">
           {created ? "Product created. You can add photos below." : "Changes saved."}
+        </p>
+      )}
+      {product.show_online && product.is_active && (
+        <p className="text-muted mb-4 text-sm">
+          On the website:{" "}
+          <Link href={`/p/${product.slug}`} target="_blank" className="text-accent hover:underline">
+            view as a customer
+          </Link>
         </p>
       )}
       <ProductImages productId={product.id} productName={product.name} images={product.product_images} />

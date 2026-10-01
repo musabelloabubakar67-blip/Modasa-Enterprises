@@ -293,3 +293,36 @@ insert into public.delivery_areas (name, fee_kobo, sort_order) values
 update public.products set show_online = true;
 update public.products set is_featured = true
 where name in ('Centre Rug – Turkey', 'Wallpaper ALLWP-001', '2-in-1 Centre Table', 'Ceramic Dishes');
+
+-- What customers see on the website. Photos are stock placeholders until the business adds its own.
+update public.business_settings set
+  storefront_name = 'Modasa',
+  tagline = 'beautiful space… beautiful life',
+  hero_title = 'The art of a well-dressed room',
+  hero_text = 'Rugs, wallpaper and furniture, in stock at our Lagos shops.',
+  hero_image = 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace'
+where id = 1;
+
+update public.locations set public_name = v.public_name
+from (values ('SH1', 'Lekki'), ('SH2', 'Ikeja'), ('SH3', 'Surulere')) as v(code, public_name)
+where locations.code = v.code;
+
+insert into public.product_images (product_id, storage_path, sort_order)
+select p.id, 'https://images.unsplash.com/photo-' || v.photo, v.sort
+from (values
+  ('Centre Rug – Turkey', '1600166898405-da9535204843', 1),
+  ('Centre Rug – Turkey', '1560448204-e02f11c3d0e2', 2),
+  ('Centre Rug – Shaggy', '1575414003591-ece8d0416c7a', 1),
+  ('Wallpaper ALLWP-001', '1564540583246-934409427776', 1),
+  ('Wallpaper ALLWP-001', '1631679706909-1844bbd07221', 2),
+  ('Vinyl Floor Tiles', '1581858726788-75bc0f6a952d', 1),
+  ('1 Stand Coffee Table', '1533090481720-856c6e3c1fdc', 1),
+  ('2-in-1 Centre Table', '1583847268964-b28dc8f51f92', 1),
+  ('Metal Ornament GJ0070', '1532372320572-cda25653a26d', 1),
+  ('LED Fireplace', '1617806118233-18e1de247200', 1),
+  ('Ceramic Dishes', '1610701596007-11502861dcfa', 1),
+  ('Knife Set', '1593618998160-e34014e67546', 1),
+  ('Laundry Basket', '1620626011761-996317b8d101', 1),
+  ('Foot Mat', '1616046229478-9901c5536a45', 1)
+) as v(name, photo, sort)
+join public.products p on p.name = v.name;

@@ -14,6 +14,8 @@ export type ProductFormData = {
   description: string | null;
   is_active: boolean;
   track_batches: boolean;
+  show_online: boolean;
+  is_featured: boolean;
   skus: {
     id: string;
     code: string;
@@ -164,6 +166,22 @@ export function ProductForm({
                     For items whose shade can differ between production runs (wallpaper, tiles). Staff record the batch
                     number when receiving, and the till warns before mixing batches in one sale.
                   </span>
+                </span>
+              </label>
+              <label className="flex items-start gap-2 text-sm">
+                <input type="checkbox" name="show_online" className="mt-1" defaultChecked={product?.show_online} />
+                <span>
+                  Show on the website
+                  <span className="text-muted block text-xs">
+                    Customers can see and order it online. Add at least one photo first — it sells the item.
+                  </span>
+                </span>
+              </label>
+              <label className="flex items-start gap-2 text-sm">
+                <input type="checkbox" name="is_featured" className="mt-1" defaultChecked={product?.is_featured} />
+                <span>
+                  Feature on the home page
+                  <span className="text-muted block text-xs">Shown under “Our favourites” and first in lists.</span>
                 </span>
               </label>
               {product && (

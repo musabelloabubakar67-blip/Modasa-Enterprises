@@ -537,5 +537,14 @@ check("warehouse staff see no sales in reports", (await wh("rpc/report_sales_dai
 r = await anon("rpc/report_sales_daily", range);
 check("signed-out visitors can't run reports", !r.ok);
 
+console.log("\n— Website —");
+check("signed-out visitors can't read the website product list", !(await anon("storefront_products?select=id")).ok);
+check("signed-out visitors can't read online orders", !(await anon("online_orders?select=id")).ok);
+check("signed-out visitors can't read delivery areas", !(await anon("delivery_areas?select=id")).ok);
+r = await cashier("delivery_areas", { name: "Test area", fee_kobo: 100 });
+check("cashier can't add delivery areas", !r.ok, r.msg);
+r = await anon("rpc/create_online_order", { payload: {} });
+check("signed-out visitors can't create orders directly", !r.ok);
+
 console.log(failures ? `\n${failures} check(s) FAILED` : "\nAll checks passed");
 process.exit(failures ? 1 : 0);

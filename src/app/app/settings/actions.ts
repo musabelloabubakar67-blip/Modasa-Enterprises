@@ -6,6 +6,7 @@ import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { fieldErrorsFrom, formValues, type ActionState } from "@/lib/forms";
+import { parseMoney } from "@/lib/money";
 import { LOCATION_KINDS, STAFF_ROLES, roleNeedsLocation } from "@/lib/roles";
 
 const optionalText = (max: number) => z.string().max(max).optional();
@@ -70,6 +71,7 @@ const locationSchema = z.object({
   kind: z.enum(LOCATION_KINDS, { error: "Choose shop or warehouse." }),
   address: optionalText(300),
   phone: optionalText(40),
+  public_name: optionalText(60),
   is_active: z.enum(["on"]).optional(),
 });
 
@@ -79,7 +81,7 @@ export async function saveLocation(_prev: ActionState, formData: FormData): Prom
   if (!parsed.success) return fieldErrorsFrom(parsed.error);
   const { id, is_active, ...v } = parsed.data;
 
-  const row = { ...v, address: v.address ?? null, phone: v.phone ?? null };
+  const row = { ...v, address: v.address ?? null, phone: v.phone ?? null, public_name: v.public_name ?? null };
   const supabase = await createClient();
   const { error } = id
     ? await supabase
@@ -94,7 +96,7 @@ export async function saveLocation(_prev: ActionState, formData: FormData): Prom
     return { error: error.message };
   }
 
-  revalidatePath("/app", "layout");
+  revalidatePath("/", "layout");
   return { success: id ? "Location updated." : "Location added." };
 }
 
@@ -180,4 +182,94 @@ export async function saveStaff(_prev: ActionState, formData: FormData): Promise
 
   revalidatePath("/app", "layout");
   return { success: "Staff member updated." };
+}
+
+// ---------- Website ----------
+
+const websiteSchema = z.object({
+  storefront_enabled: z.enum(["on"]).optional(),
+  storefront_name: optionalText(40),
+  tagline: optionalText(120),
+  hero_title: optionalText(80),
+  hero_text: optionalText(200),
+  whatsapp_number: z
+    .string()
+    .regex(/^[+\d\s-]{7,20}$/, "Enter a phone number, e.g. 0803 000 0000.")
+    .optional(),
+  opening_hours: optionalText(120),
+  order_lead_time: z.string({ error: "Say how long, e.g. 2–3 days." }).max(40),
+  order_hold_minutes: z.coerce
+    .number({ error: "Enter a number of minutes." })
+    .int("Whole minutes only.")
+    .min(5, "Between 5 and 120 minutes.")
+    .max(120, "Between 5 and 120 minutes."),
+});
+
+export async function updateWebsite(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  await requireStaff(["owner"]);
+  const parsed = websiteSchema.safeParse(formValues(formData));
+  if (!parsed.success) return fieldErrorsFrom(parsed.error);
+  const v = parsed.data;
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("business_settings")
+    .update({
+      storefront_enabled: v.storefront_enabled === "on",
+      storefront_name: v.storefront_name ?? null,
+      tagline: v.tagline ?? null,
+      hero_title: v.hero_title ?? null,
+      hero_text: v.hero_text ?? null,
+      whatsapp_number: v.whatsapp_number ?? null,
+      opening_hours: v.opening_hours ?? null,
+      order_lead_time: v.order_lead_time,
+      order_hold_minutes: v.order_hold_minutes,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", 1);
+  if (error) return { error: error.message };
+
+  revalidatePath("/", "layout");
+  return { success: "Website settings saved." };
+}
+
+/** Sets (or clears) the photo behind the home page headline, after it has been uploaded. */
+export async function setHeroImage(path: string | null): Promise<ActionState> {
+  await requireStaff(["owner"]);
+  if (path !== null && !/^site\/[\w-]+\.webp$/.test(path)) return { error: "Invalid image." };
+  const supabase = await createClient();
+  const { error } = await supabase.from("business_settings").update({ hero_image: path }).eq("id", 1);
+  if (error) return { error: error.message };
+  revalidatePath("/", "layout");
+  return { success: path ? "Photo updated." : "Photo removed." };
+}
+
+const deliveryAreaSchema = z.object({
+  id: z.uuid().optional(),
+  name: z.string({ error: "Enter the area name." }).max(80),
+  fee: z.string({ error: "Enter the delivery fee (0 for free)." }),
+  sort_order: z.coerce.number().int().min(0).max(9999).default(0),
+  is_active: z.enum(["on"]).optional(),
+});
+
+export async function saveDeliveryArea(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  await requireStaff(["owner"]);
+  const parsed = deliveryAreaSchema.safeParse(formValues(formData));
+  if (!parsed.success) return fieldErrorsFrom(parsed.error);
+  const { id, name, sort_order, is_active } = parsed.data;
+  const fee = parseMoney(parsed.data.fee);
+  if (fee === null || Number.isNaN(fee))
+    return { error: "Check the fee.", fieldErrors: { fee: "Enter an amount, e.g. 3,000." } };
+
+  const supabase = await createClient();
+  const { error } = id
+    ? await supabase
+        .from("delivery_areas")
+        .update({ name, fee_kobo: fee, sort_order, is_active: is_active === "on" })
+        .eq("id", id)
+    : await supabase.from("delivery_areas").insert({ name, fee_kobo: fee, sort_order });
+  if (error) return { error: error.code === "23505" ? "There is already an area with that name." : error.message };
+
+  revalidatePath("/", "layout");
+  return { success: id ? "Area saved." : `Added ${name}.` };
 }

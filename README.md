@@ -127,6 +127,43 @@ Build: `cd desktop && npm install && npm run build` (needs Rust + Visual Studio 
   still decides what each person sees. Dates are business days in Lagos time.
 - The local seed includes 30 days of demo sales so the reports have something to show.
 
+## Online shop
+
+The public website at `/` (staff sign in at `/login`). Its look is specified in [DESIGN.md](DESIGN.md).
+
+- **Pages:** home, catalogue with search, categories and sorting (`/shop`), product (`/p/<name>`), cart,
+  checkout, order status (`/order/<token>`), shops, roll & tile calculator, delivery & returns.
+- **What goes online** is chosen per product ("Show on the website", "Feature on the home page"). The site's
+  name, tagline, headline, home photo, WhatsApp number, opening hours and delivery areas are under
+  Settings → Website; the name customers see for each shop is under Settings → Locations.
+- **Stock is described by place, never by number:** "In stock at Lekki, Ikeja", or "Available to order ·
+  2–3 days" when only a warehouse has it.
+- **No customer accounts.** The cart lives in the browser; an order is followed through its private link.
+- **Checkout** creates the order and holds its stock for a few minutes (`stock_holds`), then sends the
+  customer to pay. Each item is held at the chosen shop if it has it, otherwise at a warehouse.
+- **Payment** is by Paystack. A payment is only believed after checking with Paystack (on return to the
+  site, and through the signed webhook at `/api/paystack/webhook`). A paid order becomes a normal sale at the
+  shop (channel "online"), so it shows in reports and in Sales → Collection & delivery. If an item must come
+  from a warehouse, a transfer request is raised automatically and the order waits under **Online orders**
+  until staff press "Stock has arrived".
+- **Online orders** (staff menu) lists paid orders needing attention, with a WhatsApp button, cancel, and
+  recording a refund (the money itself is returned from the Paystack dashboard).
+- The website's server code reads through `src/lib/shop/data.ts` with explicit field lists: cost prices,
+  quantities and staff details never reach the browser. Nothing in the database is open to signed-out visitors.
+
+### Payment keys
+
+Add to `.env.local` (test keys while building, live keys once the shop is public):
+
+```
+PAYSTACK_SECRET_KEY=sk_test_...
+NEXT_PUBLIC_SITE_URL=https://your-site.example   # needed once hosted, for payment return links
+```
+
+In the Paystack dashboard set the webhook URL to `https://<your site>/api/paystack/webhook`.
+Without a key, a development machine shows a stand-in payment page (`/pay/test/...`) so the whole journey can
+be tried; in production, checkout is switched off until the key is set.
+
 ## Roles
 
 | Role | Access |
@@ -148,5 +185,7 @@ Build: `cd desktop && npm install && npm run build` (needs Rust + Visual Studio 
 
 7. **Dashboard & reports** – owner home dashboard; sales, products, profit, staff and stock-loss reports ✅
 
-Next: the online storefront (waiting for design examples). Later, if approved: discounts with limits,
-deposits, delivery management, online payments, app auto-updates (needs hosting).
+8. **Online shop** – storefront, cart, checkout with Paystack, order tracking, staff online-orders inbox ✅
+
+Next: hosting (with live payment keys, app auto-updates and a daily summary for the owner). Later, if
+approved: discounts with limits, deposits, delivery management.

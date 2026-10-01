@@ -11,6 +11,7 @@ export type LocationRow = {
   kind: LocationKind;
   address: string | null;
   phone: string | null;
+  public_name: string | null;
   is_active: boolean;
 };
 
@@ -59,6 +60,21 @@ export function LocationForm({ location }: { location?: LocationRow }) {
               </div>
               <Field label="Phone" name={`${prefix}-phone`} error={errors.phone}>
                 <input id={`${prefix}-phone`} name="phone" className="input" defaultValue={location?.phone ?? ""} />
+              </Field>
+            </div>
+            <div className="sm:max-w-xs">
+              <Field
+                label="Name on the website"
+                name={`${prefix}-public-name`}
+                error={errors.public_name}
+                hint="What customers call this shop, e.g. Lekki. Shops only."
+              >
+                <input
+                  id={`${prefix}-public-name`}
+                  name="public_name"
+                  className="input"
+                  defaultValue={location?.public_name ?? ""}
+                />
               </Field>
             </div>
             {location && (

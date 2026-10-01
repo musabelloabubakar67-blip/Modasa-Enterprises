@@ -158,15 +158,20 @@ export type Database = {
           address: string | null;
           currency: string;
           email: string | null;
+          hero_image: string | null;
+          hero_text: string | null;
+          hero_title: string | null;
           id: number;
           legal_name: string | null;
           logo_url: string | null;
           name: string;
           opening_hours: string | null;
           order_hold_minutes: number;
+          order_lead_time: string;
           phone: string | null;
           receipt_footer: string | null;
           storefront_enabled: boolean;
+          storefront_name: string | null;
           tagline: string | null;
           updated_at: string;
           vat_enabled: boolean;
@@ -178,15 +183,20 @@ export type Database = {
           address?: string | null;
           currency?: string;
           email?: string | null;
+          hero_image?: string | null;
+          hero_text?: string | null;
+          hero_title?: string | null;
           id?: number;
           legal_name?: string | null;
           logo_url?: string | null;
           name?: string;
           opening_hours?: string | null;
           order_hold_minutes?: number;
+          order_lead_time?: string;
           phone?: string | null;
           receipt_footer?: string | null;
           storefront_enabled?: boolean;
+          storefront_name?: string | null;
           tagline?: string | null;
           updated_at?: string;
           vat_enabled?: boolean;
@@ -198,15 +208,20 @@ export type Database = {
           address?: string | null;
           currency?: string;
           email?: string | null;
+          hero_image?: string | null;
+          hero_text?: string | null;
+          hero_title?: string | null;
           id?: number;
           legal_name?: string | null;
           logo_url?: string | null;
           name?: string;
           opening_hours?: string | null;
           order_hold_minutes?: number;
+          order_lead_time?: string;
           phone?: string | null;
           receipt_footer?: string | null;
           storefront_enabled?: boolean;
+          storefront_name?: string | null;
           tagline?: string | null;
           updated_at?: string;
           vat_enabled?: boolean;
@@ -357,6 +372,7 @@ export type Database = {
           kind: Database["public"]["Enums"]["location_kind"];
           name: string;
           phone: string | null;
+          public_name: string | null;
         };
         Insert: {
           address?: string | null;
@@ -367,6 +383,7 @@ export type Database = {
           kind: Database["public"]["Enums"]["location_kind"];
           name: string;
           phone?: string | null;
+          public_name?: string | null;
         };
         Update: {
           address?: string | null;
@@ -377,6 +394,7 @@ export type Database = {
           kind?: Database["public"]["Enums"]["location_kind"];
           name?: string;
           phone?: string | null;
+          public_name?: string | null;
         };
         Relationships: [];
       };
@@ -455,6 +473,7 @@ export type Database = {
           paid_amount_kobo: number | null;
           paid_at: string | null;
           payment_reference: string;
+          payment_url: string | null;
           refund_note: string | null;
           refunded_at: string | null;
           sale_id: string | null;
@@ -483,6 +502,7 @@ export type Database = {
           paid_amount_kobo?: number | null;
           paid_at?: string | null;
           payment_reference: string;
+          payment_url?: string | null;
           refund_note?: string | null;
           refunded_at?: string | null;
           sale_id?: string | null;
@@ -511,6 +531,7 @@ export type Database = {
           paid_amount_kobo?: number | null;
           paid_at?: string | null;
           payment_reference?: string;
+          payment_url?: string | null;
           refund_note?: string | null;
           refunded_at?: string | null;
           sale_id?: string | null;
@@ -573,6 +594,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "stock_overview";
             referencedColumns: ["product_id"];
+          },
+          {
+            foreignKeyName: "product_images_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "storefront_products";
+            referencedColumns: ["id"];
           },
         ];
       };
@@ -1438,6 +1466,13 @@ export type Database = {
             referencedRelation: "stock_overview";
             referencedColumns: ["product_id"];
           },
+          {
+            foreignKeyName: "skus_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "storefront_products";
+            referencedColumns: ["id"];
+          },
         ];
       };
       stock_holds: {
@@ -2010,6 +2045,30 @@ export type Database = {
           },
         ];
       };
+      storefront_products: {
+        Row: {
+          category_id: string | null;
+          created_at: string | null;
+          id: string | null;
+          is_featured: boolean | null;
+          max_price_kobo: number | null;
+          min_price_kobo: number | null;
+          name: string | null;
+          on_sale: boolean | null;
+          search_text: string | null;
+          sku_count: number | null;
+          slug: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Functions: {
       apply_stock_movement: {
@@ -2049,6 +2108,7 @@ export type Database = {
           paid_amount_kobo: number | null;
           paid_at: string | null;
           payment_reference: string;
+          payment_url: string | null;
           refund_note: string | null;
           refunded_at: string | null;
           sale_id: string | null;

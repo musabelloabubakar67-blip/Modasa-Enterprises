@@ -83,6 +83,8 @@ const productSchema = z.object({
   description: z.string().max(2000).optional(),
   is_active: z.enum(["on"]).optional(),
   track_batches: z.enum(["on"]).optional(),
+  show_online: z.enum(["on"]).optional(),
+  is_featured: z.enum(["on"]).optional(),
   skus: z
     .string()
     .transform((s, ctx) => {
@@ -124,7 +126,8 @@ export async function saveProduct(_prev: ProductActionState, formData: FormData)
     return { error: "Please fix the highlighted SKU fields.", skuErrors };
   }
 
-  const { id, name, category_id, unit_id, description, is_active, track_batches } = parsed.data;
+  const { id, name, category_id, unit_id, description, is_active, track_batches, show_online, is_featured } =
+    parsed.data;
   const supabase = await createClient();
   const { data: productId, error } = await supabase.rpc("save_product", {
     payload: {
@@ -140,6 +143,12 @@ export async function saveProduct(_prev: ProductActionState, formData: FormData)
   });
 
   if (error) return { error: friendlyDbError(error) };
+
+  const { error: webError } = await supabase
+    .from("products")
+    .update({ show_online: show_online === "on", is_featured: is_featured === "on" })
+    .eq("id", productId);
+  if (webError) return { error: webError.message };
 
   revalidatePath("/app/products", "layout");
   // Reload the page so the form shows exactly what was stored (including ids of new SKUs).
