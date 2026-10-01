@@ -6,7 +6,8 @@
   --foreground: #1c1b19;
   --muted: #6b6760;
   --border: #e4e1da;
-  --accent: #7a4b2a;
+  /* Brand blue, shared with the online shop. */
+  --accent: #1d4fa3;
   --accent-foreground: #ffffff;
   --danger: #b42318;
   --success: #067647;

@@ -1,19 +1,10 @@
-/**
- * The shop's logo: the twin-peak mark with the brand name set in the heading typeface.
- * To change the mark, replace the two paths below.
- */
+import { LogoMark } from "@/components/logo-mark";
+
+/** The shop's logo: the mark with the brand name set in the heading typeface. */
 export function Logo({ brand, tagline, onDark = false }: { brand: string; tagline?: string | null; onDark?: boolean }) {
   return (
     <span className="inline-flex items-center gap-3">
-      <svg
-        viewBox="0 0 60 40"
-        aria-hidden="true"
-        className={`h-7 w-auto shrink-0 lg:h-9 ${onDark ? "text-on-dark" : "text-accent"}`}
-        fill="currentColor"
-      >
-        <path d="M0 40 17 10l8.9 15.8L19.2 40Z" opacity=".72" />
-        <path d="M22 40 40 2l20 38Z" />
-      </svg>
+      <LogoMark className={`h-7 w-auto lg:h-9 ${onDark ? "text-on-dark" : "text-accent"}`} />
       <span className="flex flex-col leading-none">
         <span
           className={`font-serif text-xl tracking-[0.28em] uppercase lg:text-[28px] ${onDark ? "text-on-dark" : "text-navy"}`}

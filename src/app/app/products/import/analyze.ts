@@ -51,6 +51,15 @@ function positive(value: string | undefined, label: string, messages: string[]) 
   return n;
 }
 
+/** "yes"/"no" as people type them in a spreadsheet. undefined = blank, null = not understood. */
+function yesNo(value: string | undefined) {
+  const v = lower(value ?? "");
+  if (!v) return undefined;
+  if (["yes", "y", "true", "1", "online"].includes(v)) return true;
+  if (["no", "n", "false", "0", "offline"].includes(v)) return false;
+  return null;
+}
+
 export async function analyzeImport(supabase: Client, input: ImportRow[]): Promise<ImportAnalysis> {
   const [units, categories, products, skus] = await Promise.all([
     fetchAll((a, b) => supabase.from("units").select("id, name, abbreviation").range(a, b)),
@@ -110,6 +119,8 @@ export async function analyzeImport(supabase: Client, input: ImportRow[]): Promi
     const rollLength = positive(row.roll_length_cm, "roll_length_cm", messages);
     const coverage = positive(row.coverage_m2, "coverage_m2", messages);
 
+    if (yesNo(row.show_online) === null) messages.push(`show_online must be yes or no, not “${row.show_online}”.`);
+
     const existing = code ? skuByCode.get(lower(code)) : undefined;
     const barcode = row.barcode?.trim();
     if (barcode && /\s/.test(barcode)) messages.push("barcode can't contain spaces.");
@@ -168,12 +179,16 @@ export async function analyzeImport(supabase: Client, input: ImportRow[]): Promi
     }
 
     const description = group.rows.map((r) => r.row.description?.trim()).find(Boolean);
+    const online = group.rows.map((r) => yesNo(r.row.show_online)).filter((v) => typeof v === "boolean");
+    if (new Set(online).size > 1)
+      first.result.messages.push("show_online is yes on some rows of this product and no on others.");
     payload.push({
       ...(group.existingId ? { id: group.existingId } : {}),
       name: first.row.product_name?.trim(),
       category_name: first.row.category?.trim(),
       unit_id: unitByKey.get(unit),
       ...(description ? { description } : {}),
+      ...(online.length > 0 ? { show_online: online[0] } : {}),
       skus: group.rows.map(({ row }) => {
         const p = parsedRows.get(row)!;
         // Blank optional cells leave existing values alone, so re-importing a partial sheet is safe.

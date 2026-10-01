@@ -133,7 +133,8 @@ The public website at `/` (staff sign in at `/login`). Its look is specified in 
 
 - **Pages:** home, catalogue with search, categories and sorting (`/shop`), product (`/p/<name>`), cart,
   checkout, order status (`/order/<token>`), shops, roll & tile calculator, delivery & returns.
-- **What goes online** is chosen per product ("Show on the website", "Feature on the home page"). The site's
+- **What goes online** is chosen per product ("Show on the website", "Feature on the home page"), for many
+  at once by ticking them on the Products list, or with the `show_online` column when importing a spreadsheet. The site's
   name, tagline, headline, home photo, WhatsApp number, opening hours and delivery areas are under
   Settings → Website; the name customers see for each shop is under Settings → Locations.
 - **Stock is described by place, never by number:** "In stock at Lekki, Ikeja", or "Available to order ·

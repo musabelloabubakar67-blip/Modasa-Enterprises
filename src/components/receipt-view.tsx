@@ -4,6 +4,7 @@ import { formatMoney } from "@/lib/money";
 import { formatQty } from "@/lib/quantity";
 import type { Receipt } from "@/app/app/sales/receipt-data";
 import { PAYMENT_LABELS } from "@/lib/payments";
+import { LogoMark } from "@/components/logo-mark";
 
 const METHOD = PAYMENT_LABELS;
 
@@ -23,6 +24,7 @@ export function ReceiptView({
   return (
     <div className="receipt mx-auto w-[72mm] bg-white font-mono text-[11px] leading-snug text-black">
       <div className="text-center">
+        <LogoMark className="mx-auto mb-1 h-7 w-auto" />
         <p className="text-sm font-bold">{business.name}</p>
         <p>{sale.locations.name}</p>
         {(sale.locations.address || business.address) && <p>{sale.locations.address || business.address}</p>}

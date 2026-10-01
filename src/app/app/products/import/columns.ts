@@ -14,6 +14,12 @@ export const IMPORT_COLUMNS = [
   { key: "roll_width_cm", label: "roll_width_cm", required: false, help: "Wallpaper: roll width in cm." },
   { key: "roll_length_cm", label: "roll_length_cm", required: false, help: "Wallpaper: roll length in cm." },
   { key: "coverage_m2", label: "coverage_m2", required: false, help: "Tiles: m² covered by one box." },
+  {
+    key: "show_online",
+    label: "show_online",
+    required: false,
+    help: "yes or no: show on the website. Blank leaves it as it is.",
+  },
 ] as const;
 
 export type ImportColumn = (typeof IMPORT_COLUMNS)[number]["key"];
@@ -53,6 +59,11 @@ const ALIASES: Record<string, ImportColumn> = {
   rollwidthcm: "roll_width_cm",
   rolllengthcm: "roll_length_cm",
   coveragem2: "coverage_m2",
+  showonline: "show_online",
+  online: "show_online",
+  website: "show_online",
+  onwebsite: "show_online",
+  showonwebsite: "show_online",
 };
 
 export function matchColumn(heading: unknown): ImportColumn | null {

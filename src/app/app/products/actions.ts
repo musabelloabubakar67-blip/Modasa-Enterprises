@@ -155,6 +155,22 @@ export async function saveProduct(_prev: ProductActionState, formData: FormData)
   redirect(`/app/products/${productId}?${id ? "saved" : "created"}=1`);
 }
 
+/** Shows or hides the ticked products on the website (the two buttons above the products list). */
+export async function setProductsOnline(formData: FormData) {
+  await requireStaff(EDITORS);
+  const ids = z.array(z.uuid()).max(500).safeParse(formData.getAll("ids"));
+  const show = formData.get("show");
+  if (!ids.success || ids.data.length === 0 || (show !== "yes" && show !== "no")) return;
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("products")
+    .update({ show_online: show === "yes" })
+    .in("id", ids.data);
+  if (error) throw error;
+  revalidatePath("/", "layout");
+}
+
 function friendlyDbError(error: { code?: string; message: string; details?: string }) {
   if (error.code === "23505") {
     if (error.message.includes("skus_scan_code_key"))
