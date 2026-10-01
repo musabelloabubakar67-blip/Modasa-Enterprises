@@ -11,6 +11,9 @@ export type BusinessSettings = {
   logo_url: string | null;
   currency: string;
   receipt_footer: string | null;
+  vat_enabled: boolean;
+  vat_rate: number;
+  vat_number: string | null;
 };
 
 /**
@@ -20,7 +23,9 @@ export type BusinessSettings = {
 export const getBusinessSettings = cache(async (): Promise<BusinessSettings> => {
   const { data, error } = await createAdminClient()
     .from("business_settings")
-    .select("name, legal_name, phone, email, address, logo_url, currency, receipt_footer")
+    .select(
+      "name, legal_name, phone, email, address, logo_url, currency, receipt_footer, vat_enabled, vat_rate, vat_number",
+    )
     .eq("id", 1)
     .single();
   if (error) throw error;

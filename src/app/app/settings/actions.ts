@@ -20,6 +20,13 @@ const businessSchema = z.object({
   address: optionalText(300),
   currency: z.string().regex(/^[A-Z]{3}$/, "Use a 3-letter currency code, e.g. NGN."),
   receipt_footer: optionalText(500),
+  vat_enabled: z.enum(["on"]).optional(),
+  vat_rate: z.coerce
+    .number({ error: "Enter a rate, e.g. 7.5." })
+    .min(0, "Enter a rate between 0 and 99.")
+    .max(99, "Enter a rate between 0 and 99.")
+    .default(7.5),
+  vat_number: optionalText(40),
 });
 
 export async function updateBusiness(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -39,6 +46,9 @@ export async function updateBusiness(_prev: ActionState, formData: FormData): Pr
       address: v.address ?? null,
       currency: v.currency,
       receipt_footer: v.receipt_footer ?? null,
+      vat_enabled: v.vat_enabled === "on",
+      vat_rate: v.vat_rate,
+      vat_number: v.vat_number ?? null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", 1);

@@ -83,6 +83,22 @@ Useful commands:
   transfer is flagged for a manager to resolve. No stock is lost from the books: it simply never arrived.
 - Restock suggestions bring a shop up to twice its reorder level, counting stock in transit and open requests.
 
+## Point of sale
+
+- Shops sell **only their own stock**. If an item is elsewhere, the till shows where and offers a transfer
+  request; the sale happens once it arrives.
+- A sale needs an **open till session** (`shifts`), opened with a cash float. Closing the till compares what
+  was counted with what the system expected per payment method (float + sales − refunds).
+- Prices always come from the catalogue (sale price if set). Payments must add up to the total exactly;
+  one sale can be split across cash, POS card and transfer. No discounts or deposits yet.
+- Handover is *takes now*, *collects later* or *delivery* (address, area, date, fee, status). Stock leaves the
+  shop at the time of sale either way, so set-aside goods can't be sold twice.
+- Receipts print at 80 mm from the browser and are shared on WhatsApp as a private link (`/r/<token>`).
+- VAT is a switch in Business settings; prices include VAT and receipts show the VAT portion when on.
+- Returns go back into stock or are written off as damaged; refunds come out of the open till session.
+- Wallpaper (rolls by strips, pattern repeat) and tile (boxes + waste %) calculators: `src/lib/calculators.ts`.
+- Till PC setup (Chrome kiosk mode with silent printing): [docs/till-setup.md](docs/till-setup.md).
+
 ## Roles
 
 | Role | Access |
@@ -98,7 +114,7 @@ Useful commands:
 2. **Products** – categories, units, products & SKUs, sale/cost prices, photos, CSV/Excel import ✅
 3. **Stock** – movement ledger, batches, deliveries, counts & write-offs with approval, history, labels ✅
 4. **Transfers** – request → dispatch → receive between any locations, batches, in transit, shortages ✅
-5. Point of sale – sales, discounts, deposits, stock lookup at other locations, receipts, wallpaper calculator
-6. Demo data
+5. **Point of sale** – till, calculators, split payments, collection/delivery, receipts, returns, cash-up ✅
 
-Later: owner dashboard, delivery management, online storefront, payments.
+Next: installable desktop till app (Tauri) with direct printer/drawer control. Later: owner dashboard,
+discounts with limits, deposits, delivery management, online storefront, online payments.

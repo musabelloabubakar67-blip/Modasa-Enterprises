@@ -17,7 +17,9 @@ export function SkuPicker({
   autoFocus?: boolean;
 }) {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SkuOption[]>([]);
+  // Results always remember which text they were for, so a slow reply to an earlier search can
+  // never be picked for a newer one (scanners send codes back-to-back faster than searches return).
+  const [results, setResults] = useState<{ for: string; items: SkuOption[] }>({ for: "", items: [] });
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const [message, setMessage] = useState<string | null>(null);
@@ -26,12 +28,12 @@ export function SkuPicker({
 
   useEffect(() => {
     const q = query.trim();
+    const id = ++latest.current; // bumped on every change, including clearing, to drop stale replies
     if (!q) return;
-    const id = ++latest.current;
     const timer = setTimeout(async () => {
       const found = await searchSkus(q);
-      if (id !== latest.current) return; // a newer search has started
-      setResults(found);
+      if (id !== latest.current) return; // the text has changed since
+      setResults({ for: q, items: found });
       setActive(0);
       setOpen(true);
     }, 200);
@@ -41,7 +43,7 @@ export function SkuPicker({
   function pick(sku: SkuOption) {
     onPick(sku);
     setQuery("");
-    setResults([]);
+    setResults({ for: "", items: [] });
     setOpen(false);
     setMessage(null);
     inputRef.current?.focus();
@@ -50,8 +52,10 @@ export function SkuPicker({
   async function onEnter() {
     const q = query.trim();
     if (!q) return;
-    // Scanners are faster than the debounce, so search right away.
-    const found = open && results.length ? results : await searchSkus(q);
+    // Scanners press Enter before the debounced search runs, so search now unless we already have
+    // results for exactly this text.
+    const found = results.for === q ? results.items : await searchSkus(q);
+    if (inputRef.current && inputRef.current.value.trim() !== q) return; // another scan has started
     const exact = found.find((s) => s.code.toLowerCase() === q.toLowerCase());
     if (exact) return pick(exact);
     if (found[active]) return pick(found[active]);
@@ -74,7 +78,7 @@ export function SkuPicker({
           setQuery(e.target.value);
           setMessage(null);
           if (!e.target.value.trim()) {
-            setResults([]);
+            setResults({ for: "", items: [] });
             setOpen(false);
           }
         }}
@@ -84,7 +88,7 @@ export function SkuPicker({
             onEnter();
           } else if (e.key === "ArrowDown") {
             e.preventDefault();
-            setActive((i) => Math.min(i + 1, results.length - 1));
+            setActive((i) => Math.min(i + 1, results.items.length - 1));
           } else if (e.key === "ArrowUp") {
             e.preventDefault();
             setActive((i) => Math.max(i - 1, 0));
@@ -99,8 +103,8 @@ export function SkuPicker({
           role="listbox"
           className="card absolute z-20 mt-1 max-h-80 w-full overflow-y-auto py-1 shadow-lg"
         >
-          {results.length === 0 && <li className="text-muted px-3 py-2 text-sm">No matching items.</li>}
-          {results.map((sku, i) => (
+          {results.items.length === 0 && <li className="text-muted px-3 py-2 text-sm">No matching items.</li>}
+          {results.items.map((sku, i) => (
             <li
               key={sku.id}
               role="option"

@@ -165,6 +165,9 @@ export type Database = {
           phone: string | null;
           receipt_footer: string | null;
           updated_at: string;
+          vat_enabled: boolean;
+          vat_number: string | null;
+          vat_rate: number;
         };
         Insert: {
           address?: string | null;
@@ -177,6 +180,9 @@ export type Database = {
           phone?: string | null;
           receipt_footer?: string | null;
           updated_at?: string;
+          vat_enabled?: boolean;
+          vat_number?: string | null;
+          vat_rate?: number;
         };
         Update: {
           address?: string | null;
@@ -189,6 +195,9 @@ export type Database = {
           phone?: string | null;
           receipt_footer?: string | null;
           updated_at?: string;
+          vat_enabled?: boolean;
+          vat_number?: string | null;
+          vat_rate?: number;
         };
         Relationships: [];
       };
@@ -213,6 +222,33 @@ export type Database = {
           is_active?: boolean;
           name?: string;
           sort_order?: number;
+        };
+        Relationships: [];
+      };
+      customers: {
+        Row: {
+          address: string | null;
+          created_at: string;
+          email: string | null;
+          id: string;
+          name: string;
+          phone: string | null;
+        };
+        Insert: {
+          address?: string | null;
+          created_at?: string;
+          email?: string | null;
+          id?: string;
+          name: string;
+          phone?: string | null;
+        };
+        Update: {
+          address?: string | null;
+          created_at?: string;
+          email?: string | null;
+          id?: string;
+          name?: string;
+          phone?: string | null;
         };
         Relationships: [];
       };
@@ -590,6 +626,431 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "stock_overview";
             referencedColumns: ["sku_id"];
+          },
+        ];
+      };
+      return_lines: {
+        Row: {
+          condition: Database["public"]["Enums"]["return_condition"];
+          id: string;
+          quantity: number;
+          refund_kobo: number;
+          return_id: string;
+          sale_line_id: string;
+        };
+        Insert: {
+          condition: Database["public"]["Enums"]["return_condition"];
+          id?: string;
+          quantity: number;
+          refund_kobo: number;
+          return_id: string;
+          sale_line_id: string;
+        };
+        Update: {
+          condition?: Database["public"]["Enums"]["return_condition"];
+          id?: string;
+          quantity?: number;
+          refund_kobo?: number;
+          return_id?: string;
+          sale_line_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "return_lines_return_id_fkey";
+            columns: ["return_id"];
+            isOneToOne: false;
+            referencedRelation: "returns";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "return_lines_sale_line_id_fkey";
+            columns: ["sale_line_id"];
+            isOneToOne: false;
+            referencedRelation: "sale_lines";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      returns: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          location_id: string;
+          number: string;
+          reason: string;
+          refund_kobo: number;
+          refund_method: Database["public"]["Enums"]["payment_method"];
+          sale_id: string;
+          shift_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          location_id: string;
+          number?: string;
+          reason: string;
+          refund_kobo: number;
+          refund_method: Database["public"]["Enums"]["payment_method"];
+          sale_id: string;
+          shift_id: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          location_id?: string;
+          number?: string;
+          reason?: string;
+          refund_kobo?: number;
+          refund_method?: Database["public"]["Enums"]["payment_method"];
+          sale_id?: string;
+          shift_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "returns_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "returns_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "staff_directory";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "returns_location_id_fkey";
+            columns: ["location_id"];
+            isOneToOne: false;
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "returns_sale_id_fkey";
+            columns: ["sale_id"];
+            isOneToOne: false;
+            referencedRelation: "sales";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "returns_shift_id_fkey";
+            columns: ["shift_id"];
+            isOneToOne: false;
+            referencedRelation: "shifts";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      sale_lines: {
+        Row: {
+          batch: string;
+          id: string;
+          line_total_kobo: number;
+          list_price_kobo: number;
+          quantity: number;
+          returned_quantity: number;
+          sale_id: string;
+          sku_id: string;
+          sort_order: number;
+          unit_price_kobo: number;
+        };
+        Insert: {
+          batch?: string;
+          id?: string;
+          line_total_kobo: number;
+          list_price_kobo: number;
+          quantity: number;
+          returned_quantity?: number;
+          sale_id: string;
+          sku_id: string;
+          sort_order?: number;
+          unit_price_kobo: number;
+        };
+        Update: {
+          batch?: string;
+          id?: string;
+          line_total_kobo?: number;
+          list_price_kobo?: number;
+          quantity?: number;
+          returned_quantity?: number;
+          sale_id?: string;
+          sku_id?: string;
+          sort_order?: number;
+          unit_price_kobo?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "sale_lines_sale_id_fkey";
+            columns: ["sale_id"];
+            isOneToOne: false;
+            referencedRelation: "sales";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "sale_lines_sku_id_fkey";
+            columns: ["sku_id"];
+            isOneToOne: false;
+            referencedRelation: "skus";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "sale_lines_sku_id_fkey";
+            columns: ["sku_id"];
+            isOneToOne: false;
+            referencedRelation: "stock_overview";
+            referencedColumns: ["sku_id"];
+          },
+        ];
+      };
+      sale_payments: {
+        Row: {
+          amount_kobo: number;
+          id: string;
+          method: Database["public"]["Enums"]["payment_method"];
+          reference: string | null;
+          sale_id: string;
+          tendered_kobo: number | null;
+        };
+        Insert: {
+          amount_kobo: number;
+          id?: string;
+          method: Database["public"]["Enums"]["payment_method"];
+          reference?: string | null;
+          sale_id: string;
+          tendered_kobo?: number | null;
+        };
+        Update: {
+          amount_kobo?: number;
+          id?: string;
+          method?: Database["public"]["Enums"]["payment_method"];
+          reference?: string | null;
+          sale_id?: string;
+          tendered_kobo?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "sale_payments_sale_id_fkey";
+            columns: ["sale_id"];
+            isOneToOne: false;
+            referencedRelation: "sales";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      sales: {
+        Row: {
+          cashier_id: string | null;
+          created_at: string;
+          customer_id: string | null;
+          delivery_address: string | null;
+          delivery_area: string | null;
+          delivery_date: string | null;
+          delivery_fee_kobo: number;
+          fulfilment: Database["public"]["Enums"]["fulfilment"];
+          fulfilment_status: Database["public"]["Enums"]["fulfilment_status"];
+          fulfilment_updated_at: string | null;
+          fulfilment_updated_by: string | null;
+          id: string;
+          location_id: string;
+          note: string | null;
+          number: string;
+          receipt_token: string;
+          shift_id: string;
+          subtotal_kobo: number;
+          total_kobo: number;
+          vat_kobo: number;
+          vat_rate: number | null;
+        };
+        Insert: {
+          cashier_id?: string | null;
+          created_at?: string;
+          customer_id?: string | null;
+          delivery_address?: string | null;
+          delivery_area?: string | null;
+          delivery_date?: string | null;
+          delivery_fee_kobo?: number;
+          fulfilment?: Database["public"]["Enums"]["fulfilment"];
+          fulfilment_status?: Database["public"]["Enums"]["fulfilment_status"];
+          fulfilment_updated_at?: string | null;
+          fulfilment_updated_by?: string | null;
+          id?: string;
+          location_id: string;
+          note?: string | null;
+          number?: string;
+          receipt_token?: string;
+          shift_id: string;
+          subtotal_kobo: number;
+          total_kobo: number;
+          vat_kobo?: number;
+          vat_rate?: number | null;
+        };
+        Update: {
+          cashier_id?: string | null;
+          created_at?: string;
+          customer_id?: string | null;
+          delivery_address?: string | null;
+          delivery_area?: string | null;
+          delivery_date?: string | null;
+          delivery_fee_kobo?: number;
+          fulfilment?: Database["public"]["Enums"]["fulfilment"];
+          fulfilment_status?: Database["public"]["Enums"]["fulfilment_status"];
+          fulfilment_updated_at?: string | null;
+          fulfilment_updated_by?: string | null;
+          id?: string;
+          location_id?: string;
+          note?: string | null;
+          number?: string;
+          receipt_token?: string;
+          shift_id?: string;
+          subtotal_kobo?: number;
+          total_kobo?: number;
+          vat_kobo?: number;
+          vat_rate?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "sales_cashier_id_fkey";
+            columns: ["cashier_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "sales_cashier_id_fkey";
+            columns: ["cashier_id"];
+            isOneToOne: false;
+            referencedRelation: "staff_directory";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "sales_customer_id_fkey";
+            columns: ["customer_id"];
+            isOneToOne: false;
+            referencedRelation: "customers";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "sales_fulfilment_updated_by_fkey";
+            columns: ["fulfilment_updated_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "sales_fulfilment_updated_by_fkey";
+            columns: ["fulfilment_updated_by"];
+            isOneToOne: false;
+            referencedRelation: "staff_directory";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "sales_location_id_fkey";
+            columns: ["location_id"];
+            isOneToOne: false;
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "sales_shift_id_fkey";
+            columns: ["shift_id"];
+            isOneToOne: false;
+            referencedRelation: "shifts";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      shifts: {
+        Row: {
+          close_note: string | null;
+          closed_at: string | null;
+          closed_by: string | null;
+          counted_card_kobo: number | null;
+          counted_cash_kobo: number | null;
+          counted_transfer_kobo: number | null;
+          expected_card_kobo: number | null;
+          expected_cash_kobo: number | null;
+          expected_transfer_kobo: number | null;
+          id: string;
+          location_id: string;
+          opened_at: string;
+          opened_by: string | null;
+          opening_float_kobo: number;
+          status: Database["public"]["Enums"]["shift_status"];
+        };
+        Insert: {
+          close_note?: string | null;
+          closed_at?: string | null;
+          closed_by?: string | null;
+          counted_card_kobo?: number | null;
+          counted_cash_kobo?: number | null;
+          counted_transfer_kobo?: number | null;
+          expected_card_kobo?: number | null;
+          expected_cash_kobo?: number | null;
+          expected_transfer_kobo?: number | null;
+          id?: string;
+          location_id: string;
+          opened_at?: string;
+          opened_by?: string | null;
+          opening_float_kobo: number;
+          status?: Database["public"]["Enums"]["shift_status"];
+        };
+        Update: {
+          close_note?: string | null;
+          closed_at?: string | null;
+          closed_by?: string | null;
+          counted_card_kobo?: number | null;
+          counted_cash_kobo?: number | null;
+          counted_transfer_kobo?: number | null;
+          expected_card_kobo?: number | null;
+          expected_cash_kobo?: number | null;
+          expected_transfer_kobo?: number | null;
+          id?: string;
+          location_id?: string;
+          opened_at?: string;
+          opened_by?: string | null;
+          opening_float_kobo?: number;
+          status?: Database["public"]["Enums"]["shift_status"];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "shifts_closed_by_fkey";
+            columns: ["closed_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "shifts_closed_by_fkey";
+            columns: ["closed_by"];
+            isOneToOne: false;
+            referencedRelation: "staff_directory";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "shifts_location_id_fkey";
+            columns: ["location_id"];
+            isOneToOne: false;
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "shifts_opened_by_fkey";
+            columns: ["opened_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "shifts_opened_by_fkey";
+            columns: ["opened_by"];
+            isOneToOne: false;
+            referencedRelation: "staff_directory";
+            referencedColumns: ["id"];
           },
         ];
       };
@@ -1224,8 +1685,21 @@ export type Database = {
       approve_adjustment: { Args: { p_adjustment_id: string; p_review_note?: string }; Returns: undefined };
       assert_at_either_end: { Args: { p_from: string; p_to: string }; Returns: undefined };
       assert_can_act_at: { Args: { p_location_id: string }; Returns: undefined };
+      assert_can_sell_at: { Args: { p_location_id: string }; Returns: undefined };
       cancel_receipt: { Args: { p_receipt_id: string }; Returns: undefined };
       cancel_transfer: { Args: { p_reason: string; p_transfer_id: string }; Returns: undefined };
+      close_shift: {
+        Args: {
+          p_counted_card: number;
+          p_counted_cash: number;
+          p_counted_transfer: number;
+          p_note: string;
+          p_shift_id: string;
+        };
+        Returns: undefined;
+      };
+      create_return: { Args: { payload: Json }; Returns: string };
+      create_sale: { Args: { payload: Json }; Returns: string };
       create_transfer: { Args: { payload: Json }; Returns: string };
       current_staff_location: { Args: Record<PropertyKey, never>; Returns: string };
       current_staff_role: { Args: Record<PropertyKey, never>; Returns: Database["public"]["Enums"]["staff_role"] };
@@ -1233,6 +1707,8 @@ export type Database = {
       import_products: { Args: { products: Json }; Returns: number };
       is_manager_or_owner: { Args: Record<PropertyKey, never>; Returns: boolean };
       is_owner: { Args: Record<PropertyKey, never>; Returns: boolean };
+      normalize_phone: { Args: { p_phone: string }; Returns: string };
+      open_shift: { Args: { p_float_kobo: number; p_location_id: string }; Returns: string };
       post_receipt: { Args: { p_receipt_id: string }; Returns: undefined };
       receive_transfer: { Args: { p_items: Json; p_transfer_id: string }; Returns: undefined };
       refresh_product_search_text: { Args: { p_product_id: string }; Returns: undefined };
@@ -1241,15 +1717,33 @@ export type Database = {
       save_product: { Args: { payload: Json }; Returns: string };
       save_receipt: { Args: { payload: Json }; Returns: string };
       set_reorder_level: { Args: { p_level: number; p_location_id: string; p_sku_id: string }; Returns: undefined };
+      shift_expected: {
+        Args: { p_shift_id: string };
+        Returns: {
+          expected_kobo: number;
+          method: Database["public"]["Enums"]["payment_method"];
+          refunds_kobo: number;
+          sales_kobo: number;
+        }[];
+      };
       submit_adjustment: { Args: { payload: Json }; Returns: string };
+      update_fulfilment: {
+        Args: { p_sale_id: string; p_status: Database["public"]["Enums"]["fulfilment_status"] };
+        Returns: undefined;
+      };
     };
     Enums: {
       adjustment_kind: "opening" | "count" | "damage";
       adjustment_status: "pending" | "approved" | "rejected";
+      fulfilment: "taken" | "collect_later" | "delivery";
+      fulfilment_status: "pending" | "out_for_delivery" | "completed";
       location_kind: "shop" | "warehouse";
       movement_type:
         "opening" | "receipt" | "transfer_out" | "transfer_in" | "sale" | "return" | "damage" | "count_correction";
+      payment_method: "cash" | "card" | "transfer";
       receipt_status: "draft" | "posted" | "cancelled";
+      return_condition: "restock" | "damaged";
+      shift_status: "open" | "closed";
       staff_role: "owner" | "manager" | "cashier" | "warehouse";
       transfer_status: "requested" | "dispatched" | "received" | "cancelled";
       unit_coverage: "none" | "roll" | "area";
@@ -1365,6 +1859,8 @@ export const Constants = {
     Enums: {
       adjustment_kind: ["opening", "count", "damage"],
       adjustment_status: ["pending", "approved", "rejected"],
+      fulfilment: ["taken", "collect_later", "delivery"],
+      fulfilment_status: ["pending", "out_for_delivery", "completed"],
       location_kind: ["shop", "warehouse"],
       movement_type: [
         "opening",
@@ -1376,7 +1872,10 @@ export const Constants = {
         "damage",
         "count_correction",
       ],
+      payment_method: ["cash", "card", "transfer"],
       receipt_status: ["draft", "posted", "cancelled"],
+      return_condition: ["restock", "damaged"],
+      shift_status: ["open", "closed"],
       staff_role: ["owner", "manager", "cashier", "warehouse"],
       transfer_status: ["requested", "dispatched", "received", "cancelled"],
       unit_coverage: ["none", "roll", "area"],

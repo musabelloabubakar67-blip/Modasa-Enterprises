@@ -7,22 +7,25 @@ import type { SkuOption } from "../stock/actions";
 import type { LocationSummary } from "../stock/data";
 import { availableAt, createTransfer, lowStockSuggestions } from "./actions";
 
-type Line = { sku: SkuOption; quantity: string };
+export type Line = { sku: SkuOption; quantity: string };
 
 /** Floor staff must be at one end of a transfer; the database enforces that and explains if not. */
 export function TransferForm({
   locations,
   initialFrom,
   initialTo,
+  initialLines = [],
 }: {
   locations: LocationSummary[];
   initialFrom: string;
   initialTo: string;
+  /** Pre-filled items, e.g. when the till requests something a customer wants. */
+  initialLines?: Line[];
 }) {
   const [from, setFrom] = useState(initialFrom);
   const [to, setTo] = useState(initialTo);
   const [note, setNote] = useState("");
-  const [lines, setLines] = useState<Line[]>([]);
+  const [lines, setLines] = useState<Line[]>(initialLines);
   const [available, setAvailable] = useState<Record<string, number>>({});
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);

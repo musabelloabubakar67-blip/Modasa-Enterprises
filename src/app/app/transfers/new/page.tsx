@@ -2,7 +2,8 @@ import Link from "next/link";
 import { z } from "zod";
 import { requireStaff } from "@/lib/auth";
 import { getActiveLocations, isManager } from "../../stock/data";
-import { TransferForm } from "../transfer-form";
+import { createClient } from "@/lib/supabase/server";
+import { TransferForm, type Line } from "../transfer-form";
 
 export default async function NewTransferPage({ searchParams }: PageProps<"/app/transfers/new">) {
   const staff = await requireStaff();
@@ -28,6 +29,37 @@ export default async function NewTransferPage({ searchParams }: PageProps<"/app/
     }
   }
 
+  // Pre-fill one item when coming from the till ("Request it for this shop").
+  const initialLines: Line[] = [];
+  const skuId = z.uuid().safeParse(params.sku).data;
+  if (skuId) {
+    const supabase = await createClient();
+    const { data: s } = await supabase
+      .from("skus")
+      .select(
+        "id, code, barcode, variant_label, price_kobo, promo_price_kobo, products(name, track_batches, units(abbreviation, allows_decimal))",
+      )
+      .eq("id", skuId)
+      .maybeSingle();
+    const qty = Number(params.qty);
+    if (s)
+      initialLines.push({
+        sku: {
+          id: s.id,
+          code: s.code,
+          barcode: s.barcode,
+          variant_label: s.variant_label,
+          price_kobo: s.price_kobo,
+          promo_price_kobo: s.promo_price_kobo,
+          product_name: s.products.name,
+          unit: s.products.units.abbreviation,
+          allows_decimal: s.products.units.allows_decimal,
+          track_batches: s.products.track_batches,
+        },
+        quantity: qty > 0 ? String(qty) : "1",
+      });
+  }
+
   return (
     <div className="max-w-3xl space-y-4">
       <Link href="/app/transfers" className="text-muted text-sm hover:underline">
@@ -39,7 +71,12 @@ export default async function NewTransferPage({ searchParams }: PageProps<"/app/
           You can request stock for your location, or send stock from it. The other location confirms when it arrives.
         </p>
       )}
-      <TransferForm locations={locations} initialFrom={from === to ? "" : from} initialTo={to} />
+      <TransferForm
+        locations={locations}
+        initialFrom={from === to ? "" : from}
+        initialTo={to}
+        initialLines={initialLines}
+      />
     </div>
   );
 }

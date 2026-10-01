@@ -17,13 +17,22 @@ export async function getNavBadges(staff: Staff): Promise<Record<string, number>
         )
       : null;
 
-  const [transferCount, adjustmentCount] = await Promise.all([
+  // Sold but not yet collected or delivered.
+  const handovers =
+    staff.role === "warehouse"
+      ? null
+      : supabase.from("sales").select("id", { count: "exact", head: true }).neq("fulfilment_status", "completed");
+  const handoverQuery = handovers && !manager && here ? handovers.eq("location_id", here) : handovers;
+
+  const [transferCount, adjustmentCount, handoverCount] = await Promise.all([
     transferQuery,
     manager ? supabase.from("adjustments").select("id", { count: "exact", head: true }).eq("status", "pending") : null,
+    handoverQuery,
   ]);
 
   return {
     "/app/transfers": transferCount?.count ?? 0,
     "/app/stock": adjustmentCount?.count ?? 0,
+    "/app/sales": handoverCount?.count ?? 0,
   };
 }

@@ -291,5 +291,112 @@ check("shop can send back to a warehouse", r.ok, r.msg);
 r = await cashier("rpc/cancel_transfer", { p_transfer_id: r.data, p_reason: "Changed my mind" });
 check("unsent request can be cancelled", r.ok, r.msg);
 
+console.log("\n— Till —");
+const sale = (payload) => cashier("rpc/create_sale", { payload: { location_id: loc.SH1, ...payload } });
+const cash = (kobo, tendered) => [{ method: "cash", amount_kobo: kobo, tendered_kobo: tendered ?? kobo }];
+const basket = [{ sku_id: sku["LX21-KC12S"], quantity: 2 }]; // 2 × ₦21,000
+
+r = await sale({ lines: basket, payments: cash(4200000) });
+check("no sales before the till is opened", !r.ok, r.msg);
+r = await wh("rpc/open_shift", { p_location_id: loc["WH-A"], p_float_kobo: 0 });
+check("warehouse staff can't open a till", !r.ok, r.msg);
+r = await cashier("rpc/open_shift", { p_location_id: loc.SH2, p_float_kobo: 0 });
+check("cashier can't open another shop's till", !r.ok, r.msg);
+r = await cashier("rpc/open_shift", { p_location_id: loc.SH1, p_float_kobo: 1000000 });
+check("cashier opens the till with a ₦10,000 float", r.ok, r.msg);
+const shift = r.data;
+r = await cashier("rpc/open_shift", { p_location_id: loc.SH1, p_float_kobo: 0 });
+check("only one open till per shop", !r.ok, r.msg);
+
+r = await sale({ lines: basket, payments: cash(100) });
+check("payments must equal the total", !r.ok, r.msg);
+const baskets = await level("LX21-KC12S", "SH1");
+r = await sale({ lines: [{ ...basket[0], unit_price_kobo: 1 }], payments: cash(4200000, 5000000) });
+check("cash sale; prices come from the catalogue", r.ok, r.msg);
+const firstSale = r.data;
+check("stock left the shop", (await level("LX21-KC12S", "SH1")) === baskets - 2);
+r = await sale({
+  lines: [{ sku_id: sku["GJ0070"], quantity: 1 }],
+  payments: [
+    { method: "card", amount_kobo: 2000000 },
+    { method: "transfer", amount_kobo: 1825000, reference: "From A. Yusuf" },
+  ],
+});
+check("split payment (card + transfer)", r.ok, r.msg);
+const salesBefore = (await owner("sales?select=id")).data.length;
+r = await sale({ lines: [{ sku_id: sku["GJ0070"], quantity: 50 }], payments: cash(191250000) });
+check("can't sell more than the shop has", !r.ok, r.msg);
+check("a failed sale leaves nothing behind", (await owner("sales?select=id")).data.length === salesBefore);
+r = await sale({ lines: [{ sku_id: sku["CRUG-004"], quantity: 1 }], payments: cash(15000000) });
+check("can't sell warehouse-only stock at a shop", !r.ok, r.msg);
+r = await sale({
+  lines: [{ sku_id: sku["LX21-KC12S"], quantity: 1 }],
+  payments: cash(2600000),
+  fulfilment: "delivery",
+  customer: { name: "Amina" },
+  delivery: { address: "12 Admiralty Way", fee_kobo: 500000 },
+});
+check("delivery needs the customer's phone", !r.ok, r.msg);
+r = await sale({
+  lines: [{ sku_id: sku["LX21-KC12S"], quantity: 1 }],
+  payments: cash(2600000),
+  fulfilment: "delivery",
+  customer: { name: "Amina Yusuf", phone: "0803 111 2222" },
+  delivery: { address: "12 Admiralty Way, Lekki", area: "Lekki", fee_kobo: 500000 },
+});
+check("delivery sale with fee", r.ok, r.msg);
+const delivery = (await owner(`sales?select=total_kobo,fulfilment_status,customers(phone)&id=eq.${r.data}`)).data[0];
+check("total includes the delivery fee", delivery.total_kobo === 2600000);
+check("phone stored as digits", delivery.customers.phone === "08031112222");
+r = await cashier("rpc/update_fulfilment", { p_sale_id: r.data, p_status: "completed" });
+check("cashier marks delivered", r.ok, r.msg);
+
+await owner("business_settings?id=eq.1", { vat_enabled: true }, "PATCH");
+r = await sale({ lines: [{ sku_id: sku["LX21-KC12S"], quantity: 1 }], payments: cash(2100000) });
+const vat = (await owner(`sales?select=vat_kobo&id=eq.${r.data}`)).data[0]?.vat_kobo;
+check("VAT portion recorded when switched on", vat === Math.round((2100000 * 7.5) / 107.5), `₦${vat / 100}`);
+await owner("business_settings?id=eq.1", { vat_enabled: false }, "PATCH");
+
+const lines = (await cashier(`sale_lines?select=id&sale_id=eq.${firstSale}`)).data;
+const stockBeforeReturn = await level("LX21-KC12S", "SH1");
+r = await cashier("rpc/create_return", {
+  payload: {
+    sale_id: firstSale,
+    refund_method: "cash",
+    reason: "Wrong size",
+    lines: [{ sale_line_id: lines[0].id, quantity: 3, condition: "restock" }],
+  },
+});
+check("can't return more than was bought", !r.ok, r.msg);
+r = await cashier("rpc/create_return", {
+  payload: {
+    sale_id: firstSale,
+    refund_method: "cash",
+    reason: "Handle broken",
+    lines: [{ sale_line_id: lines[0].id, quantity: 1, condition: "damaged" }],
+  },
+});
+check("damaged return refunded in cash", r.ok, r.msg);
+check("damaged return doesn't go back on sale", (await level("LX21-KC12S", "SH1")) === stockBeforeReturn);
+
+const expected = Object.fromEntries(
+  (await cashier("rpc/shift_expected", { p_shift_id: shift })).data.map((e) => [e.method, e.expected_kobo]),
+);
+// float 10,000 + cash sales (42,000 + 26,000 + 21,000) − refund 21,000
+check("expected cash = float + sales − refunds", expected.cash === 1000000 + 4200000 + 2600000 + 2100000 - 2100000);
+check("expected card and transfer", expected.card === 2000000 && expected.transfer === 1825000);
+r = await cashier("rpc/close_shift", {
+  p_shift_id: shift,
+  p_counted_cash: expected.cash - 50000,
+  p_counted_card: 2000000,
+  p_counted_transfer: 1825000,
+  p_note: "₦500 short",
+});
+check("cashier closes the till", r.ok, r.msg);
+r = await sale({ lines: basket, payments: cash(4200000) });
+check("no sales after closing", !r.ok, r.msg);
+check("warehouse staff can't see sales", (await wh("sales?select=id")).data.length === 0);
+check("warehouse staff can't see customers", (await wh("customers?select=id")).data.length === 0);
+
 console.log(failures ? `\n${failures} check(s) FAILED` : "\nAll checks passed");
 process.exit(failures ? 1 : 0);

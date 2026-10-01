@@ -31,6 +31,12 @@ body {
   color: var(--foreground);
 }
 
+/* Buttons only work once the page is interactive (see HydrationMarker). */
+body:not([data-hydrated]) button {
+  pointer-events: none;
+  cursor: progress;
+}
+
 @utility input {
   width: 100%;
   border-radius: var(--radius-md);

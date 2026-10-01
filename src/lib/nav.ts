@@ -14,7 +14,8 @@ const ALL: readonly StaffRole[] = ["owner", "manager", "cashier", "warehouse"];
 
 export const NAV_ITEMS: NavItem[] = [
   { href: "/app", label: "Home", roles: ALL },
-  { href: "/app/pos", label: "Point of sale", roles: ["owner", "manager", "cashier"], soon: true },
+  { href: "/app/pos", label: "Point of sale", roles: ["owner", "manager", "cashier"] },
+  { href: "/app/sales", label: "Sales", roles: ["owner", "manager", "cashier"] },
   { href: "/app/stock", label: "Stock", roles: ALL },
   { href: "/app/transfers", label: "Transfers", roles: ALL },
   { href: "/app/products", label: "Products", roles: ALL },
