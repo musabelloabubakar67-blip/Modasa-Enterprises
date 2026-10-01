@@ -91,3 +91,44 @@ export function setQuantity(skuId: string, quantity: number) {
 export function clearCart() {
   write([]);
 }
+
+// The order a customer has started paying for. If they come back to the cart without paying,
+// that order is released so its held stock doesn't block them from trying again.
+const PENDING = "cart:pending-order";
+
+export function rememberPendingOrder(token: string) {
+  try {
+    window.localStorage.setItem(PENDING, token);
+  } catch {
+    // Storage blocked: the order simply expires on its own.
+  }
+}
+
+/** Returns the remembered order token (if any) and forgets it. */
+export function takePendingOrder() {
+  try {
+    const token = window.localStorage.getItem(PENDING);
+    if (token) window.localStorage.removeItem(PENDING);
+    return token;
+  } catch {
+    return null;
+  }
+}
+
+let releasing: Promise<void> | null = null;
+
+/**
+ * Releases the remembered unpaid order, if there is one. Resolves once that has finished, also for
+ * callers that arrive while a release is already under way.
+ */
+export function settlePendingOrder(release: (token: string) => Promise<void>): Promise<void> {
+  const token = takePendingOrder();
+  if (token) {
+    releasing = release(token)
+      .catch(() => {})
+      .finally(() => {
+        releasing = null;
+      });
+  }
+  return releasing ?? Promise.resolve();
+}

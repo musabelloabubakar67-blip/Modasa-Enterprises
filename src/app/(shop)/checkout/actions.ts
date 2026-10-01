@@ -37,7 +37,7 @@ const orderSchema = z
 
 export type OrderInput = z.input<typeof orderSchema>;
 export type OrderResult =
-  | { ok: true; paymentUrl: string }
+  | { ok: true; paymentUrl: string; token: string }
   | { ok: false; error: string; fieldErrors?: Record<string, string>; refresh?: boolean };
 
 /** Creates the order, holds its stock and returns the address of the payment page. */
@@ -142,5 +142,5 @@ export async function placeOrder(input: OrderInput): Promise<OrderResult> {
 
   const { error: saveError } = await admin.from("online_orders").update({ payment_url: paymentUrl }).eq("id", order.id);
   if (saveError) throw saveError;
-  return { ok: true, paymentUrl };
+  return { ok: true, paymentUrl, token: order.token };
 }

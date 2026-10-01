@@ -10,7 +10,7 @@ import {
   type CartLine,
   type DeliveryArea,
 } from "@/lib/shop/data";
-import { expireUnpaidOrders } from "@/lib/shop/orders";
+import { expireUnpaidOrders, releaseUnpaidOrder } from "@/lib/shop/orders";
 
 const itemsSchema = z.array(z.object({ skuId: z.uuid(), quantity: z.number().positive().max(1000) })).max(60);
 
@@ -34,4 +34,12 @@ export async function loadCheckout(items: unknown): Promise<CheckoutData> {
     shop.shops.map((s) => s.id),
   );
   return { lines, plans, areas };
+}
+
+/**
+ * The customer came back to their cart without paying: release the order they started, so the
+ * stock it was holding is available to them again. Needs the order's private token.
+ */
+export async function releaseOrder(token: unknown): Promise<void> {
+  if (typeof token === "string") await releaseUnpaidOrder(token);
 }

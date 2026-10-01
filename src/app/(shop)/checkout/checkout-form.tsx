@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import { formatMoney } from "@/lib/money";
-import { useCart, useCartReady } from "@/lib/shop/cart";
+import { rememberPendingOrder, settlePendingOrder, useCart, useCartReady } from "@/lib/shop/cart";
 import type { Shop } from "@/lib/shop/data";
 import { bestShopForDelivery, type ShopPlan } from "@/lib/shop/plan";
-import { loadCheckout, type CheckoutData } from "../cart/actions";
+import { loadCheckout, releaseOrder, type CheckoutData } from "../cart/actions";
 import { placeOrder } from "./actions";
 
 type Fulfilment = "collect_later" | "delivery";
@@ -44,9 +44,12 @@ export function CheckoutForm({
   useEffect(() => {
     if (!ready) return;
     let stale = false;
-    loadCheckout(items).then((result) => {
-      if (!stale) setData(result);
-    });
+    // Back here without paying: let go of the order they started, then look at stock afresh.
+    settlePendingOrder(releaseOrder)
+      .then(() => loadCheckout(items))
+      .then((result) => {
+        if (!stale) setData(result);
+      });
     return () => {
       stale = true;
     };
@@ -102,6 +105,7 @@ export function CheckoutForm({
       });
       if (result.ok) {
         // The cart is emptied once the payment is confirmed, on the order page.
+        rememberPendingOrder(result.token);
         window.location.assign(result.paymentUrl);
         return;
       }

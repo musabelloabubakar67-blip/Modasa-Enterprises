@@ -10,6 +10,22 @@ export async function expireUnpaidOrders() {
   if (error) throw error;
 }
 
+/** Gives up an order that hasn't been paid for and frees its stock. Does nothing to paid orders. */
+export async function releaseUnpaidOrder(token: string) {
+  if (!/^[0-9a-f]{32}$/.test(token)) return;
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("online_orders")
+    .update({ status: "expired" })
+    .eq("token", token)
+    .eq("status", "pending_payment")
+    .select("id");
+  if (error) throw error;
+  if (data.length === 0) return;
+  const { error: holdError } = await admin.from("stock_holds").delete().eq("order_id", data[0].id);
+  if (holdError) throw holdError;
+}
+
 /** Records a confirmed payment and turns the order into a sale. Safe to call more than once. */
 export async function confirmPayment(reference: string, amountKobo: number) {
   const { data, error } = await createAdminClient().rpc("mark_order_paid", {

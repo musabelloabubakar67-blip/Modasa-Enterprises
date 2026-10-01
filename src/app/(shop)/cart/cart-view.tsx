@@ -4,10 +4,10 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { formatMoney } from "@/lib/money";
 import { availabilityText, type ShopName } from "@/lib/shop/availability";
-import { setQuantity, useCart, useCartReady } from "@/lib/shop/cart";
+import { setQuantity, settlePendingOrder, useCart, useCartReady } from "@/lib/shop/cart";
 import type { CartLine } from "@/lib/shop/data";
 import { photoUrl } from "@/lib/shop/images";
-import { loadCart } from "./actions";
+import { loadCart, releaseOrder } from "./actions";
 
 export function CartView({ shops, leadTime, currency }: { shops: ShopName[]; leadTime: string; currency: string }) {
   const items = useCart();
@@ -22,9 +22,12 @@ export function CartView({ shops, leadTime, currency }: { shops: ShopName[]; lea
   useEffect(() => {
     if (!ready) return;
     let stale = false;
-    loadCart(items).then((lines) => {
-      if (!stale) setDetails({ key, lines });
-    });
+    // Back here without paying: let go of the order they started, then look at stock afresh.
+    settlePendingOrder(releaseOrder)
+      .then(() => loadCart(items))
+      .then((lines) => {
+        if (!stale) setDetails({ key, lines });
+      });
     return () => {
       stale = true;
     };

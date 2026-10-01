@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { clearCart } from "@/lib/shop/cart";
+import { clearCart, takePendingOrder } from "@/lib/shop/cart";
 
 /** Empties the browser's cart the first time a paid order's page is opened (not on later visits). */
 export function ClearCart({ orderNumber }: { orderNumber: string }) {
@@ -13,6 +13,7 @@ export function ClearCart({ orderNumber }: { orderNumber: string }) {
     } catch {
       return;
     }
+    takePendingOrder();
     clearCart();
   }, [orderNumber]);
   return null;
