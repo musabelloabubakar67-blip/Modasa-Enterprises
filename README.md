@@ -8,8 +8,7 @@ Stack: Next.js 16 (App Router) · Supabase (PostgreSQL, Auth, Storage) · Tailwi
 
 ## Run locally
 
-Requires Docker Desktop (running) and Node 22+ (Node 20 works for now, but `supabase-js` is dropping
-support for it; use Node 22 LTS for deployment).
+Requires Docker Desktop (running) and Node 22 or newer (developed on Node 24; see `.nvmrc`).
 
 ```bash
 npm install
