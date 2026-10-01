@@ -4,8 +4,9 @@ import { formatDate, formatDateTime } from "@/lib/dates";
 import { EscPos, type PaperWidth } from "@/lib/escpos";
 import { formatMoney } from "@/lib/money";
 import { formatQty } from "@/lib/quantity";
+import { PAYMENT_LABELS } from "@/lib/payments";
 
-const METHOD = { cash: "Cash", card: "POS card", transfer: "Transfer" } as const;
+const METHOD = PAYMENT_LABELS;
 
 /** The same receipt as ReceiptView, as printer commands. Keep the two in step. */
 export function receiptToEscPos(

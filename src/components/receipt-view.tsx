@@ -3,8 +3,9 @@ import { formatDate, formatDateTime } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { formatQty } from "@/lib/quantity";
 import type { Receipt } from "@/app/app/sales/receipt-data";
+import { PAYMENT_LABELS } from "@/lib/payments";
 
-const METHOD = { cash: "Cash", card: "POS card", transfer: "Transfer" } as const;
+const METHOD = PAYMENT_LABELS;
 
 /** An 80mm-wide receipt. Used for printing at the till and for the customer's online receipt. */
 export function ReceiptView({

@@ -270,3 +270,26 @@ begin
   from public.skus s, public.locations l where s.code = 'HM-4' and l.code = 'WH-A';
   update public.stock_movements set created_at = now() - interval '12 days' where note like 'Broken%' or note like 'Water%';
 end $$;
+
+-- Online shop demo settings.
+update public.business_settings set
+  tagline = 'Rugs, wallpaper, furniture and home décor',
+  whatsapp_number = '08030000000',
+  opening_hours = 'Mon–Sat 9am–7pm'
+where id = 1;
+
+update public.locations set address = v.address, phone = v.phone
+from (values
+  ('SH1', '12 Admiralty Way, Lekki Phase 1, Lagos', '0803 000 0001'),
+  ('SH2', '45 Allen Avenue, Ikeja, Lagos', '0803 000 0002'),
+  ('SH3', '8 Adeniran Ogunsanya Street, Surulere, Lagos', '0803 000 0003')
+) as v(code, address, phone)
+where locations.code = v.code;
+
+insert into public.delivery_areas (name, fee_kobo, sort_order) values
+  ('Lekki / Ajah', 350000, 1), ('Victoria Island / Ikoyi', 300000, 2), ('Ikeja / Maryland', 300000, 3),
+  ('Surulere / Yaba', 250000, 4), ('Other Lagos mainland', 450000, 5);
+
+update public.products set show_online = true;
+update public.products set is_featured = true
+where name in ('Centre Rug – Turkey', 'Wallpaper ALLWP-001', '2-in-1 Centre Table', 'Ceramic Dishes');

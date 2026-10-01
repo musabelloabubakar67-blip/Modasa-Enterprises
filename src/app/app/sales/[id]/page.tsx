@@ -11,8 +11,9 @@ import { createClient } from "@/lib/supabase/server";
 import { getSaleShare } from "../actions";
 import { FulfilmentButtons } from "../fulfilment-buttons";
 import { ReceiptPrinter } from "@/components/receipt-printer";
+import { PAYMENT_LABELS } from "@/lib/payments";
 
-const METHOD = { cash: "Cash", card: "POS card", transfer: "Bank transfer" } as const;
+const METHOD = PAYMENT_LABELS;
 const STATUS = { pending: "Waiting", out_for_delivery: "Out for delivery", completed: "Done" } as const;
 
 export default async function SalePage({ params, searchParams }: PageProps<"/app/sales/[id]">) {

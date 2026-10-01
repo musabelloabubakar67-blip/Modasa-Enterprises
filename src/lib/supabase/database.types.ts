@@ -162,12 +162,17 @@ export type Database = {
           legal_name: string | null;
           logo_url: string | null;
           name: string;
+          opening_hours: string | null;
+          order_hold_minutes: number;
           phone: string | null;
           receipt_footer: string | null;
+          storefront_enabled: boolean;
+          tagline: string | null;
           updated_at: string;
           vat_enabled: boolean;
           vat_number: string | null;
           vat_rate: number;
+          whatsapp_number: string | null;
         };
         Insert: {
           address?: string | null;
@@ -177,12 +182,17 @@ export type Database = {
           legal_name?: string | null;
           logo_url?: string | null;
           name?: string;
+          opening_hours?: string | null;
+          order_hold_minutes?: number;
           phone?: string | null;
           receipt_footer?: string | null;
+          storefront_enabled?: boolean;
+          tagline?: string | null;
           updated_at?: string;
           vat_enabled?: boolean;
           vat_number?: string | null;
           vat_rate?: number;
+          whatsapp_number?: string | null;
         };
         Update: {
           address?: string | null;
@@ -192,12 +202,17 @@ export type Database = {
           legal_name?: string | null;
           logo_url?: string | null;
           name?: string;
+          opening_hours?: string | null;
+          order_hold_minutes?: number;
           phone?: string | null;
           receipt_footer?: string | null;
+          storefront_enabled?: boolean;
+          tagline?: string | null;
           updated_at?: string;
           vat_enabled?: boolean;
           vat_number?: string | null;
           vat_rate?: number;
+          whatsapp_number?: string | null;
         };
         Relationships: [];
       };
@@ -249,6 +264,30 @@ export type Database = {
           id?: string;
           name?: string;
           phone?: string | null;
+        };
+        Relationships: [];
+      };
+      delivery_areas: {
+        Row: {
+          fee_kobo: number;
+          id: string;
+          is_active: boolean;
+          name: string;
+          sort_order: number;
+        };
+        Insert: {
+          fee_kobo: number;
+          id?: string;
+          is_active?: boolean;
+          name: string;
+          sort_order?: number;
+        };
+        Update: {
+          fee_kobo?: number;
+          id?: string;
+          is_active?: boolean;
+          name?: string;
+          sort_order?: number;
         };
         Relationships: [];
       };
@@ -341,6 +380,163 @@ export type Database = {
         };
         Relationships: [];
       };
+      online_order_lines: {
+        Row: {
+          id: string;
+          line_total_kobo: number;
+          list_price_kobo: number;
+          order_id: string;
+          quantity: number;
+          sku_id: string;
+          sort_order: number;
+          unit_price_kobo: number;
+        };
+        Insert: {
+          id?: string;
+          line_total_kobo: number;
+          list_price_kobo: number;
+          order_id: string;
+          quantity: number;
+          sku_id: string;
+          sort_order?: number;
+          unit_price_kobo: number;
+        };
+        Update: {
+          id?: string;
+          line_total_kobo?: number;
+          list_price_kobo?: number;
+          order_id?: string;
+          quantity?: number;
+          sku_id?: string;
+          sort_order?: number;
+          unit_price_kobo?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "online_order_lines_order_id_fkey";
+            columns: ["order_id"];
+            isOneToOne: false;
+            referencedRelation: "online_orders";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "online_order_lines_sku_id_fkey";
+            columns: ["sku_id"];
+            isOneToOne: false;
+            referencedRelation: "skus";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "online_order_lines_sku_id_fkey";
+            columns: ["sku_id"];
+            isOneToOne: false;
+            referencedRelation: "stock_overview";
+            referencedColumns: ["sku_id"];
+          },
+        ];
+      };
+      online_orders: {
+        Row: {
+          attention: string | null;
+          cancelled_reason: string | null;
+          created_at: string;
+          customer_email: string | null;
+          customer_name: string;
+          customer_phone: string;
+          delivery_address: string | null;
+          delivery_area: string | null;
+          delivery_fee_kobo: number;
+          expires_at: string;
+          fulfilment: Database["public"]["Enums"]["fulfilment"];
+          id: string;
+          location_id: string;
+          note: string | null;
+          number: string;
+          paid_amount_kobo: number | null;
+          paid_at: string | null;
+          payment_reference: string;
+          refund_note: string | null;
+          refunded_at: string | null;
+          sale_id: string | null;
+          status: Database["public"]["Enums"]["online_order_status"];
+          subtotal_kobo: number;
+          token: string;
+          total_kobo: number;
+          transfer_requested: boolean;
+        };
+        Insert: {
+          attention?: string | null;
+          cancelled_reason?: string | null;
+          created_at?: string;
+          customer_email?: string | null;
+          customer_name: string;
+          customer_phone: string;
+          delivery_address?: string | null;
+          delivery_area?: string | null;
+          delivery_fee_kobo?: number;
+          expires_at: string;
+          fulfilment: Database["public"]["Enums"]["fulfilment"];
+          id?: string;
+          location_id: string;
+          note?: string | null;
+          number?: string;
+          paid_amount_kobo?: number | null;
+          paid_at?: string | null;
+          payment_reference: string;
+          refund_note?: string | null;
+          refunded_at?: string | null;
+          sale_id?: string | null;
+          status?: Database["public"]["Enums"]["online_order_status"];
+          subtotal_kobo: number;
+          token?: string;
+          total_kobo: number;
+          transfer_requested?: boolean;
+        };
+        Update: {
+          attention?: string | null;
+          cancelled_reason?: string | null;
+          created_at?: string;
+          customer_email?: string | null;
+          customer_name?: string;
+          customer_phone?: string;
+          delivery_address?: string | null;
+          delivery_area?: string | null;
+          delivery_fee_kobo?: number;
+          expires_at?: string;
+          fulfilment?: Database["public"]["Enums"]["fulfilment"];
+          id?: string;
+          location_id?: string;
+          note?: string | null;
+          number?: string;
+          paid_amount_kobo?: number | null;
+          paid_at?: string | null;
+          payment_reference?: string;
+          refund_note?: string | null;
+          refunded_at?: string | null;
+          sale_id?: string | null;
+          status?: Database["public"]["Enums"]["online_order_status"];
+          subtotal_kobo?: number;
+          token?: string;
+          total_kobo?: number;
+          transfer_requested?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "online_orders_location_id_fkey";
+            columns: ["location_id"];
+            isOneToOne: false;
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "online_orders_sale_id_fkey";
+            columns: ["sale_id"];
+            isOneToOne: false;
+            referencedRelation: "sales";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       product_images: {
         Row: {
           created_at: string;
@@ -387,8 +583,11 @@ export type Database = {
           description: string | null;
           id: string;
           is_active: boolean;
+          is_featured: boolean;
           name: string;
           search_text: string;
+          show_online: boolean;
+          slug: string | null;
           track_batches: boolean;
           unit_id: string;
           updated_at: string;
@@ -399,8 +598,11 @@ export type Database = {
           description?: string | null;
           id?: string;
           is_active?: boolean;
+          is_featured?: boolean;
           name: string;
           search_text?: string;
+          show_online?: boolean;
+          slug?: string | null;
           track_batches?: boolean;
           unit_id: string;
           updated_at?: string;
@@ -411,8 +613,11 @@ export type Database = {
           description?: string | null;
           id?: string;
           is_active?: boolean;
+          is_featured?: boolean;
           name?: string;
           search_text?: string;
+          show_online?: boolean;
+          slug?: string | null;
           track_batches?: boolean;
           unit_id?: string;
           updated_at?: string;
@@ -924,6 +1129,7 @@ export type Database = {
       sales: {
         Row: {
           cashier_id: string | null;
+          channel: string;
           created_at: string;
           customer_id: string | null;
           delivery_address: string | null;
@@ -939,7 +1145,7 @@ export type Database = {
           note: string | null;
           number: string;
           receipt_token: string;
-          shift_id: string;
+          shift_id: string | null;
           subtotal_kobo: number;
           total_kobo: number;
           vat_kobo: number;
@@ -947,6 +1153,7 @@ export type Database = {
         };
         Insert: {
           cashier_id?: string | null;
+          channel?: string;
           created_at?: string;
           customer_id?: string | null;
           delivery_address?: string | null;
@@ -962,7 +1169,7 @@ export type Database = {
           note?: string | null;
           number?: string;
           receipt_token?: string;
-          shift_id: string;
+          shift_id?: string | null;
           subtotal_kobo: number;
           total_kobo: number;
           vat_kobo?: number;
@@ -970,6 +1177,7 @@ export type Database = {
         };
         Update: {
           cashier_id?: string | null;
+          channel?: string;
           created_at?: string;
           customer_id?: string | null;
           delivery_address?: string | null;
@@ -985,7 +1193,7 @@ export type Database = {
           note?: string | null;
           number?: string;
           receipt_token?: string;
-          shift_id?: string;
+          shift_id?: string | null;
           subtotal_kobo?: number;
           total_kobo?: number;
           vat_kobo?: number;
@@ -1229,6 +1437,62 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "stock_overview";
             referencedColumns: ["product_id"];
+          },
+        ];
+      };
+      stock_holds: {
+        Row: {
+          expires_at: string;
+          id: string;
+          location_id: string;
+          order_id: string;
+          quantity: number;
+          sku_id: string;
+        };
+        Insert: {
+          expires_at: string;
+          id?: string;
+          location_id: string;
+          order_id: string;
+          quantity: number;
+          sku_id: string;
+        };
+        Update: {
+          expires_at?: string;
+          id?: string;
+          location_id?: string;
+          order_id?: string;
+          quantity?: number;
+          sku_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "stock_holds_location_id_fkey";
+            columns: ["location_id"];
+            isOneToOne: false;
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "stock_holds_order_id_fkey";
+            columns: ["order_id"];
+            isOneToOne: false;
+            referencedRelation: "online_orders";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "stock_holds_sku_id_fkey";
+            columns: ["sku_id"];
+            isOneToOne: false;
+            referencedRelation: "skus";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "stock_holds_sku_id_fkey";
+            columns: ["sku_id"];
+            isOneToOne: false;
+            referencedRelation: "stock_overview";
+            referencedColumns: ["sku_id"];
           },
         ];
       };
@@ -1764,8 +2028,46 @@ export type Database = {
       approve_adjustment: { Args: { p_adjustment_id: string; p_review_note?: string }; Returns: undefined };
       assert_at_either_end: { Args: { p_from: string; p_to: string }; Returns: undefined };
       assert_can_act_at: { Args: { p_location_id: string }; Returns: undefined };
+      assert_can_handle_order: {
+        Args: { p_order_id: string };
+        Returns: {
+          attention: string | null;
+          cancelled_reason: string | null;
+          created_at: string;
+          customer_email: string | null;
+          customer_name: string;
+          customer_phone: string;
+          delivery_address: string | null;
+          delivery_area: string | null;
+          delivery_fee_kobo: number;
+          expires_at: string;
+          fulfilment: Database["public"]["Enums"]["fulfilment"];
+          id: string;
+          location_id: string;
+          note: string | null;
+          number: string;
+          paid_amount_kobo: number | null;
+          paid_at: string | null;
+          payment_reference: string;
+          refund_note: string | null;
+          refunded_at: string | null;
+          sale_id: string | null;
+          status: Database["public"]["Enums"]["online_order_status"];
+          subtotal_kobo: number;
+          token: string;
+          total_kobo: number;
+          transfer_requested: boolean;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "online_orders";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       assert_can_sell_at: { Args: { p_location_id: string }; Returns: undefined };
       business_date: { Args: { p_at: string }; Returns: string };
+      cancel_online_order: { Args: { p_order_id: string; p_reason: string }; Returns: undefined };
       cancel_receipt: { Args: { p_receipt_id: string }; Returns: undefined };
       cancel_transfer: { Args: { p_reason: string; p_transfer_id: string }; Returns: undefined };
       close_shift: {
@@ -1778,17 +2080,34 @@ export type Database = {
         };
         Returns: undefined;
       };
+      create_online_order: { Args: { payload: Json }; Returns: Json };
       create_return: { Args: { payload: Json }; Returns: string };
       create_sale: { Args: { payload: Json }; Returns: string };
       create_transfer: { Args: { payload: Json }; Returns: string };
       current_staff_location: { Args: Record<PropertyKey, never>; Returns: string };
       current_staff_role: { Args: Record<PropertyKey, never>; Returns: Database["public"]["Enums"]["staff_role"] };
       dispatch_transfer: { Args: { p_items: Json; p_note?: string; p_transfer_id: string }; Returns: undefined };
+      expire_online_orders: { Args: Record<PropertyKey, never>; Returns: number };
+      fulfil_online_order: {
+        Args: { p_order_id: string };
+        Returns: Database["public"]["Enums"]["online_order_status"];
+      };
       import_products: { Args: { products: Json }; Returns: number };
       is_manager_or_owner: { Args: Record<PropertyKey, never>; Returns: boolean };
       is_owner: { Args: Record<PropertyKey, never>; Returns: boolean };
       log_drawer_open: { Args: { p_location_id: string; p_reason: string }; Returns: undefined };
+      mark_order_paid: { Args: { p_amount_kobo: number; p_reference: string }; Returns: Json };
+      mark_order_refunded: { Args: { p_note: string; p_order_id: string }; Returns: undefined };
       normalize_phone: { Args: { p_phone: string }; Returns: string };
+      online_availability: {
+        Args: { p_sku_ids: string[] };
+        Returns: {
+          available: number;
+          kind: Database["public"]["Enums"]["location_kind"];
+          location_id: string;
+          sku_id: string;
+        }[];
+      };
       open_shift: { Args: { p_float_kobo: number; p_location_id: string }; Returns: string };
       post_receipt: { Args: { p_receipt_id: string }; Returns: undefined };
       receive_transfer: { Args: { p_items: Json; p_transfer_id: string }; Returns: undefined };
@@ -1870,6 +2189,7 @@ export type Database = {
         }[];
       };
       resolve_transfer_shortage: { Args: { p_resolution: string; p_transfer_id: string }; Returns: undefined };
+      retry_online_order: { Args: { p_order_id: string }; Returns: Database["public"]["Enums"]["online_order_status"] };
       save_product: { Args: { payload: Json }; Returns: string };
       save_receipt: { Args: { payload: Json }; Returns: string };
       set_reorder_level: { Args: { p_level: number; p_location_id: string; p_sku_id: string }; Returns: undefined };
@@ -1882,6 +2202,7 @@ export type Database = {
           sales_kobo: number;
         }[];
       };
+      slugify: { Args: { p_text: string }; Returns: string };
       submit_adjustment: { Args: { payload: Json }; Returns: string };
       update_fulfilment: {
         Args: { p_sale_id: string; p_status: Database["public"]["Enums"]["fulfilment_status"] };
@@ -1896,7 +2217,9 @@ export type Database = {
       location_kind: "shop" | "warehouse";
       movement_type:
         "opening" | "receipt" | "transfer_out" | "transfer_in" | "sale" | "return" | "damage" | "count_correction";
-      payment_method: "cash" | "card" | "transfer";
+      online_order_status:
+        "pending_payment" | "paid" | "awaiting_stock" | "confirmed" | "expired" | "cancelled" | "refunded";
+      payment_method: "cash" | "card" | "transfer" | "online";
       receipt_status: "draft" | "posted" | "cancelled";
       return_condition: "restock" | "damaged";
       shift_status: "open" | "closed";
@@ -2028,7 +2351,16 @@ export const Constants = {
         "damage",
         "count_correction",
       ],
-      payment_method: ["cash", "card", "transfer"],
+      online_order_status: [
+        "pending_payment",
+        "paid",
+        "awaiting_stock",
+        "confirmed",
+        "expired",
+        "cancelled",
+        "refunded",
+      ],
+      payment_method: ["cash", "card", "transfer", "online"],
       receipt_status: ["draft", "posted", "cancelled"],
       return_condition: ["restock", "damaged"],
       shift_status: ["open", "closed"],

@@ -422,6 +422,99 @@ check("no sales after closing", !r.ok, r.msg);
 check("warehouse staff can't see sales", (await wh("sales?select=id")).data.length === 0);
 check("warehouse staff can't see customers", (await wh("customers?select=id")).data.length === 0);
 
+console.log("\n— Online shop —");
+// The website's server code uses the service role; nobody else may place or confirm orders.
+const site = async (fn, args) => {
+  const res = await fetch(`${url}/rest/v1/rpc/${fn}`, {
+    method: "POST",
+    headers: { apikey: env.SUPABASE_SECRET_KEY, Authorization: `Bearer ${env.SUPABASE_SECRET_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify(args),
+  });
+  const data = await res.json().catch(() => null);
+  return { ok: res.ok, data, msg: data?.message };
+};
+await owner("rpc/submit_adjustment", {
+  payload: {
+    location_id: loc.SH1,
+    kind: "opening",
+    note: "Online test fixture",
+    lines: [
+      { sku_id: sku["HM-4"], quantity: 6 },
+      { sku_id: sku["CRUG-004"], quantity: 0 },
+    ],
+  },
+});
+const customer = { name: "Ngozi Eze", phone: "0805 222 3333" };
+const order = (lines, extra = {}) =>
+  site("create_online_order", { payload: { location_id: loc.SH1, fulfilment: "collect_later", customer, lines, ...extra } });
+const availableAt = async (code, where) =>
+  Number((await site("online_availability", { p_sku_ids: [sku[code]] })).data.find((a) => a.location_id === loc[where])?.available ?? 0);
+
+r = await cashier("rpc/create_online_order", { payload: {} });
+check("staff accounts can't place website orders", !r.ok, r.msg);
+r = await anon("rpc/mark_order_paid", { p_reference: "x", p_amount_kobo: 1 });
+check("visitors can't mark an order as paid", !r.ok);
+
+r = await order([{ sku_id: sku["HM-4"], quantity: 2, unit_price_kobo: 1 }]);
+check("website order created at catalogue prices", r.ok && r.data.total_kobo === 2 * 1012500, r.msg);
+const first = r.data;
+check("stock is held while the customer pays", (await availableAt("HM-4", "SH1")) === 4);
+r = await order([{ sku_id: sku["HM-4"], quantity: 5 }]);
+check(
+  "held shop stock isn't sold twice: a bigger order is sourced from the warehouse",
+  r.ok && r.data.needs_transfer === true && (await availableAt("HM-4", "SH1")) === 4,
+  r.msg,
+);
+r = await order([{ sku_id: sku["HM-4"], quantity: 5000 }]);
+check("can't order more than exists anywhere", !r.ok, r.msg);
+r = await site("mark_order_paid", { p_reference: first.reference, p_amount_kobo: 100 });
+check("underpayment doesn't confirm the order", !r.ok, r.msg);
+r = await site("mark_order_paid", { p_reference: first.reference, p_amount_kobo: first.total_kobo });
+check("payment turns the order into a sale", r.ok && r.data.status === "confirmed", r.msg ?? r.data?.status);
+const onlineSale = (await owner(`online_orders?select=sales(channel,shift_id,fulfilment_status,sale_payments(method))&id=eq.${first.id}`)).data[0].sales;
+check("sale is online, outside any till session", onlineSale.channel === "online" && onlineSale.shift_id === null);
+check("paid by the online method", onlineSale.sale_payments[0].method === "online");
+check("awaits collection", onlineSale.fulfilment_status === "pending");
+check("stock left the shop once", (await level("HM-4", "SH1")) === 4 && (await availableAt("HM-4", "SH1")) === 4);
+r = await site("mark_order_paid", { p_reference: first.reference, p_amount_kobo: first.total_kobo });
+check("a repeated payment notice changes nothing", r.ok && r.data.already === true && (await level("HM-4", "SH1")) === 4);
+
+r = await order([{ sku_id: sku["CRUG-004"], quantity: 1 }]);
+check("warehouse-only item can be ordered", r.ok && r.data.needs_transfer === true, r.msg);
+const second = r.data;
+r = await site("mark_order_paid", { p_reference: second.reference, p_amount_kobo: second.total_kobo });
+check("paid order waits for warehouse stock", r.data?.status === "awaiting_stock", r.msg);
+const autoTransfer = (await owner(`transfers?select=id,from_location_id&to_location_id=eq.${loc.SH1}&status=eq.requested&note=like.*${second.number}*`)).data[0];
+check("a transfer was requested automatically", !!autoTransfer);
+await owner("rpc/dispatch_transfer", { p_transfer_id: autoTransfer.id, p_items: [{ sku_id: sku["CRUG-004"], quantity: 1 }] });
+const autoItems = (await owner(`transfer_items?select=id&transfer_id=eq.${autoTransfer.id}`)).data;
+await owner("rpc/receive_transfer", { p_transfer_id: autoTransfer.id, p_items: [{ item_id: autoItems[0].id, received_quantity: 1 }] });
+r = await wh("rpc/retry_online_order", { p_order_id: second.id });
+check("warehouse staff can't complete online orders", !r.ok, r.msg);
+r = await cashier("rpc/retry_online_order", { p_order_id: second.id });
+check("cashier completes it once the stock arrives", r.ok && r.data === "confirmed", r.msg ?? r.data);
+
+r = await order([{ sku_id: sku["HM-4"], quantity: 1 }], {
+  fulfilment: "delivery",
+  delivery: { address: "5 Bourdillon Road", area_id: (await owner("delivery_areas?select=id,fee_kobo&name=like.Victoria*")).data[0].id },
+});
+check("delivery fee comes from the delivery area", r.ok && r.data.total_kobo === 1012500 + 300000, r.msg);
+const third = r.data;
+r = await cashier("rpc/cancel_online_order", { p_order_id: third.id, p_reason: "x" });
+check("cashier can't cancel online orders", !r.ok, r.msg);
+await fetch(`${url}/rest/v1/online_orders?id=eq.${third.id}`, {
+  method: "PATCH",
+  headers: { apikey: env.SUPABASE_SECRET_KEY, Authorization: `Bearer ${env.SUPABASE_SECRET_KEY}`, "Content-Type": "application/json" },
+  body: JSON.stringify({ expires_at: "2000-01-01T00:00:00Z" }),
+});
+await site("expire_online_orders", {});
+check(
+  "unpaid orders expire and release their stock",
+  (await owner(`online_orders?select=status&id=eq.${third.id}`)).data[0].status === "expired" &&
+    (await owner(`stock_holds?select=id&order_id=eq.${third.id}`)).data.length === 0,
+);
+check("warehouse staff can't see online orders", (await wh("online_orders?select=id")).data.length === 0);
+
 console.log("\n— Reports —");
 const range = { p_from: "2000-01-01", p_to: "2100-01-01" };
 const ownerProducts = (await owner("rpc/report_products", range)).data;

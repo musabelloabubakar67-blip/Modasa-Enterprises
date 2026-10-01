@@ -6,8 +6,9 @@ import { formatDate, formatDateTime, todayInBusinessZone } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveLocations, isManager } from "../stock/data";
+import { PAYMENT_LABELS } from "@/lib/payments";
 
-const METHOD = { cash: "Cash", card: "POS card", transfer: "Transfer" } as const;
+const METHOD = PAYMENT_LABELS;
 const HANDOVER = { taken: null, collect_later: "Collect later", delivery: "Delivery" } as const;
 
 export default async function SalesPage({ searchParams }: PageProps<"/app/sales">) {
@@ -46,7 +47,7 @@ export default async function SalesPage({ searchParams }: PageProps<"/app/sales"
   const [{ data: sales, error }, { currency }] = await Promise.all([query, getBusinessSettings()]);
   if (error) throw error;
 
-  const byMethod = { cash: 0, card: 0, transfer: 0 };
+  const byMethod = { cash: 0, card: 0, transfer: 0, online: 0 };
   let refunds = 0;
   for (const s of sales) {
     s.sale_payments.forEach((p) => (byMethod[p.method] += p.amount_kobo));
