@@ -115,6 +115,18 @@ A small Tauri (Rust) app that shows the system's own pages full-screen and adds:
 Build: `cd desktop && npm install && npm run build` (needs Rust + Visual Studio C++ build tools). Details in
 [docs/till-setup.md](docs/till-setup.md).
 
+## Dashboard & reports
+
+- Owners and managers land on a dashboard: today's takings per shop vs the same day last week *by the same
+  time*, till status, a "needs attention" list, the last 30 full days by shop, and this week's best sellers.
+- `/app/reports`: Sales, Products (incl. slow movers), Profit, Staff, Stock losses. Every report filters by
+  period and shop (kept in the URL) and exports to CSV.
+- **Profit uses the cost price at the time of each sale** (`sale_line_costs`, filled by a trigger and hidden
+  from floor staff). Takings for items with no recorded cost are reported separately, never guessed.
+- Report queries are SQL functions (`report_*`) running with the caller's permissions, so row-level security
+  still decides what each person sees. Dates are business days in Lagos time.
+- The local seed includes 30 days of demo sales so the reports have something to show.
+
 ## Roles
 
 | Role | Access |
@@ -134,5 +146,7 @@ Build: `cd desktop && npm install && npm run build` (needs Rust + Visual Studio 
 
 6. **Desktop till app** – installable Windows app (Tauri) with direct receipt printing, cash drawer, kiosk lock ✅
 
-Next: owner dashboard & reports, then the online storefront. Later, if approved: discounts with limits,
+7. **Dashboard & reports** – owner home dashboard; sales, products, profit, staff and stock-loss reports ✅
+
+Next: the online storefront (waiting for design examples). Later, if approved: discounts with limits,
 deposits, delivery management, online payments, app auto-updates (needs hosting).

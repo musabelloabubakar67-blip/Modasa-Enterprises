@@ -157,3 +157,116 @@ with t as (
 )
 select public.apply_stock_movement(s.id, l.id, '2304', -6, 'transfer_out', 'transfer', t.id, t.number || ' → Shop 1')
 from t, public.skus s, public.locations l where s.code = 'ALLWP-001A' and l.code = 'WH-A';
+
+-- ---------------------------------------------------------------------------------------------
+-- Demo history: 30 days of sales at the three shops, so the dashboard and reports have something
+-- to show. Everything goes through the stock ledger so stock and sales stay consistent. Sales have
+-- no cashier (test accounts are created after seeding).
+-- ---------------------------------------------------------------------------------------------
+do $$
+declare
+  v_shop record;
+  v_day date;
+  v_shift uuid;
+  v_sale uuid;
+  v_number text;
+  v_sku record;
+  v_qty int;
+  v_at timestamptz;
+  v_total bigint;
+  v_cash bigint;
+  v_n int;
+  v_method public.payment_method;
+  v_line uuid;
+  v_ret uuid;
+begin
+  perform setseed(0.42);
+
+  -- Extra stock in the shops 31 days ago (as if transferred in), so a month of sales is possible.
+  for v_shop in select id, code from public.locations where kind = 'shop' loop
+    for v_sku in select s.id from public.skus s join public.products p on p.id = s.product_id where not p.track_batches loop
+      perform public.apply_stock_movement(v_sku.id, v_shop.id, '', 25, 'opening', null, null, 'Demo history stock');
+    end loop;
+  end loop;
+  update public.stock_movements set created_at = now() - interval '31 days' where note = 'Demo history stock';
+
+  for v_day in select generate_series(current_date - 30, current_date - 1, interval '1 day')::date loop
+    for v_shop in select id, code from public.locations where kind = 'shop' order by code loop
+      insert into public.shifts (location_id, status, opened_at, opening_float_kobo, closed_at)
+      values (v_shop.id, 'closed', (v_day + time '08:30') at time zone 'Africa/Lagos', 1000000,
+              (v_day + time '19:00') at time zone 'Africa/Lagos')
+      returning id into v_shift;
+      v_cash := 1000000;
+
+      -- Busier on Saturdays and at Shop 1.
+      v_n := 2 + floor(random() * 5)::int + case when extract(isodow from v_day) = 6 then 3 else 0 end
+             + case when v_shop.code = 'SH1' then 2 else 0 end;
+      for i in 1..v_n loop
+        v_at := (v_day + time '09:00' + make_interval(mins => floor(random() * 600)::int)) at time zone 'Africa/Lagos';
+        insert into public.sales (location_id, shift_id, subtotal_kobo, total_kobo, created_at)
+        values (v_shop.id, v_shift, 0, 0, v_at) returning id, number into v_sale, v_number;
+        v_total := 0;
+
+        for v_sku in
+          select s.id, coalesce(s.promo_price_kobo, s.price_kobo) as price, s.price_kobo, sl.quantity as have
+          from public.skus s
+          join public.products p on p.id = s.product_id
+          join public.stock_levels sl on sl.sku_id = s.id and sl.location_id = v_shop.id and sl.batch = ''
+          where sl.quantity >= 2 and not p.track_batches
+          order by random() * (case when s.price_kobo < 2500000 then 1 else 3 end)  -- cheaper items sell more
+          limit 1 + floor(random() * 2)::int
+        loop
+          v_qty := 1 + floor(random() * least(2, v_sku.have - 1))::int;
+          insert into public.sale_lines (sale_id, sku_id, quantity, list_price_kobo, unit_price_kobo, line_total_kobo)
+          values (v_sale, v_sku.id, v_qty, v_sku.price_kobo, v_sku.price, v_sku.price * v_qty);
+          perform public.apply_stock_movement(v_sku.id, v_shop.id, '', -v_qty, 'sale', 'sale', v_sale, v_number);
+          v_total := v_total + v_sku.price * v_qty;
+        end loop;
+
+        if v_total = 0 then
+          delete from public.sales where id = v_sale;
+          continue;
+        end if;
+        v_method := (array['cash', 'cash', 'transfer', 'transfer', 'card'])[1 + floor(random() * 5)::int]::public.payment_method;
+        insert into public.sale_payments (sale_id, method, amount_kobo) values (v_sale, v_method, v_total);
+        if v_method = 'cash' then v_cash := v_cash + v_total; end if;
+        update public.sales set subtotal_kobo = v_total, total_kobo = v_total where id = v_sale;
+        update public.stock_movements set created_at = v_at where reference_id = v_sale;
+      end loop;
+
+      -- Close the till; Shop 2 comes up ₦500 short now and then.
+      update public.shifts set
+        expected_cash_kobo = v_cash,
+        counted_cash_kobo = v_cash - case when v_shop.code = 'SH2' and random() < 0.2 then 50000 else 0 end,
+        expected_card_kobo = (select coalesce(sum(p.amount_kobo), 0) from public.sale_payments p join public.sales s on s.id = p.sale_id where s.shift_id = v_shift and p.method = 'card'),
+        expected_transfer_kobo = (select coalesce(sum(p.amount_kobo), 0) from public.sale_payments p join public.sales s on s.id = p.sale_id where s.shift_id = v_shift and p.method = 'transfer')
+      where id = v_shift;
+      update public.shifts set counted_card_kobo = expected_card_kobo, counted_transfer_kobo = expected_transfer_kobo,
+        close_note = case when counted_cash_kobo <> expected_cash_kobo then 'Short — checking' end
+      where id = v_shift;
+    end loop;
+  end loop;
+
+  -- A few returns and write-offs in the history.
+  for v_line in
+    select l.id from public.sale_lines l join public.sales s on s.id = l.sale_id
+    where s.created_at < now() - interval '3 days' order by random() limit 4
+  loop
+    select s.* into v_shop from public.sales s join public.sale_lines l on l.sale_id = s.id where l.id = v_line;
+    insert into public.returns (sale_id, location_id, shift_id, refund_method, refund_kobo, reason, created_at)
+    select s.id, s.location_id, s.shift_id, 'cash', l.unit_price_kobo, 'Customer changed their mind', s.created_at + interval '1 day'
+    from public.sales s join public.sale_lines l on l.sale_id = s.id where l.id = v_line
+    returning id into v_ret;
+    insert into public.return_lines (return_id, sale_line_id, quantity, condition, refund_kobo)
+    select v_ret, l.id, 1, 'restock', l.unit_price_kobo from public.sale_lines l where l.id = v_line;
+    update public.sale_lines set returned_quantity = returned_quantity + 1 where id = v_line;
+    perform public.apply_stock_movement(l.sku_id, s.location_id, '', 1, 'return', 'return', v_ret, 'Demo return')
+    from public.sale_lines l join public.sales s on s.id = l.sale_id where l.id = v_line;
+  end loop;
+
+  perform public.apply_stock_movement(s.id, l.id, '', -1, 'damage', null, null, 'Broken · dropped while unpacking')
+  from public.skus s, public.locations l where s.code = 'T3-7G' and l.code = 'WH-B';
+  perform public.apply_stock_movement(s.id, l.id, '', -2, 'damage', null, null, 'Water damage · roof leak')
+  from public.skus s, public.locations l where s.code = 'HM-4' and l.code = 'WH-A';
+  update public.stock_movements set created_at = now() - interval '12 days' where note like 'Broken%' or note like 'Water%';
+end $$;

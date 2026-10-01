@@ -62,6 +62,24 @@ const level = async (code, where, batch = "") =>
       .data[0]?.quantity ?? 0,
   );
 
+// Known starting quantities for the items these checks use, whatever the demo data left behind.
+// (An owner's opening count sets the level directly.)
+const fixture = await owner("rpc/submit_adjustment", {
+  payload: {
+    location_id: loc.SH1,
+    kind: "opening",
+    note: "Test fixture",
+    lines: [
+      { sku_id: sku["HM-1"], quantity: 10 },
+      { sku_id: sku["LX21-KC12S"], quantity: 5 },
+      { sku_id: sku["GJ0070"], quantity: 2 },
+      { sku_id: sku["CRUG-001"], quantity: 3 },
+      { sku_id: sku["CRUG-004"], quantity: 0 },
+    ],
+  },
+});
+if (!fixture.ok) throw new Error(`Couldn't set up test stock: ${fixture.msg}`);
+
 console.log("\n— Access —");
 check("signed-out visitors read nothing", !(await anon("locations?select=id")).ok);
 check("cashier reads only own profile", (await cashier("profiles?select=id")).data.length === 1);
@@ -403,6 +421,28 @@ r = await sale({ lines: basket, payments: cash(4200000) });
 check("no sales after closing", !r.ok, r.msg);
 check("warehouse staff can't see sales", (await wh("sales?select=id")).data.length === 0);
 check("warehouse staff can't see customers", (await wh("customers?select=id")).data.length === 0);
+
+console.log("\n— Reports —");
+const range = { p_from: "2000-01-01", p_to: "2100-01-01" };
+const ownerProducts = (await owner("rpc/report_products", range)).data;
+check(
+  "cost is captured at the time of sale",
+  ownerProducts.some((p) => Number(p.cost_kobo) > 0),
+);
+const cashierProducts = (await cashier("rpc/report_products", range)).data;
+check(
+  "cashier's product report shows no costs",
+  cashierProducts.every((p) => Number(p.cost_kobo) === 0),
+);
+check("cashier can't read sale costs", (await cashier("sale_line_costs?select=cost_kobo")).data.length === 0);
+const cashierDaily = (await cashier("rpc/report_sales_daily", range)).data;
+check(
+  "cashier's sales report covers only their shop",
+  cashierDaily.every((r) => r.location_id === loc.SH1),
+);
+check("warehouse staff see no sales in reports", (await wh("rpc/report_sales_daily", range)).data.length === 0);
+r = await anon("rpc/report_sales_daily", range);
+check("signed-out visitors can't run reports", !r.ok);
 
 console.log(failures ? `\n${failures} check(s) FAILED` : "\nAll checks passed");
 process.exit(failures ? 1 : 0);

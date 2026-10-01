@@ -19,6 +19,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/app/stock", label: "Stock", roles: ALL },
   { href: "/app/transfers", label: "Transfers", roles: ALL },
   { href: "/app/products", label: "Products", roles: ALL },
+  { href: "/app/reports", label: "Reports", roles: ["owner", "manager"] },
   { href: "/app/settings", label: "Settings", roles: ["owner"] },
 ];
 

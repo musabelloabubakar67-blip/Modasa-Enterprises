@@ -1,19 +1,30 @@
 import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
 import { navFor } from "@/lib/nav";
+import { OwnerDashboard } from "./owner-dashboard";
 
 export default async function StaffHome({ searchParams }: PageProps<"/app">) {
   const staff = await requireStaff();
   const { denied } = await searchParams;
   const sections = navFor(staff.role).filter((item) => item.href !== "/app");
 
+  const deniedBanner = denied && (
+    <p role="alert" className="bg-danger/10 text-danger mb-4 rounded-md px-3 py-2 text-sm">
+      You don&apos;t have access to that page.
+    </p>
+  );
+  if (staff.role === "owner" || staff.role === "manager") {
+    return (
+      <>
+        {deniedBanner}
+        <OwnerDashboard name={staff.fullName} />
+      </>
+    );
+  }
+
   return (
     <div className="max-w-4xl">
-      {denied && (
-        <p role="alert" className="bg-danger/10 text-danger mb-4 rounded-md px-3 py-2 text-sm">
-          You don&apos;t have access to that page.
-        </p>
-      )}
+      {deniedBanner}
       <h1 className="text-2xl font-semibold">Welcome, {staff.fullName.split(" ")[0]}</h1>
       <p className="text-muted mt-1 text-sm">
         {staff.locationName ? `You're working at ${staff.locationName}.` : "You have access to all locations."}

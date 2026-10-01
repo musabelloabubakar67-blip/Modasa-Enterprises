@@ -27,3 +27,12 @@ export function toMoneyInput(minor: number | null | undefined) {
   if (minor === null || minor === undefined) return "";
   return minor % 100 === 0 ? String(minor / 100) : (minor / 100).toFixed(2);
 }
+
+/** ₦1.2M / ₦350k / ₦900, for chart axes where full amounts don't fit. */
+export function formatMoneyShort(minor: number, currency = "NGN") {
+  const symbol = currency === "NGN" ? "₦" : `${currency} `;
+  const n = minor / 100;
+  if (n >= 1_000_000) return `${symbol}${(n / 1_000_000).toFixed(n >= 10_000_000 ? 0 : 1).replace(/\.0$/, "")}M`;
+  if (n >= 1_000) return `${symbol}${Math.round(n / 1_000)}k`;
+  return `${symbol}${Math.round(n)}`;
+}

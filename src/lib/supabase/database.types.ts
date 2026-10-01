@@ -802,6 +802,29 @@ export type Database = {
           },
         ];
       };
+      sale_line_costs: {
+        Row: {
+          cost_kobo: number;
+          sale_line_id: string;
+        };
+        Insert: {
+          cost_kobo: number;
+          sale_line_id: string;
+        };
+        Update: {
+          cost_kobo?: number;
+          sale_line_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "sale_line_costs_sale_line_id_fkey";
+            columns: ["sale_line_id"];
+            isOneToOne: true;
+            referencedRelation: "sale_lines";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       sale_lines: {
         Row: {
           batch: string;
@@ -1742,6 +1765,7 @@ export type Database = {
       assert_at_either_end: { Args: { p_from: string; p_to: string }; Returns: undefined };
       assert_can_act_at: { Args: { p_location_id: string }; Returns: undefined };
       assert_can_sell_at: { Args: { p_location_id: string }; Returns: undefined };
+      business_date: { Args: { p_at: string }; Returns: string };
       cancel_receipt: { Args: { p_receipt_id: string }; Returns: undefined };
       cancel_transfer: { Args: { p_reason: string; p_transfer_id: string }; Returns: undefined };
       close_shift: {
@@ -1770,6 +1794,81 @@ export type Database = {
       receive_transfer: { Args: { p_items: Json; p_transfer_id: string }; Returns: undefined };
       refresh_product_search_text: { Args: { p_product_id: string }; Returns: undefined };
       reject_adjustment: { Args: { p_adjustment_id: string; p_review_note: string }; Returns: undefined };
+      report_losses: {
+        Args: { p_from: string; p_location?: string; p_to: string };
+        Returns: {
+          code: string;
+          happened_at: string;
+          kind: string;
+          location_id: string;
+          product_name: string;
+          quantity: number;
+          reason: string;
+          sku_id: string;
+          value_kobo: number;
+          variant_label: string;
+        }[];
+      };
+      report_payments: {
+        Args: { p_from: string; p_location?: string; p_to: string };
+        Returns: {
+          method: Database["public"]["Enums"]["payment_method"];
+          received_kobo: number;
+          refunded_kobo: number;
+        }[];
+      };
+      report_products: {
+        Args: { p_from: string; p_location?: string; p_to: string };
+        Returns: {
+          category_name: string;
+          code: string;
+          cost_kobo: number;
+          costed_revenue_kobo: number;
+          product_name: string;
+          quantity: number;
+          revenue_kobo: number;
+          sku_id: string;
+          unit: string;
+          variant_label: string;
+        }[];
+      };
+      report_sales_daily: {
+        Args: { p_from: string; p_location?: string; p_to: string };
+        Returns: {
+          day: string;
+          gross_kobo: number;
+          items_sold: number;
+          location_id: string;
+          refunds_kobo: number;
+          sales_count: number;
+        }[];
+      };
+      report_slow_movers: {
+        Args: { p_days: number; p_location?: string };
+        Returns: {
+          code: string;
+          cost_kobo: number;
+          last_sold_at: string;
+          location_id: string;
+          product_name: string;
+          quantity: number;
+          sku_id: string;
+          variant_label: string;
+        }[];
+      };
+      report_staff: {
+        Args: { p_from: string; p_location?: string; p_to: string };
+        Returns: {
+          cash_difference_kobo: number;
+          drawer_openings: number;
+          returns_count: number;
+          returns_kobo: number;
+          sales_count: number;
+          sales_kobo: number;
+          sessions_closed: number;
+          staff_id: string;
+        }[];
+      };
       resolve_transfer_shortage: { Args: { p_resolution: string; p_transfer_id: string }; Returns: undefined };
       save_product: { Args: { payload: Json }; Returns: string };
       save_receipt: { Args: { payload: Json }; Returns: string };

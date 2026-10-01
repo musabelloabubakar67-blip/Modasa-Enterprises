@@ -50,3 +50,25 @@ for (const user of users) {
   const body = await res.json();
   console.log(res.ok ? `created ${user.email}` : `${user.email}: ${body.msg ?? body.message ?? res.status}`);
 }
+
+// Demo history in the seed has no cashier; credit Shop 1's to the test cashier so staff reports have data.
+const cashierId = (
+  await (
+    await fetch(`${url}/rest/v1/profiles?email=eq.${encodeURIComponent(env.DEV_CASHIER_EMAIL)}&select=id`, { headers })
+  ).json()
+)[0]?.id;
+if (cashierId && shop.id) {
+  for (const table of ["sales", "returns"]) {
+    const column = table === "sales" ? "cashier_id" : "created_by";
+    await fetch(`${url}/rest/v1/${table}?${column}=is.null&location_id=eq.${shop.id}`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({ [column]: cashierId }),
+    });
+  }
+  await fetch(`${url}/rest/v1/shifts?closed_by=is.null&status=eq.closed&location_id=eq.${shop.id}`, {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify({ opened_by: cashierId, closed_by: cashierId }),
+  });
+}
