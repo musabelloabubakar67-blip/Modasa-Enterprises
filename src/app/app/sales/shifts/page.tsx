@@ -14,13 +14,14 @@ export default async function ShiftsPage({ searchParams }: PageProps<"/app/sales
     .select(
       `id, status, opened_at, opened_by, closed_at, closed_by, opening_float_kobo, close_note,
        counted_cash_kobo, counted_card_kobo, counted_transfer_kobo,
-       expected_cash_kobo, expected_card_kobo, expected_transfer_kobo, locations(name), sales(count)`,
+       expected_cash_kobo, expected_card_kobo, expected_transfer_kobo, locations(name), sales(count),
+       drawer_openings(reason, created_at, opened_by)`,
     )
     .order("opened_at", { ascending: false })
     .limit(60);
   if (error) throw error;
   const [names, { currency }] = await Promise.all([
-    getStaffNames(shifts.flatMap((s) => [s.opened_by, s.closed_by])),
+    getStaffNames(shifts.flatMap((s) => [s.opened_by, s.closed_by, ...s.drawer_openings.map((d) => d.opened_by)])),
     getBusinessSettings(),
   ]);
   const money = (k: number) => formatMoney(k, currency);
@@ -95,6 +96,21 @@ export default async function ShiftsPage({ searchParams }: PageProps<"/app/sales
                 </table>
               )}
               {s.close_note && <p className="text-sm">Note: “{s.close_note}”</p>}
+              {s.drawer_openings.length > 0 && (
+                <details className="text-sm">
+                  <summary className="cursor-pointer text-amber-700">
+                    Drawer opened without a sale {s.drawer_openings.length} time
+                    {s.drawer_openings.length === 1 ? "" : "s"}
+                  </summary>
+                  <ul className="text-muted mt-1 space-y-0.5">
+                    {s.drawer_openings.map((d, i) => (
+                      <li key={i}>
+                        {formatDateTime(d.created_at)} · {who(d.opened_by)} · “{d.reason}”
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
             </li>
           );
         })}

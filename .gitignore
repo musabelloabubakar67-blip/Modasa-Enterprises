@@ -41,3 +41,8 @@ yarn-error.log*
 next-env.d.ts
 
 !.env.example
+
+# desktop app build output
+/desktop/node_modules
+/desktop/src-tauri/target
+/desktop/src-tauri/gen

@@ -10,6 +10,7 @@ import { getStaffNames } from "@/lib/staff-names";
 import { createClient } from "@/lib/supabase/server";
 import { getSaleShare } from "../actions";
 import { FulfilmentButtons } from "../fulfilment-buttons";
+import { ReceiptPrinter } from "@/components/receipt-printer";
 
 const METHOD = { cash: "Cash", card: "POS card", transfer: "Bank transfer" } as const;
 const STATUS = { pending: "Waiting", out_for_delivery: "Out for delivery", completed: "Done" } as const;
@@ -74,9 +75,7 @@ export default async function SalePage({ params, searchParams }: PageProps<"/app
       </p>
 
       <div className="flex flex-wrap gap-2">
-        <a href={`/app/sales/${sale.id}/receipt?print=1`} target="_blank" rel="noopener" className="btn btn-secondary">
-          Print receipt
-        </a>
+        <ReceiptPrinter saleId={sale.id} copy />
         {share?.whatsapp_url && (
           <a href={share.whatsapp_url} target="_blank" rel="noopener" className="btn btn-secondary">
             Send on WhatsApp

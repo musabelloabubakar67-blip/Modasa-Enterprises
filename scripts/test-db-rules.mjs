@@ -385,6 +385,12 @@ const expected = Object.fromEntries(
 // float 10,000 + cash sales (42,000 + 26,000 + 21,000) − refund 21,000
 check("expected cash = float + sales − refunds", expected.cash === 1000000 + 4200000 + 2600000 + 2100000 - 2100000);
 check("expected card and transfer", expected.card === 2000000 && expected.transfer === 1825000);
+r = await wh("rpc/log_drawer_open", { p_location_id: loc.SH1, p_reason: "x" });
+check("warehouse staff can't open a shop drawer", !r.ok, r.msg);
+r = await cashier("rpc/log_drawer_open", { p_location_id: loc.SH1, p_reason: " " });
+check("drawer opening needs a reason", !r.ok, r.msg);
+r = await cashier("rpc/log_drawer_open", { p_location_id: loc.SH1, p_reason: "Change for a customer" });
+check("no-sale drawer opening is logged", r.ok, r.msg);
 r = await cashier("rpc/close_shift", {
   p_shift_id: shift,
   p_counted_cash: expected.cash - 50000,

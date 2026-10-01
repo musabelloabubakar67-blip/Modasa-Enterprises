@@ -1,0 +1,18 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "local",
+  "description": "The bundled settings screen.",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "allow-get-config",
+    "allow-save-config",
+    "allow-list-printers",
+    "allow-print-raw",
+    "allow-test-print",
+    "allow-open-server",
+    "allow-open-settings",
+    "allow-exit-app",
+    "allow-open-external"
+  ]
+}

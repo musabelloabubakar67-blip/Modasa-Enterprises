@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Desktop till app: built separately (Rust/Tauri), with generated files under target/.
+    "desktop/**",
   ]),
 ]);
 

@@ -9,6 +9,8 @@ import { formatMoney } from "@/lib/money";
 import { getSiteUrl, whatsappNumber } from "@/lib/site-url";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionState } from "@/lib/forms";
+import { getStaffNames } from "@/lib/staff-names";
+import { getReceiptById } from "./receipt-data";
 
 const TILL_ROLES = ["owner", "manager", "cashier"] as const;
 
@@ -83,4 +85,27 @@ export async function createReturn(input: z.input<typeof returnSchema>): Promise
   if (error) return { error: error.message };
   revalidatePath("/app", "layout");
   redirect(`/app/sales/${parsed.data.sale_id}?returned=1`);
+}
+
+/** Everything needed to print a receipt directly on the till's printer (desktop app). */
+export async function getReceiptForPrint(saleId: string) {
+  await requireStaff(TILL_ROLES);
+  const sale = await getReceiptById(saleId);
+  if (!sale) return null;
+  const [business, names] = await Promise.all([getBusinessSettings(), getStaffNames([sale.cashier_id])]);
+  return {
+    sale,
+    business,
+    cashierName: sale.cashier_id ? names.get(sale.cashier_id)?.split(" ")[0] : undefined,
+    paidCash: sale.sale_payments.some((p) => p.method === "cash"),
+  };
+}
+
+/** Records a "no sale" drawer opening; the desktop app then pops the drawer. */
+export async function logDrawerOpen(locationId: string, reason: string): Promise<ActionState> {
+  await requireStaff(TILL_ROLES);
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("log_drawer_open", { p_location_id: locationId, p_reason: reason });
+  if (error) return { error: error.message };
+  return { success: "Logged." };
 }

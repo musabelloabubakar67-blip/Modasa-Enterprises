@@ -97,7 +97,23 @@ Useful commands:
 - VAT is a switch in Business settings; prices include VAT and receipts show the VAT portion when on.
 - Returns go back into stock or are written off as damaged; refunds come out of the open till session.
 - Wallpaper (rolls by strips, pattern repeat) and tile (boxes + waste %) calculators: `src/lib/calculators.ts`.
-- Till PC setup (Chrome kiosk mode with silent printing): [docs/till-setup.md](docs/till-setup.md).
+- Till PC setup: [docs/till-setup.md](docs/till-setup.md).
+
+## Desktop till app (`desktop/`)
+
+A small Tauri (Rust) app that shows the system's own pages full-screen and adds:
+
+- **Direct receipt printing**: receipts are built as ESC/POS printer commands in the web app
+  (`src/lib/receipt-escpos.ts`) and sent to the chosen Windows printer raw, so there's no dialog, the paper is
+  cut, and the cash drawer opens for cash sales. In a normal browser the till falls back to the print page.
+- **Open drawer** button for no-sale openings, each logged with a reason (`drawer_openings`).
+- **Kiosk lock** (full screen, can't be closed without the manager PIN), start with Windows, single instance.
+- **Navigation lock**: only the configured server and the bundled settings page can load in the window, so no
+  other site can reach the printer commands. Other links open in the system browser.
+- Per-PC settings (server address, printer, paper width, drawer, PIN) in a bundled settings screen.
+
+Build: `cd desktop && npm install && npm run build` (needs Rust + Visual Studio C++ build tools). Details in
+[docs/till-setup.md](docs/till-setup.md).
 
 ## Roles
 
@@ -116,5 +132,7 @@ Useful commands:
 4. **Transfers** – request → dispatch → receive between any locations, batches, in transit, shortages ✅
 5. **Point of sale** – till, calculators, split payments, collection/delivery, receipts, returns, cash-up ✅
 
-Next: installable desktop till app (Tauri) with direct printer/drawer control. Later: owner dashboard,
-discounts with limits, deposits, delivery management, online storefront, online payments.
+6. **Desktop till app** – installable Windows app (Tauri) with direct receipt printing, cash drawer, kiosk lock ✅
+
+Next: owner dashboard & reports, then the online storefront. Later, if approved: discounts with limits,
+deposits, delivery management, online payments, app auto-updates (needs hosting).

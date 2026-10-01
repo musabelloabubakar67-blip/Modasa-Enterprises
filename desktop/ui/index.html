@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Till settings</title>
+    <style>
+      :root {
+        --bg: #f7f6f3;
+        --surface: #fff;
+        --fg: #1c1b19;
+        --muted: #6b6760;
+        --border: #e4e1da;
+        --accent: #7a4b2a;
+        --danger: #b42318;
+        --success: #067647;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg);
+        color: var(--fg);
+        font: 15px/1.5 "Segoe UI", system-ui, sans-serif;
+        padding: 24px;
+      }
+      main {
+        width: 100%;
+        max-width: 560px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 28px;
+      }
+      h1 { margin: 0 0 4px; font-size: 22px; }
+      p.lead { margin: 0 0 20px; color: var(--muted); }
+      label { display: block; font-weight: 600; margin: 16px 0 4px; }
+      .hint { color: var(--muted); font-size: 13px; font-weight: 400; }
+      input[type="text"], input[type="url"], input[type="password"], select {
+        width: 100%;
+        padding: 9px 12px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font: inherit;
+        background: #fff;
+      }
+      input:focus, select:focus { outline: 2px solid color-mix(in srgb, var(--accent) 30%, transparent); border-color: var(--accent); }
+      .row { display: flex; gap: 8px; align-items: center; }
+      .row > :first-child { flex: 1; }
+      .check { display: flex; gap: 8px; align-items: flex-start; font-weight: 400; margin-top: 12px; }
+      .check input { margin-top: 4px; }
+      button {
+        font: inherit;
+        padding: 9px 16px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        background: #fff;
+        cursor: pointer;
+      }
+      button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+      button:disabled { opacity: 0.6; cursor: not-allowed; }
+      .actions { display: flex; gap: 8px; margin-top: 24px; flex-wrap: wrap; }
+      .msg { margin-top: 16px; padding: 10px 12px; border-radius: 6px; font-size: 14px; display: none; }
+      .msg.error { display: block; background: color-mix(in srgb, var(--danger) 10%, #fff); color: var(--danger); }
+      .msg.ok { display: block; background: color-mix(in srgb, var(--success) 10%, #fff); color: var(--success); }
+      fieldset { border: 1px solid var(--border); border-radius: 8px; padding: 4px 16px 16px; margin: 20px 0 0; }
+      legend { font-weight: 600; padding: 0 4px; }
+      kbd { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 0 5px; font-size: 13px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Till settings</h1>
+      <p class="lead">These settings are saved on this PC only.</p>
+
+      <form id="form">
+        <label for="server">Server address</label>
+        <input id="server" type="url" placeholder="https://your-shop-system.com" required />
+        <div class="hint">The address of your retail system. Ask whoever set it up.</div>
+
+        <fieldset>
+          <legend>Receipt printer</legend>
+          <label for="printer">Printer</label>
+          <div class="row">
+            <select id="printer"></select>
+            <button type="button" id="refresh" title="Look for printers again">Refresh</button>
+          </div>
+          <div class="hint">Install the printer's Windows driver first. “Test file” saves receipts to Documents instead of printing.</div>
+
+          <label for="paper">Paper width</label>
+          <select id="paper">
+            <option value="48">80 mm (most common)</option>
+            <option value="32">58 mm</option>
+          </select>
+
+          <label class="check"><input type="checkbox" id="drawer" /> <span>A cash drawer is plugged into the printer<br /><span class="hint">It opens after cash sales and with the till's “Open drawer” button.</span></span></label>
+
+          <div class="actions" style="margin-top: 12px">
+            <button type="button" id="test">Print a test page</button>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>This PC</legend>
+          <label class="check"><input type="checkbox" id="kiosk" /> <span>Lock to the till (full screen, can't be closed)<br /><span class="hint">Leave with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Q</kbd>; settings with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd>.</span></span></label>
+          <label class="check"><input type="checkbox" id="autostart" /> <span>Start the till when Windows starts</span></label>
+          <label for="pin">Manager PIN <span class="hint">(to leave the locked till or change settings)</span></label>
+          <input id="pin" type="password" inputmode="numeric" autocomplete="new-password" placeholder="Leave blank to keep the current PIN" />
+          <label class="check"><input type="checkbox" id="removePin" /> <span>Remove the PIN</span></label>
+        </fieldset>
+
+        <div id="msg" class="msg" role="status"></div>
+
+        <div class="actions">
+          <button type="submit" class="primary" id="save">Save and open the till</button>
+          <button type="button" id="quit">Exit</button>
+        </div>
+      </form>
+    </main>
+
+    <script>
+      const invoke = (cmd, args) => window.__TAURI__.core.invoke(cmd, args);
+      const $ = (id) => document.getElementById(id);
+      const FILE = "__file__";
+
+      function show(text, ok) {
+        const el = $("msg");
+        el.textContent = text;
+        el.className = "msg " + (ok ? "ok" : "error");
+      }
+
+      async function loadPrinters(selected) {
+        const select = $("printer");
+        select.innerHTML = "";
+        const add = (value, label) => {
+          const o = document.createElement("option");
+          o.value = value;
+          o.textContent = label;
+          select.appendChild(o);
+        };
+        add("", "— Choose a printer —");
+        try {
+          for (const name of await invoke("list_printers")) add(name, name);
+        } catch (e) {
+          show(String(e));
+        }
+        add(FILE, "Test file (no printer)");
+        select.value = selected ?? "";
+      }
+
+      async function init() {
+        const c = await invoke("get_config");
+        $("server").value = c.server_url || "http://localhost:3000";
+        $("paper").value = String(c.paper_width);
+        $("drawer").checked = c.cash_drawer;
+        $("kiosk").checked = c.kiosk;
+        $("autostart").checked = c.autostart;
+        $("pin").placeholder = c.has_exit_pin ? "Leave blank to keep the current PIN" : "4+ digits (recommended)";
+        $("removePin").parentElement.style.display = c.has_exit_pin ? "" : "none";
+        await loadPrinters(c.receipt_printer);
+      }
+
+      $("refresh").onclick = () => loadPrinters($("printer").value);
+
+      $("test").onclick = async () => {
+        const printer = $("printer").value;
+        if (!printer) return show("Choose a printer first.");
+        try {
+          await invoke("test_print", {
+            printer,
+            paperWidth: Number($("paper").value),
+            cashDrawer: $("drawer").checked,
+          });
+          show(
+            printer === FILE
+              ? "Test saved to Documents\\till-test-receipt.txt"
+              : "Test page sent. Check it printed, was cut, and the drawer opened.",
+            true,
+          );
+        } catch (e) {
+          show(String(e));
+        }
+      };
+
+      $("form").onsubmit = async (e) => {
+        e.preventDefault();
+        const pin = $("pin").value.trim();
+        try {
+          await invoke("save_config", {
+            config: {
+              server_url: $("server").value.trim(),
+              receipt_printer: $("printer").value || null,
+              paper_width: Number($("paper").value),
+              cash_drawer: $("drawer").checked,
+              kiosk: $("kiosk").checked,
+              autostart: $("autostart").checked,
+              exit_pin: $("removePin").checked ? "" : pin ? pin : null,
+            },
+          });
+          await invoke("open_server");
+        } catch (err) {
+          show(String(err));
+        }
+      };
+
+      $("quit").onclick = async () => {
+        try {
+          await invoke("exit_app", { pin: null });
+        } catch {
+          const pin = prompt("Manager PIN");
+          if (pin !== null) invoke("exit_app", { pin }).catch((e) => show(String(e)));
+        }
+      };
+
+      init().catch((e) => show(String(e)));
+    </script>
+  </body>
+</html>

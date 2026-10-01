@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { formatMoney } from "@/lib/money";
+import { ReceiptPrinter } from "@/components/receipt-printer";
 import { getSaleShare, type SaleShare } from "../sales/actions";
 
 export function SaleComplete({
@@ -37,14 +38,7 @@ export function SaleComplete({
         </p>
       )}
       <div className="grid gap-2">
-        <a
-          href={`/app/sales/${saleId}/receipt?print=1`}
-          target="_blank"
-          rel="noopener"
-          className="btn btn-secondary py-3"
-        >
-          Print receipt
-        </a>
+        <ReceiptPrinter saleId={saleId} auto className="btn btn-secondary w-full py-3" />
         {share?.whatsapp_url && (
           <a href={share.whatsapp_url} target="_blank" rel="noopener" className="btn btn-secondary py-3">
             Send receipt on WhatsApp

@@ -252,6 +252,62 @@ export type Database = {
         };
         Relationships: [];
       };
+      drawer_openings: {
+        Row: {
+          created_at: string;
+          id: string;
+          location_id: string;
+          opened_by: string | null;
+          reason: string;
+          shift_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          location_id: string;
+          opened_by?: string | null;
+          reason: string;
+          shift_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          location_id?: string;
+          opened_by?: string | null;
+          reason?: string;
+          shift_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "drawer_openings_location_id_fkey";
+            columns: ["location_id"];
+            isOneToOne: false;
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "drawer_openings_opened_by_fkey";
+            columns: ["opened_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "drawer_openings_opened_by_fkey";
+            columns: ["opened_by"];
+            isOneToOne: false;
+            referencedRelation: "staff_directory";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "drawer_openings_shift_id_fkey";
+            columns: ["shift_id"];
+            isOneToOne: false;
+            referencedRelation: "shifts";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       locations: {
         Row: {
           address: string | null;
@@ -1707,6 +1763,7 @@ export type Database = {
       import_products: { Args: { products: Json }; Returns: number };
       is_manager_or_owner: { Args: Record<PropertyKey, never>; Returns: boolean };
       is_owner: { Args: Record<PropertyKey, never>; Returns: boolean };
+      log_drawer_open: { Args: { p_location_id: string; p_reason: string }; Returns: undefined };
       normalize_phone: { Args: { p_phone: string }; Returns: string };
       open_shift: { Args: { p_float_kobo: number; p_location_id: string }; Returns: string };
       post_receipt: { Args: { p_receipt_id: string }; Returns: undefined };
