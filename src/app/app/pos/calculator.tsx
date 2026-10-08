@@ -27,7 +27,9 @@ export function Calculator({
       <div className="card w-full max-w-md space-y-4 p-5 shadow-xl">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <h2 className="font-semibold">{item.coverage === "roll" ? "How many rolls?" : "How many boxes?"}</h2>
+            <h2 className="font-semibold">
+              {item.coverage === "roll" ? "How many rolls?" : "How many to cover the area?"}
+            </h2>
             <p className="text-muted text-sm">{skuLabel(item)}</p>
           </div>
           <button type="button" className="text-muted text-sm hover:underline" onClick={onClose}>
@@ -150,7 +152,7 @@ function Tiles({ item, onApply }: { item: TillItem; onApply: (q: number) => void
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
         <label className="block">
-          <span className="label">Room length (m)</span>
+          <span className="label">Length (m)</span>
           <input
             className="input"
             value={length}
@@ -160,7 +162,7 @@ function Tiles({ item, onApply }: { item: TillItem; onApply: (q: number) => void
           />
         </label>
         <label className="block">
-          <span className="label">Room width (m)</span>
+          <span className="label">Width or height (m)</span>
           <input className="input" value={width} onChange={(e) => setWidth(e.target.value)} inputMode="decimal" />
         </label>
       </div>
@@ -169,7 +171,7 @@ function Tiles({ item, onApply }: { item: TillItem; onApply: (q: number) => void
         <input className="input" value={waste} onChange={(e) => setWaste(e.target.value)} inputMode="decimal" />
       </label>
       <p className="text-muted text-xs">
-        One {item.unit} covers {item.coverage_m2 ?? "?"} m².
+        Floor: length × width. Wall: width × height. One {item.unit} covers {item.coverage_m2 ?? "?"} m².
       </p>
       {length && width && (
         <div className="bg-background rounded-md p-3 text-sm">
@@ -179,7 +181,7 @@ function Tiles({ item, onApply }: { item: TillItem; onApply: (q: number) => void
                 {result.boxes} {item.unit}
               </p>
               <p className="text-muted">
-                Floor {Math.round(num(length) * num(width) * 100) / 100} m² · covers {result.coveredM2} m²
+                Area {Math.round(num(length) * num(width) * 100) / 100} m² · covers {result.coveredM2} m²
               </p>
             </>
           ) : (

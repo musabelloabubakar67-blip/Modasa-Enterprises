@@ -13,7 +13,7 @@ export const IMPORT_COLUMNS = [
   { key: "description", label: "description", required: false, help: "Optional product description." },
   { key: "roll_width_cm", label: "roll_width_cm", required: false, help: "Wallpaper: roll width in cm." },
   { key: "roll_length_cm", label: "roll_length_cm", required: false, help: "Wallpaper: roll length in cm." },
-  { key: "coverage_m2", label: "coverage_m2", required: false, help: "Tiles: m² covered by one box." },
+  { key: "coverage_m2", label: "coverage_m2", required: false, help: "Tiles, sheets, panels: m² covered by one unit." },
 ] as const;
 
 export type ImportColumn = (typeof IMPORT_COLUMNS)[number]["key"];

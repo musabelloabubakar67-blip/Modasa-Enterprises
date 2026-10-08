@@ -317,7 +317,7 @@ export function ProductForm({
                           label={`Coverage (m² per ${unit.abbreviation})`}
                           name={id("m2")}
                           error={e.coverage_m2}
-                          hint="Used to work out how many to sell for a floor area."
+                          hint="Used to work out how many to sell for a floor or wall area."
                         >
                           <input
                             id={id("m2")}

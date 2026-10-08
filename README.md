@@ -55,7 +55,8 @@ Useful commands:
 - **Cost prices** are in a separate table that cashiers and warehouse staff cannot read at all.
 - **Import** (`/app/products/import`): one row per SKU; rows matching an existing `sku_code` update it, and
   blank optional cells leave existing values unchanged. The whole file is saved in one transaction.
-- Units with *coverage* (Roll → width × length; Box → m² per box) feed the wallpaper/tile calculator at the till.
+- Units with *coverage* (Roll → width × length; area units such as Box, Sheet or Panel → m² per unit) feed the
+  wallpaper and area calculators at the till.
 
 ## Stock
 
@@ -96,7 +97,8 @@ Useful commands:
 - Receipts print at 80 mm from the browser and are shared on WhatsApp as a private link (`/r/<token>`).
 - VAT is a switch in Business settings; prices include VAT and receipts show the VAT portion when on.
 - Returns go back into stock or are written off as damaged; refunds come out of the open till session.
-- Wallpaper (rolls by strips, pattern repeat) and tile (boxes + waste %) calculators: `src/lib/calculators.ts`.
+- Wallpaper (rolls by strips, pattern repeat) and area (tiles, marble sheets, wall panels + waste %) calculators:
+  `src/lib/calculators.ts`.
 - Till PC setup: [docs/till-setup.md](docs/till-setup.md).
 
 ## Desktop till app (`desktop/`)
