@@ -32,8 +32,12 @@ Useful commands:
 | `npm run dev:users` | Create local test accounts (owner, Shop 1 cashier, Warehouse A staff) after a reset |
 | `npm run test:db` | Check the database's security and stock rules (run on a freshly reset database) |
 | `npm run db:types` | Regenerate TypeScript types after changing the schema |
+| `node scripts/product-workbook-to-csv.mjs` | Turn a completed product workbook into the product and opening-stock import files |
 | `npm run typecheck` / `npm run lint` / `npm run format` | Checks and formatting |
 | Studio: http://127.0.0.1:54323 | Browse the local database |
+
+Hosting, the training copy and handover: [`docs/training-copy.md`](docs/training-copy.md). Till PCs:
+[`docs/till-setup.md`](docs/till-setup.md).
 
 ## How it's organised
 
