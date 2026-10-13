@@ -24,15 +24,27 @@ export async function getNavBadges(staff: Staff): Promise<Record<string, number>
       : supabase.from("sales").select("id", { count: "exact", head: true }).neq("fulfilment_status", "completed");
   const handoverQuery = handovers && !manager && here ? handovers.eq("location_id", here) : handovers;
 
-  const [transferCount, adjustmentCount, handoverCount] = await Promise.all([
+  // Paid online orders that need someone: waiting for stock, or cancelled and not yet refunded.
+  // (Row-level security already limits cashiers to their own shop.)
+  const onlineQuery =
+    staff.role === "warehouse"
+      ? null
+      : supabase
+          .from("online_orders")
+          .select("id", { count: "exact", head: true })
+          .or("status.in.(paid,awaiting_stock),and(status.eq.cancelled,paid_at.not.is.null)");
+
+  const [transferCount, adjustmentCount, handoverCount, onlineCount] = await Promise.all([
     transferQuery,
     manager ? supabase.from("adjustments").select("id", { count: "exact", head: true }).eq("status", "pending") : null,
     handoverQuery,
+    onlineQuery,
   ]);
 
   return {
     "/app/transfers": transferCount?.count ?? 0,
     "/app/stock": adjustmentCount?.count ?? 0,
     "/app/sales": handoverCount?.count ?? 0,
+    "/app/online-orders": onlineCount?.count ?? 0,
   };
 }

@@ -3,6 +3,7 @@ import { getBusinessSettings } from "@/lib/business";
 import { navFor } from "@/lib/nav";
 import { ROLE_LABELS } from "@/lib/roles";
 import { signOut } from "@/app/login/actions";
+import { LogoMark } from "@/components/logo-mark";
 import { NavLinks } from "./nav-links";
 import { getNavBadges } from "./nav-badges";
 
@@ -17,7 +18,10 @@ export default async function StaffLayout({ children }: LayoutProps<"/app">) {
       <aside className="border-border bg-surface border-b md:w-60 md:shrink-0 md:border-r md:border-b-0 print:hidden">
         <div className="flex items-start justify-between gap-2 px-4 py-4">
           <div className="min-w-0">
-            <p className="truncate font-semibold">{business.name}</p>
+            <p className="flex items-center gap-2 font-semibold">
+              <LogoMark className="text-accent h-5 w-auto" />
+              <span className="truncate">{business.name}</span>
+            </p>
             <p className="text-muted truncate text-xs md:mt-1">
               {staff.fullName} · {ROLE_LABELS[staff.role]}
               {staff.locationName ? ` · ${staff.locationName}` : ""}

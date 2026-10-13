@@ -7,8 +7,9 @@ import { LineChart } from "@/components/charts/line-chart";
 import { seriesColor } from "@/components/charts/colors";
 import { getActiveLocations } from "../stock/data";
 import { filterQuery, ReportFilterBar, Stat } from "./filters";
+import { PAYMENT_LABELS } from "@/lib/payments";
 
-const METHOD = { cash: "Cash", card: "POS card", transfer: "Bank transfer" } as const;
+const METHOD = PAYMENT_LABELS;
 
 export default async function SalesReportPage({ searchParams }: PageProps<"/app/reports">) {
   const f = parseReportFilters(await searchParams);

@@ -40,14 +40,20 @@ Check current plans and terms on each provider's pricing page before quoting run
 1. At vercel.com, **Add New → Project**, import this GitHub repository. Framework: Next.js. Node: 22.
 2. Environment variables (Settings → Environment Variables):
 
-   | Name                                   | Value                                                                                 |
-   | -------------------------------------- | ------------------------------------------------------------------------------------- |
-   | `NEXT_PUBLIC_SUPABASE_URL`             | `https://<project ref>.supabase.co`                                                   |
-   | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | the publishable key                                                                   |
-   | `SUPABASE_SECRET_KEY`                  | the secret key. Never share it or put it in the code.                                 |
-   | `NEXT_PUBLIC_SITE_URL`                 | the site's address, e.g. `https://modasa-training.vercel.app` (used in receipt links) |
+   | Name                                   | Value                                                                                   |
+   | -------------------------------------- | --------------------------------------------------------------------------------------- |
+   | `NEXT_PUBLIC_SUPABASE_URL`             | `https://<project ref>.supabase.co`                                                     |
+   | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | the publishable key                                                                     |
+   | `SUPABASE_SECRET_KEY`                  | the secret key. Never share it or put it in the code.                                   |
+   | `NEXT_PUBLIC_SITE_URL`                 | the site's address, e.g. `https://modasa-training.vercel.app` (used in receipt links)   |
+   | `PAYSTACK_SECRET_KEY`                  | training: a Paystack **test** key (`sk_test_…`). Never a live key on the training copy. |
 
 3. Deploy.
+4. With a Paystack key set, add the webhook in the Paystack dashboard (test mode):
+   `https://<site address>/api/paystack/webhook`. Without a key, the online shop's checkout stays switched off.
+
+The site's home page is the public **online shop**, so the training copy has a shop anyone could open. Keep
+it from looking real: leave products off the website except a few for practice, and use only test payments.
 
 ## 3. Create the owner straight away
 
@@ -90,8 +96,8 @@ Train each role on the jobs they'll do every day, on the real products:
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Cashier         | Sign in, find an item by search and by scanning, sell with cash / transfer / split payment, area and roll calculators (marble sheets, panels, wallpaper), receipt by print and WhatsApp, a return, end-of-day cash-up |
 | Warehouse staff | Receive a delivery, print labels, dispatch a transfer, report a count difference or damage                                                                                                                            |
-| Manager         | Approve counts and damage, request and receive transfers, sales and shift history, product edits and price changes                                                                                                    |
-| Owner           | Dashboard and reports, staff logins, locations, business settings                                                                                                                                                     |
+| Manager         | Approve counts and damage, request and receive transfers, sales and shift history, product edits and price changes, an online order end to end (test-card checkout, Online orders, collection or delivery, a cancel)  |
+| Owner           | Dashboard and reports, staff logins, locations, business settings, Settings → Website and which products show online                                                                                                  |
 
 Make mistakes on purpose (wrong item, wrong payment, a return, a short transfer) so staff see how each one
 is put right. That's the point of the training copy.
@@ -99,7 +105,7 @@ is put right. That's the point of the training copy.
 ## 7. At handover
 
 1. Create the live Supabase project (Pro plan) and Vercel project the same way (steps 1–4), with the real
-   business name.
+   business name and the **live** Paystack key and webhook.
 2. Import the same `products.csv`.
 3. Count every location on go-live day and import those counts as opening stock (run the script without
    `--location`, using the go-live counts).

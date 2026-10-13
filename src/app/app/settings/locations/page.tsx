@@ -5,7 +5,7 @@ export default async function LocationsPage() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("locations")
-    .select("id, name, code, kind, address, phone, is_active")
+    .select("id, name, code, kind, address, phone, public_name, is_active")
     .order("kind")
     .order("name");
   if (error) throw error;

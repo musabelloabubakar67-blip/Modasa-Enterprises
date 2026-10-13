@@ -2,7 +2,9 @@ import { env } from "@/lib/env";
 
 export const PRODUCT_IMAGES_BUCKET = "product-images";
 
+/** Photos are normally uploaded (a storage path); a full web address is shown as it is. */
 export function productImageUrl(storagePath: string) {
+  if (/^https?:\/\//.test(storagePath)) return storagePath;
   return `${env.supabaseUrl}/storage/v1/object/public/${PRODUCT_IMAGES_BUCKET}/${storagePath}`;
 }
 

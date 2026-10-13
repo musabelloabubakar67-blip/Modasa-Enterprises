@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { formatMoney } from "@/lib/money";
 import { canEditProducts, sellingPrice } from "@/lib/products";
 import { ProductThumb } from "@/components/product-thumb";
+import { setProductsOnline } from "./actions";
+import { SelectAll } from "./select-all";
 
 const PAGE_SIZE = 40;
 
@@ -15,13 +17,14 @@ export default async function ProductsPage({ searchParams }: PageProps<"/app/pro
   const q = typeof params.q === "string" ? params.q.trim() : "";
   const category = typeof params.category === "string" ? params.category : "";
   const status = params.status === "archived" || params.status === "all" ? params.status : "active";
+  const website = params.website === "on" || params.website === "off" ? params.website : "";
   const page = Math.max(1, Number(params.page) || 1);
 
   const supabase = await createClient();
   let query = supabase
     .from("products")
     .select(
-      "id, name, is_active, categories(name), units(abbreviation), skus(code, variant_label, price_kobo, promo_price_kobo, is_active), product_images(storage_path, sort_order)",
+      "id, name, is_active, show_online, categories(name), units(abbreviation), skus(code, variant_label, price_kobo, promo_price_kobo, is_active), product_images(storage_path, sort_order)",
       { count: "exact" },
     )
     .order("name")
@@ -32,6 +35,7 @@ export default async function ProductsPage({ searchParams }: PageProps<"/app/pro
   if (q) query = query.ilike("search_text", `%${q.toLowerCase().replace(/[\\%_]/g, (c) => `\\${c}`)}%`);
   if (category) query = query.eq("category_id", category);
   if (status !== "all") query = query.eq("is_active", status === "active");
+  if (website) query = query.eq("show_online", website === "on");
 
   const [{ data: products, count, error }, { data: categories }] = await Promise.all([
     query,
@@ -46,6 +50,7 @@ export default async function ProductsPage({ searchParams }: PageProps<"/app/pro
     if (q) sp.set("q", q);
     if (category) sp.set("category", category);
     if (status !== "active") sp.set("status", status);
+    if (website) sp.set("website", website);
     if (p > 1) sp.set("page", String(p));
     const s = sp.toString();
     return `/app/products${s ? `?${s}` : ""}`;
@@ -91,6 +96,11 @@ export default async function ProductsPage({ searchParams }: PageProps<"/app/pro
           <option value="archived">Archived</option>
           <option value="all">All</option>
         </select>
+        <select name="website" defaultValue={website} className="input w-auto" aria-label="Website">
+          <option value="">On or off the website</option>
+          <option value="on">On the website</option>
+          <option value="off">Not on the website</option>
+        </select>
         <button type="submit" className="btn btn-secondary">
           Filter
         </button>
@@ -100,70 +110,97 @@ export default async function ProductsPage({ searchParams }: PageProps<"/app/pro
         {count ?? 0} product{count === 1 ? "" : "s"}
       </p>
 
-      <ul className="card divide-border mt-2 divide-y">
-        {products.length === 0 && (
-          <li className="text-muted p-6 text-center text-sm">
-            No products found.{" "}
-            {canEdit && !q && (
-              <>
-                <Link href="/app/products/new" className="text-accent underline">
-                  Add one
-                </Link>{" "}
-                or{" "}
-                <Link href="/app/products/import" className="text-accent underline">
-                  import a spreadsheet
-                </Link>
-                .
-              </>
-            )}
-          </li>
+      <form action={setProductsOnline}>
+        {canEdit && products.length > 0 && (
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
+            <SelectAll />
+            <span className="text-muted text-sm">Ticked products:</span>
+            <button type="submit" name="show" value="yes" className="btn btn-secondary">
+              Show on website
+            </button>
+            <button type="submit" name="show" value="no" className="btn btn-secondary">
+              Hide from website
+            </button>
+          </div>
         )}
-        {products.map((product) => {
-          const skus = product.skus.filter((s) => s.is_active);
-          const prices = skus.map(sellingPrice);
-          const min = Math.min(...prices);
-          const max = Math.max(...prices);
-          const onSale = skus.some((s) => s.promo_price_kobo !== null);
-          return (
-            <li key={product.id}>
-              <Link href={`/app/products/${product.id}`} className="hover:bg-background flex items-center gap-3 p-3">
-                <ProductThumb path={product.product_images[0]?.storage_path} name={product.name} />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">
-                    {product.name}
-                    {!product.is_active && (
-                      <span className="bg-background text-muted ml-2 rounded px-1.5 py-0.5 text-xs">Archived</span>
-                    )}
-                  </p>
-                  <p className="text-muted truncate text-sm">
-                    {product.categories.name} ·{" "}
-                    {skus.length === 1
-                      ? skus[0].code
-                      : `${skus.length} variants (${skus
-                          .slice(0, 4)
-                          .map((s) => s.variant_label ?? s.code)
-                          .join(", ")}${skus.length > 4 ? "…" : ""})`}
-                  </p>
-                </div>
-                <div className="shrink-0 text-right text-sm">
-                  {prices.length > 0 ? (
-                    <p className="font-medium tabular-nums">
-                      {formatMoney(min, currency)}
-                      {max !== min && <> – {formatMoney(max, currency)}</>}
-                    </p>
-                  ) : (
-                    <p className="text-muted">No active SKUs</p>
-                  )}
-                  <p className="text-muted text-xs">
-                    per {product.units.abbreviation}
-                    {onSale && <span className="text-success ml-1">· on sale</span>}
-                  </p>
-                </div>
-              </Link>
+        <ul className="card divide-border mt-2 divide-y">
+          {products.length === 0 && (
+            <li className="text-muted p-6 text-center text-sm">
+              No products found.{" "}
+              {canEdit && !q && (
+                <>
+                  <Link href="/app/products/new" className="text-accent underline">
+                    Add one
+                  </Link>{" "}
+                  or{" "}
+                  <Link href="/app/products/import" className="text-accent underline">
+                    import a spreadsheet
+                  </Link>
+                  .
+                </>
+              )}
             </li>
-          );
-        })}
-      </ul>
+          )}
+          {products.map((product) => {
+            const skus = product.skus.filter((s) => s.is_active);
+            const prices = skus.map(sellingPrice);
+            const min = Math.min(...prices);
+            const max = Math.max(...prices);
+            const onSale = skus.some((s) => s.promo_price_kobo !== null);
+            return (
+              <li key={product.id} className="flex items-center">
+                {canEdit && (
+                  <label className="flex cursor-pointer items-center self-stretch pr-1 pl-3">
+                    <input type="checkbox" name="ids" value={product.id} aria-label={`Select ${product.name}`} />
+                  </label>
+                )}
+                <Link
+                  href={`/app/products/${product.id}`}
+                  className="hover:bg-background flex min-w-0 flex-1 items-center gap-3 p-3"
+                >
+                  <ProductThumb path={product.product_images[0]?.storage_path} name={product.name} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">
+                      {product.name}
+                      {!product.is_active && (
+                        <span className="bg-background text-muted ml-2 rounded px-1.5 py-0.5 text-xs">Archived</span>
+                      )}
+                      {product.show_online && product.is_active && (
+                        <span className="bg-accent/10 text-accent ml-2 rounded px-1.5 py-0.5 text-xs">
+                          On website{product.product_images.length === 0 && " · no photo"}
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-muted truncate text-sm">
+                      {product.categories.name} ·{" "}
+                      {skus.length === 1
+                        ? skus[0].code
+                        : `${skus.length} variants (${skus
+                            .slice(0, 4)
+                            .map((s) => s.variant_label ?? s.code)
+                            .join(", ")}${skus.length > 4 ? "…" : ""})`}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-right text-sm">
+                    {prices.length > 0 ? (
+                      <p className="font-medium tabular-nums">
+                        {formatMoney(min, currency)}
+                        {max !== min && <> – {formatMoney(max, currency)}</>}
+                      </p>
+                    ) : (
+                      <p className="text-muted">No active SKUs</p>
+                    )}
+                    <p className="text-muted text-xs">
+                      per {product.units.abbreviation}
+                      {onSale && <span className="text-success ml-1">· on sale</span>}
+                    </p>
+                  </div>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </form>
 
       {totalPages > 1 && (
         <nav className="mt-4 flex items-center justify-between text-sm" aria-label="Pagination">

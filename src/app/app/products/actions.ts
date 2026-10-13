@@ -83,6 +83,8 @@ const productSchema = z.object({
   description: z.string().max(2000).optional(),
   is_active: z.enum(["on"]).optional(),
   track_batches: z.enum(["on"]).optional(),
+  show_online: z.enum(["on"]).optional(),
+  is_featured: z.enum(["on"]).optional(),
   skus: z
     .string()
     .transform((s, ctx) => {
@@ -124,7 +126,8 @@ export async function saveProduct(_prev: ProductActionState, formData: FormData)
     return { error: "Please fix the highlighted SKU fields.", skuErrors };
   }
 
-  const { id, name, category_id, unit_id, description, is_active, track_batches } = parsed.data;
+  const { id, name, category_id, unit_id, description, is_active, track_batches, show_online, is_featured } =
+    parsed.data;
   const supabase = await createClient();
   const { data: productId, error } = await supabase.rpc("save_product", {
     payload: {
@@ -141,9 +144,31 @@ export async function saveProduct(_prev: ProductActionState, formData: FormData)
 
   if (error) return { error: friendlyDbError(error) };
 
+  const { error: webError } = await supabase
+    .from("products")
+    .update({ show_online: show_online === "on", is_featured: is_featured === "on" })
+    .eq("id", productId);
+  if (webError) return { error: webError.message };
+
   revalidatePath("/app/products", "layout");
   // Reload the page so the form shows exactly what was stored (including ids of new SKUs).
   redirect(`/app/products/${productId}?${id ? "saved" : "created"}=1`);
+}
+
+/** Shows or hides the ticked products on the website (the two buttons above the products list). */
+export async function setProductsOnline(formData: FormData) {
+  await requireStaff(EDITORS);
+  const ids = z.array(z.uuid()).max(500).safeParse(formData.getAll("ids"));
+  const show = formData.get("show");
+  if (!ids.success || ids.data.length === 0 || (show !== "yes" && show !== "no")) return;
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("products")
+    .update({ show_online: show === "yes" })
+    .in("id", ids.data);
+  if (error) throw error;
+  revalidatePath("/", "layout");
 }
 
 function friendlyDbError(error: { code?: string; message: string; details?: string }) {

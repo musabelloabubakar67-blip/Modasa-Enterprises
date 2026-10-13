@@ -7,8 +7,9 @@ import { formatMoney } from "@/lib/money";
 import { createClient } from "@/lib/supabase/server";
 import { isManager } from "../../stock/data";
 import { CloseTillForm } from "./close-form";
+import { PAYMENT_LABELS } from "@/lib/payments";
 
-const METHOD = { cash: "Cash", card: "POS card", transfer: "Bank transfer" } as const;
+const METHOD = PAYMENT_LABELS;
 
 export default async function CloseTillPage({ searchParams }: PageProps<"/app/pos/close">) {
   const staff = await requireStaff(["owner", "manager", "cashier"]);
@@ -39,12 +40,15 @@ export default async function CloseTillPage({ searchParams }: PageProps<"/app/po
     supabase.from("sales").select("id", { count: "exact", head: true }).eq("shift_id", shift.id),
     getBusinessSettings(),
   ]);
-  const rows = (expected ?? []).map((e) => ({
-    method: e.method,
-    sales: e.sales_kobo,
-    refunds: e.refunds_kobo,
-    expected: e.expected_kobo,
-  }));
+  // Website payments never pass through the till, so they aren't part of cash-up.
+  const rows = (expected ?? [])
+    .filter((e) => e.method !== "online")
+    .map((e) => ({
+      method: e.method,
+      sales: e.sales_kobo,
+      refunds: e.refunds_kobo,
+      expected: e.expected_kobo,
+    }));
 
   return (
     <div className="max-w-2xl space-y-4">

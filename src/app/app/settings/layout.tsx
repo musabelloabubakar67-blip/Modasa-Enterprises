@@ -5,6 +5,7 @@ const TABS = [
   { href: "/app/settings", label: "Business", exact: true },
   { href: "/app/settings/locations", label: "Locations" },
   { href: "/app/settings/staff", label: "Staff" },
+  { href: "/app/settings/website", label: "Website" },
 ];
 
 export default async function SettingsLayout({ children }: LayoutProps<"/app/settings">) {
