@@ -27,7 +27,19 @@ export default async function PosPage({ searchParams }: PageProps<"/app/pos">) {
     return (
       <div className="max-w-xl space-y-4">
         <h1 className="text-2xl font-semibold">Point of sale</h1>
-        {manager ? (
+        {manager && shops.length === 0 ? (
+          <p className="card p-6 text-sm">
+            There are no shops yet.{" "}
+            {staff.role === "owner" ? (
+              <Link href="/app/settings/locations" className="text-accent underline">
+                Add your shops in Settings → Locations
+              </Link>
+            ) : (
+              "Ask the owner to add the shops in Settings → Locations"
+            )}
+            , then come back here.
+          </p>
+        ) : manager ? (
           <>
             <p className="text-muted text-sm">Which shop are you selling at?</p>
             <div className="grid gap-2 sm:grid-cols-3">
