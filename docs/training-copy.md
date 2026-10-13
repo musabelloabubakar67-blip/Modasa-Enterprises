@@ -38,6 +38,9 @@ Check current plans and terms on each provider's pricing page before quoting run
 ## 2. Website (Vercel)
 
 1. At vercel.com, **Add New → Project**, import this GitHub repository. Framework: Next.js. Node: 22.
+   **Settings → Functions → Function Region**: pick the region nearest the Supabase project's region (shown
+   under Supabase **Project Settings → General**), e.g. London for `eu-west-2`. Vercel's default is the US East
+   coast; every page makes several database calls, and each one crossing the Atlantic makes pages feel slow.
 2. Environment variables (Settings → Environment Variables):
 
    | Name                                   | Value                                                                                              |
