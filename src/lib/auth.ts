@@ -16,15 +16,17 @@ export type Staff = {
 /** The signed-in, active staff member, or null. Cached for the duration of one request. */
 export const getStaff = cache(async (): Promise<Staff | null> => {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+  // getClaims checks the session token's signature locally (no call to the Auth server when the project
+  // uses asymmetric signing keys). The profile lookup below still runs on every request, so a deactivated
+  // staff member is locked out immediately.
+  const { data: auth } = await supabase.auth.getClaims();
+  const userId = auth?.claims.sub;
+  if (!userId) return null;
 
   const { data } = await supabase
     .from("profiles")
     .select("id, full_name, email, role, location_id, is_active, locations(name)")
-    .eq("id", user.id)
+    .eq("id", userId)
     .maybeSingle();
 
   if (!data || !data.is_active) return null;

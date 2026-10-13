@@ -34,6 +34,8 @@ function addressRedirect(request: NextRequest) {
 export async function proxy(request: NextRequest) {
   const redirect = addressRedirect(request);
   if (redirect) return redirect;
+  // Shop visitors have no sign-in, so shop pages skip the session check entirely.
+  if (!isStaffPath(request.nextUrl.pathname)) return NextResponse.next({ request });
 
   let response = NextResponse.next({ request });
 
@@ -55,11 +57,10 @@ export async function proxy(request: NextRequest) {
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Also refreshes an expiring session. getClaims verifies the token locally where it can.
+  const { data } = await supabase.auth.getClaims();
 
-  if (!user && request.nextUrl.pathname.startsWith("/app")) {
+  if (!data?.claims && request.nextUrl.pathname.startsWith("/app")) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.search = "";

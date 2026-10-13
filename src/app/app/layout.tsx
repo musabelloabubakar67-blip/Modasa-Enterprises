@@ -9,8 +9,7 @@ import { getNavBadges } from "./nav-badges";
 
 export default async function StaffLayout({ children }: LayoutProps<"/app">) {
   const staff = await requireStaff();
-  const business = await getBusinessSettings();
-  const badges = await getNavBadges(staff);
+  const [business, badges] = await Promise.all([getBusinessSettings(), getNavBadges(staff)]);
   const items = navFor(staff.role).map((item) => ({ ...item, badge: badges[item.href] }));
 
   return (
