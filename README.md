@@ -167,6 +167,14 @@ NEXT_PUBLIC_SITE_URL=https://your-site.example   # needed once hosted, for payme
 ```
 
 In the Paystack dashboard set the webhook URL to `https://<your site>/api/paystack/webhook`.
+
+### Separate addresses for staff and the shop
+
+Set `STAFF_SITE_URL` (e.g. `https://staff.example.com`) and point both domains at the same deployment.
+`src/proxy.ts` then serves the staff screens (`/app`, `/login`, `/setup`) only on that address and everything
+else only on `NEXT_PUBLIC_SITE_URL`, redirecting visitors who use the wrong one. Staff sign-ins stay on the staff
+address. `NEXT_PUBLIC_SITE_URL` is required when the addresses are split: receipt, order and payment links use it.
+Till PCs use the staff address.
 Without a key, a development machine shows a stand-in payment page (`/pay/test/...`) so the whole journey can
 be tried; in production, checkout is switched off until the key is set.
 

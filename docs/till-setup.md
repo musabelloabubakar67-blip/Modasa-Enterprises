@@ -32,7 +32,7 @@ The app opens its settings screen the first time:
 
 | Setting | What to enter |
 | --- | --- |
-| Server address | The address of the retail system, e.g. `https://modasa.example.com` |
+| Server address | The staff address of the retail system, e.g. `https://staff.modasa.example.com` (not the online shop's address, if they differ) |
 | Printer | The receipt printer's name. **Refresh** if you just plugged it in. *Test file* saves receipts to `Documents\till-test-receipt.txt` instead of printing (for testing without a printer). |
 | Paper width | 80 mm (most printers) or 58 mm |
 | Cash drawer | Tick if a drawer is plugged into the printer |

@@ -40,16 +40,21 @@ Check current plans and terms on each provider's pricing page before quoting run
 1. At vercel.com, **Add New → Project**, import this GitHub repository. Framework: Next.js. Node: 22.
 2. Environment variables (Settings → Environment Variables):
 
-   | Name                                   | Value                                                                                   |
-   | -------------------------------------- | --------------------------------------------------------------------------------------- |
-   | `NEXT_PUBLIC_SUPABASE_URL`             | `https://<project ref>.supabase.co`                                                     |
-   | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | the publishable key                                                                     |
-   | `SUPABASE_SECRET_KEY`                  | the secret key. Never share it or put it in the code.                                   |
-   | `NEXT_PUBLIC_SITE_URL`                 | the site's address, e.g. `https://modasa-training.vercel.app` (used in receipt links)   |
-   | `PAYSTACK_SECRET_KEY`                  | training: a Paystack **test** key (`sk_test_…`). Never a live key on the training copy. |
+   | Name                                   | Value                                                                                              |
+   | -------------------------------------- | -------------------------------------------------------------------------------------------------- |
+   | `NEXT_PUBLIC_SUPABASE_URL`             | `https://<project ref>.supabase.co`                                                                |
+   | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | the publishable key                                                                                |
+   | `SUPABASE_SECRET_KEY`                  | the secret key. Never share it or put it in the code.                                              |
+   | `NEXT_PUBLIC_SITE_URL`                 | the **shop** address, e.g. `https://modasa-training.vercel.app` (receipt, order and payment links) |
+   | `STAFF_SITE_URL`                       | the **staff** address, e.g. `https://modasa-training-staff.vercel.app`                             |
+   | `PAYSTACK_SECRET_KEY`                  | training: a Paystack **test** key (`sk_test_…`). Never a live key on the training copy.            |
 
 3. Deploy.
-4. With a Paystack key set, add the webhook in the Paystack dashboard (test mode):
+4. **Settings → Domains**: add the staff address (e.g. `modasa-training-staff.vercel.app`) next to the shop
+   address. Both point at this one deployment. Staff screens then open only on the staff address and the shop
+   only on the shop address; a visitor on the wrong one is sent to the right one. If a variable is added after
+   the first deploy, **Redeploy** for it to take effect.
+5. With a Paystack key set, add the webhook in the Paystack dashboard (test mode):
    `https://<site address>/api/paystack/webhook`. Without a key, the online shop's checkout stays switched off.
 
 The site's home page is the public **online shop**, so the training copy has a shop anyone could open. Keep
@@ -109,5 +114,5 @@ is put right. That's the point of the training copy.
 2. Import the same `products.csv`.
 3. Count every location on go-live day and import those counts as opening stock (run the script without
    `--location`, using the go-live counts).
-4. Point the till PCs at the live address (till settings → Server address, see `till-setup.md`).
+4. Point the till PCs at the live **staff** address (till settings → Server address, see `till-setup.md`).
 5. Delete the training projects, or keep the training copy for new staff, clearly named.

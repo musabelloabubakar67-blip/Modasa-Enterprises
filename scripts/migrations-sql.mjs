@@ -35,6 +35,8 @@ const out = [
   // Stop if any of these were already applied, rather than failing halfway with a confusing error.
   "create schema if not exists supabase_migrations;",
   "create table if not exists supabase_migrations.schema_migrations (version text primary key, statements text[], name text);",
+  // Bookkeeping only; nothing should read it through the API.
+  "alter table supabase_migrations.schema_migrations enable row level security;",
   "do $$ begin",
   `  if exists (select 1 from supabase_migrations.schema_migrations where version in (${files.map((f) => quote(f.slice(0, 14))).join(", ")})) then`,
   "    raise exception 'Some of these migrations are already applied. Use --after with the latest applied version.';",
