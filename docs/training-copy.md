@@ -19,14 +19,19 @@ Check current plans and terms on each provider's pricing page before quoting run
 1. At supabase.com, create a project named e.g. `modasa-training`. Pick the region closest to the shops
    (there is no African region; a European one is usually nearest to Nigeria). Save the database password in
    a password manager.
-2. On a computer with Node 22 and this repository:
+2. Create the tables and security rules. Either way skips the demo seed.
+   - **From the dashboard (no tools needed):** open the project's **SQL Editor → New query**, paste the whole
+     of `setup.sql` and **Run**. Generate it with `node scripts/migrations-sql.mjs > setup.sql`. It runs in
+     one transaction: if anything fails, nothing is applied. For later updates, generate only the new
+     migrations with `--after <latest applied version>`.
+   - **With the Supabase CLI**, on a computer with Node 22 and this repository:
 
-   ```bash
-   npm install
-   npx supabase login
-   npx supabase link --project-ref <project ref from the project's URL>
-   npx supabase db push        # creates the tables and security rules; does NOT load the demo seed
-   ```
+     ```bash
+     npm install
+     npx supabase login
+     npx supabase link --project-ref <project ref from the project's URL>
+     npx supabase db push
+     ```
 
 3. In the project's **Settings → API Keys**, copy the **publishable** key and the **secret** key.
 
