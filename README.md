@@ -31,8 +31,12 @@ Useful commands:
 | `npm run dev:users` | Create local test accounts (owner, Shop 1 cashier, Warehouse A staff) after a reset |
 | `npm run test:db` | Check the database's security and stock rules (run on a freshly reset database) |
 | `npm run db:types` | Regenerate TypeScript types after changing the schema |
+| `node scripts/product-workbook-to-csv.mjs` | Turn a completed product workbook into the product and opening-stock import files |
 | `npm run typecheck` / `npm run lint` / `npm run format` | Checks and formatting |
 | Studio: http://127.0.0.1:54323 | Browse the local database |
+
+Hosting, the training copy and handover: [`docs/training-copy.md`](docs/training-copy.md). Till PCs:
+[`docs/till-setup.md`](docs/till-setup.md).
 
 ## How it's organised
 
@@ -54,7 +58,8 @@ Useful commands:
 - **Cost prices** are in a separate table that cashiers and warehouse staff cannot read at all.
 - **Import** (`/app/products/import`): one row per SKU; rows matching an existing `sku_code` update it, and
   blank optional cells leave existing values unchanged. The whole file is saved in one transaction.
-- Units with *coverage* (Roll → width × length; Box → m² per box) feed the wallpaper/tile calculator at the till.
+- Units with *coverage* (Roll → width × length; area units such as Box, Sheet or Panel → m² per unit) feed the
+  wallpaper and area calculators at the till.
 
 ## Stock
 
@@ -95,7 +100,8 @@ Useful commands:
 - Receipts print at 80 mm from the browser and are shared on WhatsApp as a private link (`/r/<token>`).
 - VAT is a switch in Business settings; prices include VAT and receipts show the VAT portion when on.
 - Returns go back into stock or are written off as damaged; refunds come out of the open till session.
-- Wallpaper (rolls by strips, pattern repeat) and tile (boxes + waste %) calculators: `src/lib/calculators.ts`.
+- Wallpaper (rolls by strips, pattern repeat) and area (tiles, marble sheets, wall panels + waste %) calculators:
+  `src/lib/calculators.ts`.
 - Till PC setup: [docs/till-setup.md](docs/till-setup.md).
 
 ## Desktop till app (`desktop/`)

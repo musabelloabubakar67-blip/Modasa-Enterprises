@@ -41,11 +41,14 @@ export function wallpaperRolls(input: WallpaperInput): WallpaperResult {
 export type TileInput = { areaM2: number; coverageM2PerBox: number; wastePercent?: number };
 export type TileResult = { ok: true; boxes: number; coveredM2: number } | { ok: false; reason: string };
 
-/** Boxes needed for a floor area, with an allowance for cuts and breakage (10% by default). */
+/**
+ * Units (boxes of tiles, marble sheets, wall panels…) needed to cover a floor or wall area, with an
+ * allowance for cuts and breakage (10% by default).
+ */
 export function tileBoxes(input: TileInput): TileResult {
-  if (!(input.areaM2 > 0)) return { ok: false, reason: "Enter the floor size." };
+  if (!(input.areaM2 > 0)) return { ok: false, reason: "Enter the length and width." };
   if (!(input.coverageM2PerBox > 0))
-    return { ok: false, reason: "This item has no coverage per box set. Add it on the product." };
+    return { ok: false, reason: "This item has no coverage (m² per unit) set. Add it on the product." };
   const needed = input.areaM2 * (1 + (input.wastePercent ?? 10) / 100);
   // Round before ceil so floating-point noise (e.g. 3.0000000004) doesn't add a box.
   const boxes = Math.ceil(Math.round((needed / input.coverageM2PerBox) * 1000) / 1000);

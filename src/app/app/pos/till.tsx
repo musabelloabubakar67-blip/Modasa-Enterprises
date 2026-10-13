@@ -335,7 +335,7 @@ export function Till({ shop, currency }: { shop: { id: string; name: string }; c
                       </div>
                       {l.item.coverage !== "none" && (
                         <button type="button" className="btn btn-secondary" onClick={() => setCalculatorFor(l.key)}>
-                          {l.item.coverage === "roll" ? "Rolls calculator" : "Boxes calculator"}
+                          {l.item.coverage === "roll" ? "Rolls calculator" : "Area calculator"}
                         </button>
                       )}
                       <button

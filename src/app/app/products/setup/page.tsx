@@ -59,7 +59,8 @@ export default async function CatalogueSetupPage() {
           <h2 className="font-semibold">Units</h2>
           <p className="text-muted text-sm">
             How products are sold and counted. &ldquo;Coverage&rdquo; lets the till work out quantities from wall or
-            floor sizes — use Roll size for wallpaper and m² per unit for tiles sold by the box.
+            floor sizes — use Roll size for wallpaper, and m² per unit for anything sold to cover an area (tiles by the
+            box, marble sheets, wall panels).
           </p>
         </div>
         <ul className="card divide-border divide-y">
