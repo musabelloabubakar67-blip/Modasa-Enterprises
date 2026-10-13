@@ -3,7 +3,6 @@ import { requireStaff } from "@/lib/auth";
 import { getBusinessSettings } from "@/lib/business";
 import { createClient } from "@/lib/supabase/server";
 import { formatMoney } from "@/lib/money";
-import { fetchAll } from "@/lib/supabase/fetch-all";
 import { formatQty, getActiveLocations, isManager } from "./data";
 
 const PAGE_SIZE = 50;
@@ -30,20 +29,20 @@ export default async function StockOverviewPage({ searchParams }: PageProps<"/ap
   if (show === "low") query = query.eq("is_low", true);
   if (show === "out") query = query.lte("total_quantity", 0);
 
-  const [locations, { data: rows, count, error }, { data: categories }] = await Promise.all([
+  const manager = isManager(staff.role);
+  const [locations, { data: rows, count, error }, { data: categories }, stockValue] = await Promise.all([
     getActiveLocations(),
     query,
     supabase.from("categories").select("id, name").order("sort_order").order("name"),
+    manager ? getStockValue() : null,
   ]);
   if (error) throw error;
 
   const skuIds = rows.map((r) => r.sku_id!);
-  const manager = isManager(staff.role);
-  const [{ data: levels }, { data: reorders }, { data: transit }, stockValue, { currency }] = await Promise.all([
+  const [{ data: levels }, { data: reorders }, { data: transit }, { currency }] = await Promise.all([
     supabase.from("sku_location_stock").select("sku_id, location_id, quantity").in("sku_id", skuIds),
     supabase.from("reorder_levels").select("sku_id, location_id, reorder_level").in("sku_id", skuIds),
     supabase.from("stock_in_transit").select("sku_id, quantity").in("sku_id", skuIds),
-    manager ? getStockValue(locations.map((l) => l.id)) : null,
     getBusinessSettings(),
   ]);
   const inTransit = new Map<string, number>();
@@ -222,34 +221,23 @@ export default async function StockOverviewPage({ searchParams }: PageProps<"/ap
   );
 }
 
-/** Stock value at cost per location. Only called for owners/managers (costs are hidden from others anyway). */
-async function getStockValue(locationIds: string[]) {
+/**
+ * Stock value at cost per active location, added up in the database. Only called for owners/managers (costs
+ * are hidden from others anyway).
+ */
+async function getStockValue() {
   const supabase = await createClient();
-  const [levels, costs] = await Promise.all([
-    fetchAll((from, to) =>
-      supabase
-        .from("sku_location_stock")
-        .select("sku_id, location_id, quantity")
-        .in("location_id", locationIds)
-        .range(from, to),
-    ),
-    fetchAll((from, to) => supabase.from("sku_costs").select("sku_id, cost_kobo").range(from, to)),
-  ]);
-  const cost = new Map(costs.map((c) => [c.sku_id, c.cost_kobo]));
-  const byLocation = new Map<string, number>();
-  const uncosted = new Set<string>();
-  let total = 0;
-  for (const l of levels) {
-    const q = Number(l.quantity);
-    if (q <= 0) continue;
-    const c = cost.get(l.sku_id!);
-    if (c === undefined) {
-      uncosted.add(l.sku_id!);
-      continue;
-    }
-    const value = Math.round(q * c);
-    byLocation.set(l.location_id!, (byLocation.get(l.location_id!) ?? 0) + value);
-    total += value;
+  const { data, error } = await supabase.rpc("stock_value_by_location");
+  if (error) {
+    // The database function arrives with migration 20261013000013. Until that has been run on a database,
+    // leave the stock value out rather than break the whole page.
+    if (error.code === "PGRST202") return null;
+    throw error;
   }
-  return { byLocation, total, uncosted: uncosted.size };
+  const total = data.find((r) => r.location_id === null);
+  return {
+    byLocation: new Map(data.filter((r) => r.location_id !== null).map((r) => [r.location_id, r.value_kobo])),
+    total: total?.value_kobo ?? 0,
+    uncosted: total?.uncosted_skus ?? 0,
+  };
 }

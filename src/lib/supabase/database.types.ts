@@ -2263,6 +2263,14 @@ export type Database = {
         }[];
       };
       slugify: { Args: { p_text: string }; Returns: string };
+      stock_value_by_location: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          location_id: string;
+          uncosted_skus: number;
+          value_kobo: number;
+        }[];
+      };
       submit_adjustment: { Args: { payload: Json }; Returns: string };
       update_fulfilment: {
         Args: { p_sale_id: string; p_status: Database["public"]["Enums"]["fulfilment_status"] };
