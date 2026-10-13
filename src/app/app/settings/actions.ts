@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { expireBusinessSettings } from "@/lib/business";
+import { expireLocations } from "../stock/data";
 import { z } from "zod";
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -55,6 +57,7 @@ export async function updateBusiness(_prev: ActionState, formData: FormData): Pr
     .eq("id", 1);
   if (error) return { error: error.message };
 
+  expireBusinessSettings();
   revalidatePath("/", "layout");
   return { success: "Business details saved." };
 }
@@ -96,6 +99,7 @@ export async function saveLocation(_prev: ActionState, formData: FormData): Prom
     return { error: error.message };
   }
 
+  expireLocations();
   revalidatePath("/", "layout");
   return { success: id ? "Location updated." : "Location added." };
 }
@@ -229,6 +233,7 @@ export async function updateWebsite(_prev: ActionState, formData: FormData): Pro
     .eq("id", 1);
   if (error) return { error: error.message };
 
+  expireBusinessSettings();
   revalidatePath("/", "layout");
   return { success: "Website settings saved." };
 }
@@ -240,6 +245,7 @@ export async function setHeroImage(path: string | null): Promise<ActionState> {
   const supabase = await createClient();
   const { error } = await supabase.from("business_settings").update({ hero_image: path }).eq("id", 1);
   if (error) return { error: error.message };
+  expireBusinessSettings();
   revalidatePath("/", "layout");
   return { success: path ? "Photo updated." : "Photo removed." };
 }

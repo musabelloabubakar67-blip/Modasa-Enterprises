@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { expireBusinessSettings } from "@/lib/business";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { needsSetup } from "@/lib/setup";
@@ -29,6 +30,7 @@ export async function completeSetup(_prev: ActionState, formData: FormData): Pro
     .update({ name: businessName, updated_at: new Date().toISOString() })
     .eq("id", 1);
   if (settingsError) return { error: settingsError.message };
+  expireBusinessSettings();
 
   const { error: userError } = await admin.auth.admin.createUser({
     email,

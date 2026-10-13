@@ -38,19 +38,18 @@ export default async function StockOverviewPage({ searchParams }: PageProps<"/ap
   if (error) throw error;
 
   const skuIds = rows.map((r) => r.sku_id!);
-  const [{ data: levels }, { data: reorders }, { data: transit }] = await Promise.all([
+  const manager = isManager(staff.role);
+  const [{ data: levels }, { data: reorders }, { data: transit }, stockValue, { currency }] = await Promise.all([
     supabase.from("sku_location_stock").select("sku_id, location_id, quantity").in("sku_id", skuIds),
     supabase.from("reorder_levels").select("sku_id, location_id, reorder_level").in("sku_id", skuIds),
     supabase.from("stock_in_transit").select("sku_id, quantity").in("sku_id", skuIds),
+    manager ? getStockValue(locations.map((l) => l.id)) : null,
+    getBusinessSettings(),
   ]);
   const inTransit = new Map<string, number>();
   transit?.forEach((t) => inTransit.set(t.sku_id!, (inTransit.get(t.sku_id!) ?? 0) + Number(t.quantity)));
   const qty = new Map(levels?.map((l) => [`${l.sku_id}|${l.location_id}`, Number(l.quantity)]));
   const reorder = new Map(reorders?.map((r) => [`${r.sku_id}|${r.location_id}`, Number(r.reorder_level)]));
-
-  const manager = isManager(staff.role);
-  const stockValue = manager ? await getStockValue(locations.map((l) => l.id)) : null;
-  const { currency } = await getBusinessSettings();
 
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
   const href = (overrides: { page: number }) => {
