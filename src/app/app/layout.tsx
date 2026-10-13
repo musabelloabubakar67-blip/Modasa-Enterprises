@@ -9,8 +9,10 @@ import { getNavBadges } from "./nav-badges";
 
 export default async function StaffLayout({ children }: LayoutProps<"/app">) {
   const staff = await requireStaff();
-  const [business, badges] = await Promise.all([getBusinessSettings(), getNavBadges(staff)]);
-  const items = navFor(staff.role).map((item) => ({ ...item, badge: badges[item.href] }));
+  const business = await getBusinessSettings();
+  // Not awaited: the counts stream into the menu once ready, so the page doesn't wait for them.
+  const badges = getNavBadges(staff);
+  const items = navFor(staff.role);
 
   return (
     <div className="flex flex-1 flex-col md:flex-row">
@@ -32,7 +34,7 @@ export default async function StaffLayout({ children }: LayoutProps<"/app">) {
             </button>
           </form>
         </div>
-        <NavLinks items={items} />
+        <NavLinks items={items} badges={badges} />
         <form action={signOut} className="hidden px-4 py-4 md:block">
           <button type="submit" className="text-muted hover:text-foreground text-sm">
             Sign out

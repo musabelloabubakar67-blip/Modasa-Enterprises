@@ -1,10 +1,13 @@
 "use client";
 
+import { Suspense, use } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { NavItem } from "@/lib/nav";
 
-export function NavLinks({ items }: { items: NavItem[] }) {
+type Badges = Promise<Record<string, number>>;
+
+export function NavLinks({ items, badges }: { items: NavItem[]; badges: Badges }) {
   const pathname = usePathname();
 
   return (
@@ -33,14 +36,23 @@ export function NavLinks({ items }: { items: NavItem[] }) {
             }`}
           >
             {item.label}
-            {!!item.badge && (
-              <span className="bg-accent text-accent-foreground ml-2 rounded-full px-1.5 py-0.5 text-[10px] font-semibold">
-                {item.badge}
-              </span>
-            )}
+            <Suspense>
+              <Badge badges={badges} href={item.href} />
+            </Suspense>
           </Link>
         );
       })}
     </nav>
+  );
+}
+
+/** The count of things waiting under a menu item; appears when the counts arrive. */
+function Badge({ badges, href }: { badges: Badges; href: string }) {
+  const count = use(badges)[href];
+  if (!count) return null;
+  return (
+    <span className="bg-accent text-accent-foreground ml-2 rounded-full px-1.5 py-0.5 text-[10px] font-semibold">
+      {count}
+    </span>
   );
 }

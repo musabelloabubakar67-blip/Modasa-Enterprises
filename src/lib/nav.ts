@@ -7,7 +7,6 @@ export type NavItem = {
   /** Planned but not built yet; shown greyed out so staff can see what's coming. */
   soon?: boolean;
   /** Number of things waiting for this person (set per request). */
-  badge?: number;
 };
 
 const ALL: readonly StaffRole[] = ["owner", "manager", "cashier", "warehouse"];
