@@ -2085,6 +2085,17 @@ export type Database = {
         Returns: undefined;
       };
       approve_adjustment: { Args: { p_adjustment_id: string; p_review_note?: string }; Returns: undefined };
+      break_up_set: {
+        Args: {
+          p_location_id: string;
+          p_note?: string;
+          p_piece_sku_id: string;
+          p_pieces_per_set: number;
+          p_set_sku_id: string;
+          p_sets: number;
+        };
+        Returns: string;
+      };
       assert_at_either_end: { Args: { p_from: string; p_to: string }; Returns: undefined };
       assert_can_act_at: { Args: { p_location_id: string }; Returns: undefined };
       assert_can_handle_order: {
@@ -2284,7 +2295,15 @@ export type Database = {
       fulfilment_status: "pending" | "out_for_delivery" | "completed";
       location_kind: "shop" | "warehouse";
       movement_type:
-        "opening" | "receipt" | "transfer_out" | "transfer_in" | "sale" | "return" | "damage" | "count_correction";
+        | "opening"
+        | "receipt"
+        | "transfer_out"
+        | "transfer_in"
+        | "sale"
+        | "return"
+        | "damage"
+        | "count_correction"
+        | "set_split";
       online_order_status:
         "pending_payment" | "paid" | "awaiting_stock" | "confirmed" | "expired" | "cancelled" | "refunded";
       payment_method: "cash" | "card" | "transfer" | "online";
@@ -2418,6 +2437,7 @@ export const Constants = {
         "return",
         "damage",
         "count_correction",
+        "set_split",
       ],
       online_order_status: [
         "pending_payment",

@@ -231,6 +231,41 @@ export async function reviewAdjustment(id: string, approve: boolean, note: strin
   return { success: approve ? "Approved — stock updated." : "Rejected." };
 }
 
+// ---------- Breaking up a set ----------
+
+const breakUpSchema = z.object({
+  location_id: z.uuid({ error: "Choose a location." }),
+  set_sku_id: z.uuid({ error: "Choose the set." }),
+  sets: quantity("Number of sets"),
+  piece_sku_id: z.uuid({ error: "Choose the single-piece item." }),
+  pieces_per_set: quantity("Pieces per set"),
+  note: z.string().trim().max(300).optional(),
+});
+
+export type BreakUpInput = z.input<typeof breakUpSchema>;
+
+/** Turns sets into single pieces at one location: the sets go out of stock, the pieces come in. */
+export async function breakUpSet(input: BreakUpInput): Promise<ActionState> {
+  await requireStaff(["owner", "manager"]);
+  const parsed = breakUpSchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const v = parsed.data;
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("break_up_set", {
+    p_location_id: v.location_id,
+    p_set_sku_id: v.set_sku_id,
+    p_sets: Number(v.sets),
+    p_piece_sku_id: v.piece_sku_id,
+    p_pieces_per_set: Number(v.pieces_per_set),
+    p_note: v.note || undefined,
+  });
+  if (error) return { error: dbError(error) };
+
+  revalidatePath("/app/stock", "layout");
+  redirect("/app/stock/history?type=set_split");
+}
+
 // ---------- Reorder levels ----------
 
 export async function setReorderLevel(skuId: string, locationId: string, value: string): Promise<ActionState> {

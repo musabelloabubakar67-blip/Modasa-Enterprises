@@ -9,6 +9,7 @@ export const MOVEMENT_LABELS: Record<string, string> = {
   return: "Return",
   damage: "Write-off",
   count_correction: "Count correction",
+  set_split: "Set broken up",
 };
 
 export const ADJUSTMENT_LABELS = {

@@ -23,6 +23,7 @@ export default async function StockLayout({ children }: LayoutProps<"/app/stock"
     ...(manager || staff.role === "warehouse" ? [{ href: "/app/stock/deliveries", label: "Deliveries" }] : []),
     { href: "/app/stock/adjustments", label: pending ? `Adjustments (${pending})` : "Adjustments" },
     { href: "/app/stock/history", label: "History" },
+    ...(manager ? [{ href: "/app/stock/break-up", label: "Break up a set" }] : []),
     ...(manager || staff.role === "warehouse" ? [{ href: "/app/stock/labels", label: "Labels" }] : []),
   ];
 

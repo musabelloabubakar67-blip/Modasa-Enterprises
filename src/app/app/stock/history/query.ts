@@ -11,6 +11,7 @@ export const MOVEMENT_TYPES = [
   "return",
   "damage",
   "count_correction",
+  "set_split",
 ] as const;
 
 const filtersSchema = z.object({
