@@ -96,6 +96,21 @@ It lists any rows the import will reject (no item code, no price). Then, in the 
 2. **Stock → Adjustments → Import opening stock**: upload `out/opening-stock.csv`.
 3. **Stock → Labels**: print labels for a handful of items so cashiers can practise scanning.
 
+### Starting again
+
+To wipe a practice import and try again, mark the database as a training copy once. In the Supabase dashboard of the
+**training** project only, open **SQL Editor → New query** and run:
+
+```sql
+insert into public.instance_flags (name) values ('training_copy');
+```
+
+The owner then sees **Settings → Business → Training copy: start again**. It deletes every product, category, stock
+count, adjustment, delivery, transfer, sale, return, shift, customer and online order; logins, business settings,
+locations, units and delivery areas are kept, and numbering starts again from 1. The database refuses the reset
+on any project without that mark, so never run the line above on the live system. Product photos already uploaded
+stay in storage.
+
 ## 6. Train
 
 Train each role on the jobs they'll do every day, on the real products:

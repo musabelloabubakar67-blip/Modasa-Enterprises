@@ -72,6 +72,9 @@ Hosting, the training copy and handover: [`docs/training-copy.md`](docs/training
 - **Adjustments**: opening stock, counts and damage write-offs. Floor staff submit, managers approve; managers'
   own entries apply immediately. A count stores what the system showed at the time, so approving it later
   applies only the difference and doesn't undo sales made in between.
+- **Breaking up a set** (Stock → Break up a set, owners and managers): when a set is opened and its pieces are sold
+  singly, the sets come out of stock and the single-piece item goes in, at one location. The single piece is its own
+  item with its own price and cost. Recorded as *Set broken up* movements, which the losses report leaves out.
 - Labels print a CODE128 barcode of the SKU's barcode (or code) on A4 sticker sheets or 50×30 mm thermal labels.
 - Staff names in history come from `staff_directory` (names only), so floor staff never see colleagues' contact
   details. Dates are shown in Africa/Lagos time (`src/lib/dates.ts`).

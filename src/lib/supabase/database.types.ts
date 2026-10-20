@@ -2085,6 +2085,17 @@ export type Database = {
         Returns: undefined;
       };
       approve_adjustment: { Args: { p_adjustment_id: string; p_review_note?: string }; Returns: undefined };
+      break_up_set: {
+        Args: {
+          p_location_id: string;
+          p_note?: string;
+          p_piece_sku_id: string;
+          p_pieces_per_set: number;
+          p_set_sku_id: string;
+          p_sets: number;
+        };
+        Returns: string;
+      };
       assert_at_either_end: { Args: { p_from: string; p_to: string }; Returns: undefined };
       assert_can_act_at: { Args: { p_location_id: string }; Returns: undefined };
       assert_can_handle_order: {
@@ -2155,6 +2166,7 @@ export type Database = {
       import_products: { Args: { products: Json }; Returns: number };
       is_manager_or_owner: { Args: Record<PropertyKey, never>; Returns: boolean };
       is_owner: { Args: Record<PropertyKey, never>; Returns: boolean };
+      is_training_copy: { Args: Record<PropertyKey, never>; Returns: boolean };
       log_drawer_open: { Args: { p_location_id: string; p_reason: string }; Returns: undefined };
       mark_order_paid: { Args: { p_amount_kobo: number; p_reference: string }; Returns: Json };
       mark_order_refunded: { Args: { p_note: string; p_order_id: string }; Returns: undefined };
@@ -2248,6 +2260,7 @@ export type Database = {
           staff_id: string;
         }[];
       };
+      reset_training_data: { Args: Record<PropertyKey, never>; Returns: undefined };
       resolve_transfer_shortage: { Args: { p_resolution: string; p_transfer_id: string }; Returns: undefined };
       retry_online_order: { Args: { p_order_id: string }; Returns: Database["public"]["Enums"]["online_order_status"] };
       save_product: { Args: { payload: Json }; Returns: string };
@@ -2284,7 +2297,15 @@ export type Database = {
       fulfilment_status: "pending" | "out_for_delivery" | "completed";
       location_kind: "shop" | "warehouse";
       movement_type:
-        "opening" | "receipt" | "transfer_out" | "transfer_in" | "sale" | "return" | "damage" | "count_correction";
+        | "opening"
+        | "receipt"
+        | "transfer_out"
+        | "transfer_in"
+        | "sale"
+        | "return"
+        | "damage"
+        | "count_correction"
+        | "set_split";
       online_order_status:
         "pending_payment" | "paid" | "awaiting_stock" | "confirmed" | "expired" | "cancelled" | "refunded";
       payment_method: "cash" | "card" | "transfer" | "online";
@@ -2418,6 +2439,7 @@ export const Constants = {
         "return",
         "damage",
         "count_correction",
+        "set_split",
       ],
       online_order_status: [
         "pending_payment",
