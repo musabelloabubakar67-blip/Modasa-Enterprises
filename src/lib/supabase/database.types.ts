@@ -2166,6 +2166,7 @@ export type Database = {
       import_products: { Args: { products: Json }; Returns: number };
       is_manager_or_owner: { Args: Record<PropertyKey, never>; Returns: boolean };
       is_owner: { Args: Record<PropertyKey, never>; Returns: boolean };
+      is_training_copy: { Args: Record<PropertyKey, never>; Returns: boolean };
       log_drawer_open: { Args: { p_location_id: string; p_reason: string }; Returns: undefined };
       mark_order_paid: { Args: { p_amount_kobo: number; p_reference: string }; Returns: Json };
       mark_order_refunded: { Args: { p_note: string; p_order_id: string }; Returns: undefined };
@@ -2259,6 +2260,7 @@ export type Database = {
           staff_id: string;
         }[];
       };
+      reset_training_data: { Args: Record<PropertyKey, never>; Returns: undefined };
       resolve_transfer_shortage: { Args: { p_resolution: string; p_transfer_id: string }; Returns: undefined };
       retry_online_order: { Args: { p_order_id: string }; Returns: Database["public"]["Enums"]["online_order_status"] };
       save_product: { Args: { payload: Json }; Returns: string };
