@@ -22,10 +22,10 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
     .from("products")
     .select(
       `id, name, slug, category_id, unit_id, description, is_active, track_batches, show_online, is_featured,
-       categories(name), units(name, abbreviation),
-       skus(id, code, variant_label, price_kobo, promo_price_kobo, barcode, roll_width_cm, roll_length_cm,
-            coverage_m2, is_active, sort_order, sku_costs(cost_kobo)),
-       product_images(id, storage_path, sort_order)`,
+       option1_name, option2_name, categories(name), units(name, abbreviation),
+       skus(id, code, variant_label, option1, option2, price_kobo, promo_price_kobo, barcode, roll_width_cm,
+            roll_length_cm, coverage_m2, is_active, sort_order, sku_costs(cost_kobo)),
+       product_images(id, storage_path, sort_order, sku_id)`,
     )
     .eq("id", id)
     .order("sort_order", { referencedTable: "skus" })
@@ -107,7 +107,12 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
           </Link>
         </p>
       )}
-      <ProductImages productId={product.id} productName={product.name} images={product.product_images} />
+      <ProductImages
+        productId={product.id}
+        productName={product.name}
+        images={product.product_images}
+        variants={skus.filter((s) => s.is_active).map((s) => ({ id: s.id, label: s.variant_label ?? s.code }))}
+      />
       <div className="mt-6">
         <ProductForm
           key={JSON.stringify(skus.map((s) => s.id))}

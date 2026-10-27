@@ -56,6 +56,12 @@ Hosting, the training copy and handover: [`docs/training-copy.md`](docs/training
 - **Barcodes**: a SKU's barcode is optional; when blank, the SKU code is what gets printed and scanned.
   The database guarantees every scan code identifies exactly one SKU.
 - **Cost prices** are in a separate table that cashiers and warehouse staff cannot read at all.
+- **Variants**: a SKU's *variant* is what customers see (in words: "4 × 6 ft", "Gold Eiffel Tower"). A product
+  whose variants differ in two ways names its options (e.g. Size and Colour, `products.option1_name/option2_name`)
+  and gives each SKU a value for each (`skus.option1/option2`); the variant label is then built from them
+  ("5 × 7 ft · Grey"), so the till, labels, receipts and search are unchanged, and the shop shows one picker per
+  option. A photo can belong to one variant (`product_images.sku_id`): the shop shows it when that variant is
+  picked, and on its option button.
 - **Import** (`/app/products/import`): one row per SKU; rows matching an existing `sku_code` update it, and
   blank optional cells leave existing values unchanged. The whole file is saved in one transaction.
 - Units with *coverage* (Roll → width × length; area units such as Box, Sheet or Panel → m² per unit) feed the

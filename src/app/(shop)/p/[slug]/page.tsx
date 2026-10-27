@@ -7,6 +7,7 @@ import { getProduct, getStorefront, listProducts } from "@/lib/shop/data";
 import { photoUrl } from "@/lib/shop/images";
 import { Gallery } from "./gallery";
 import { ProductBuy } from "./product-buy";
+import { SelectionProvider } from "./selection";
 
 export async function generateMetadata({ params }: PageProps<"/p/[slug]">): Promise<Metadata> {
   const product = await getProduct((await params).slug);
@@ -47,47 +48,53 @@ export default async function ProductPage({ params }: PageProps<"/p/[slug]">) {
         </Link>
       </nav>
 
-      <div className="grid gap-8 md:grid-cols-2 md:gap-12 lg:gap-20">
-        <Gallery images={product.images} name={product.name} />
-        <div className="md:max-w-md">
-          <h1 className="font-serif text-[clamp(30px,3.6vw,44px)] leading-[1.1] text-balance">{product.name}</h1>
-          <div className="mt-4">
-            <ProductBuy product={product} shops={shop.shops} leadTime={shop.leadTime} currency={shop.currency} />
+      <SelectionProvider initialSkuId={(product.skus.find((s) => s.availability.max > 0) ?? product.skus[0]).id}>
+        <div className="grid gap-8 md:grid-cols-2 md:gap-12 lg:gap-20">
+          <Gallery
+            images={product.images}
+            name={product.name}
+            skuImages={Object.fromEntries(product.skus.map((s) => [s.id, s.images]))}
+          />
+          <div className="md:max-w-md">
+            <h1 className="font-serif text-[clamp(30px,3.6vw,44px)] leading-[1.1] text-balance">{product.name}</h1>
+            <div className="mt-4">
+              <ProductBuy product={product} shops={shop.shops} leadTime={shop.leadTime} currency={shop.currency} />
+            </div>
+
+            {product.description && <p className="mt-8 whitespace-pre-line">{product.description}</p>}
+
+            <dl className="border-border mt-8 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 border-t pt-6 text-sm">
+              <dt className="text-muted">Sold by</dt>
+              <dd>The {unit.name.toLowerCase()}</dd>
+              {unit.coverage === "roll" && sizes.length === 1 && sizes[0] && (
+                <>
+                  <dt className="text-muted">Roll size</dt>
+                  <dd>{sizes[0]}</dd>
+                </>
+              )}
+              {unit.coverage === "area" && coverage.length === 1 && coverage[0] && (
+                <>
+                  <dt className="text-muted">Covers</dt>
+                  <dd>
+                    {coverage[0]} m² per {unit.name.toLowerCase()}
+                  </dd>
+                </>
+              )}
+              <dt className="text-muted">{product.skus.length > 1 ? "Codes" : "Code"}</dt>
+              <dd>{product.skus.map((s) => s.code).join(", ")}</dd>
+              <dt className="text-muted">Collection</dt>
+              <dd>Free from {shop.shops.length > 1 ? "the shop you choose" : "our shop"}</dd>
+              <dt className="text-muted">Delivery</dt>
+              <dd>
+                Available at checkout.{" "}
+                <Link href="/help#delivery" className="shop-link">
+                  See areas and fees
+                </Link>
+              </dd>
+            </dl>
           </div>
-
-          {product.description && <p className="mt-8 whitespace-pre-line">{product.description}</p>}
-
-          <dl className="border-border mt-8 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 border-t pt-6 text-sm">
-            <dt className="text-muted">Sold by</dt>
-            <dd>The {unit.name.toLowerCase()}</dd>
-            {unit.coverage === "roll" && sizes.length === 1 && sizes[0] && (
-              <>
-                <dt className="text-muted">Roll size</dt>
-                <dd>{sizes[0]}</dd>
-              </>
-            )}
-            {unit.coverage === "area" && coverage.length === 1 && coverage[0] && (
-              <>
-                <dt className="text-muted">Covers</dt>
-                <dd>
-                  {coverage[0]} m² per {unit.name.toLowerCase()}
-                </dd>
-              </>
-            )}
-            <dt className="text-muted">{product.skus.length > 1 ? "Codes" : "Code"}</dt>
-            <dd>{product.skus.map((s) => s.code).join(", ")}</dd>
-            <dt className="text-muted">Collection</dt>
-            <dd>Free from {shop.shops.length > 1 ? "the shop you choose" : "our shop"}</dd>
-            <dt className="text-muted">Delivery</dt>
-            <dd>
-              Available at checkout.{" "}
-              <Link href="/help#delivery" className="shop-link">
-                See areas and fees
-              </Link>
-            </dd>
-          </dl>
         </div>
-      </div>
+      </SelectionProvider>
 
       {related.products.length > 0 && (
         <section className="shop-reveal border-border mt-16 border-t pt-12 md:mt-24">

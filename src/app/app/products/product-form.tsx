@@ -16,10 +16,14 @@ export type ProductFormData = {
   track_batches: boolean;
   show_online: boolean;
   is_featured: boolean;
+  option1_name: string | null;
+  option2_name: string | null;
   skus: {
     id: string;
     code: string;
     variant_label: string | null;
+    option1: string | null;
+    option2: string | null;
     price_kobo: number;
     promo_price_kobo: number | null;
     cost_kobo: number | null;
@@ -34,6 +38,8 @@ export type ProductFormData = {
 const emptySku = (): SkuFormRow => ({
   code: "",
   variant_label: "",
+  option1: "",
+  option2: "",
   price: "",
   promo_price: "",
   cost: "",
@@ -63,6 +69,8 @@ export function ProductForm({
       id: s.id,
       code: s.code,
       variant_label: s.variant_label ?? "",
+      option1: s.option1 ?? "",
+      option2: s.option2 ?? "",
       price: toMoneyInput(s.price_kobo),
       promo_price: toMoneyInput(s.promo_price_kobo),
       cost: toMoneyInput(s.cost_kobo),
@@ -74,9 +82,19 @@ export function ProductForm({
     })) ?? [emptySku()],
   );
 
+  const [option1Name, setOption1Name] = useState(product?.option1_name ?? "");
+  const [option2Name, setOption2Name] = useState(product?.option2_name ?? "");
+  const hasOptions = option1Name.trim() !== "";
+
   const unit = units.find((u) => u.id === unitId);
   const update = (i: number, patch: Partial<SkuFormRow>) =>
     setSkus((rows) => rows.map((row, j) => (j === i ? { ...row, ...patch } : row)));
+  // Switching a product to named options: start each variant's first option from its current label.
+  const nameFirstOption = (name: string) => {
+    if (!hasOptions && name.trim())
+      setSkus((rows) => rows.map((row) => ({ ...row, option1: row.option1 || row.variant_label })));
+    setOption1Name(name);
+  };
 
   return (
     <ActionForm action={saveProduct} className="space-y-6">
@@ -184,6 +202,37 @@ export function ProductForm({
                   <span className="text-muted block text-xs">Shown under “Our favourites” and first in lists.</span>
                 </span>
               </label>
+              <fieldset className="space-y-2">
+                <legend className="text-sm font-medium">Options (optional)</legend>
+                <p className="text-muted text-xs">
+                  If the variants differ in one or two ways, name them here, e.g. Size and Colour. The website then lets
+                  customers choose each one, and every variant gets a value for each. Put colour or design second: its
+                  buttons show the variant&apos;s photo. Leave blank to type a single variant name instead.
+                </p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field label="First option" name="option1_name" error={errors.option1_name}>
+                    <input
+                      id="option1_name"
+                      name="option1_name"
+                      className="input"
+                      value={option1Name}
+                      onChange={(e) => nameFirstOption(e.target.value)}
+                      placeholder="e.g. Size"
+                    />
+                  </Field>
+                  <Field label="Second option" name="option2_name" error={errors.option2_name}>
+                    <input
+                      id="option2_name"
+                      name="option2_name"
+                      className="input"
+                      value={option2Name}
+                      onChange={(e) => setOption2Name(e.target.value)}
+                      placeholder="e.g. Colour"
+                      disabled={!hasOptions}
+                    />
+                  </Field>
+                </div>
+              </fieldset>
               {product && (
                 <label className="flex items-center gap-2 text-sm">
                   <input type="checkbox" name="is_active" defaultChecked={product.is_active} />
@@ -227,20 +276,50 @@ export function ProductForm({
                           required
                         />
                       </Field>
-                      <Field
-                        label="Variant"
-                        name={id("variant")}
-                        error={e.variant_label}
-                        hint="Size, colour… optional."
-                      >
-                        <input
-                          id={id("variant")}
-                          className="input"
-                          value={sku.variant_label}
-                          onChange={(ev) => update(i, { variant_label: ev.target.value })}
-                          placeholder="e.g. 4 × 6"
-                        />
-                      </Field>
+                      {hasOptions ? (
+                        <div className={`grid gap-3 ${option2Name.trim() ? "grid-cols-2" : ""}`}>
+                          <Field label={option1Name.trim()} name={id("option1")} error={e.option1}>
+                            <input
+                              id={id("option1")}
+                              className="input"
+                              value={sku.option1}
+                              onChange={(ev) => update(i, { option1: ev.target.value })}
+                              placeholder="e.g. 5 × 7 ft"
+                            />
+                          </Field>
+                          {option2Name.trim() && (
+                            <Field label={option2Name.trim()} name={id("option2")} error={e.option2}>
+                              <input
+                                id={id("option2")}
+                                className="input"
+                                value={sku.option2}
+                                onChange={(ev) => update(i, { option2: ev.target.value })}
+                                placeholder="e.g. Grey"
+                              />
+                            </Field>
+                          )}
+                        </div>
+                      ) : (
+                        <Field
+                          label="Variant"
+                          name={id("variant")}
+                          error={e.variant_label}
+                          hint={
+                            sku.variant_label.trim() &&
+                            sku.variant_label.trim().toLowerCase() === sku.code.trim().toLowerCase()
+                              ? "This is the item code. Customers see this name, so use words, e.g. Gold Eiffel Tower."
+                              : "What customers see: size, colour or design in words. Optional."
+                          }
+                        >
+                          <input
+                            id={id("variant")}
+                            className="input"
+                            value={sku.variant_label}
+                            onChange={(ev) => update(i, { variant_label: ev.target.value })}
+                            placeholder="e.g. 4 × 6 ft, or Gold Eiffel Tower"
+                          />
+                        </Field>
+                      )}
                       <Field
                         label="Barcode"
                         name={id("barcode")}

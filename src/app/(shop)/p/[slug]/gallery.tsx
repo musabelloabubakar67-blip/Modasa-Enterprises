@@ -2,9 +2,34 @@
 
 import { useState } from "react";
 import { photoUrl } from "@/lib/shop/images";
+import { useSelectedSku } from "./selection";
 
-export function Gallery({ images, name }: { images: string[]; name: string }) {
-  const [current, setCurrent] = useState(0);
+export function Gallery({
+  images,
+  name,
+  skuImages,
+}: {
+  images: string[];
+  name: string;
+  /** Each variant's own photos, so picking it shows its photo. */
+  skuImages: Record<string, string[]>;
+}) {
+  const [skuId] = useSelectedSku();
+  // The picked variant's own photo; for a variant without one, the first photo of the whole product, so the
+  // picture never shows a different colour or design from the one picked.
+  const photoFor = (id: string) => {
+    const own = images.indexOf(skuImages[id]?.[0] ?? "");
+    if (own >= 0) return own;
+    const variantPhotos = new Set(Object.values(skuImages).flat());
+    return images.findIndex((image) => !variantPhotos.has(image));
+  };
+  const [current, setCurrent] = useState(() => Math.max(0, photoFor(skuId)));
+  const [shownFor, setShownFor] = useState(skuId);
+  if (shownFor !== skuId) {
+    setShownFor(skuId);
+    const next = photoFor(skuId);
+    if (next >= 0) setCurrent(next);
+  }
 
   if (images.length === 0) {
     return (

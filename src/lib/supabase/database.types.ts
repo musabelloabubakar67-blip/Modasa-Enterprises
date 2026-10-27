@@ -563,6 +563,7 @@ export type Database = {
           created_at: string;
           id: string;
           product_id: string;
+          sku_id: string | null;
           sort_order: number;
           storage_path: string;
         };
@@ -570,6 +571,7 @@ export type Database = {
           created_at?: string;
           id?: string;
           product_id: string;
+          sku_id?: string | null;
           sort_order?: number;
           storage_path: string;
         };
@@ -577,10 +579,18 @@ export type Database = {
           created_at?: string;
           id?: string;
           product_id?: string;
+          sku_id?: string | null;
           sort_order?: number;
           storage_path?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "product_images_sku_fkey";
+            columns: ["sku_id", "product_id"];
+            isOneToOne: false;
+            referencedRelation: "skus";
+            referencedColumns: ["id", "product_id"];
+          },
           {
             foreignKeyName: "product_images_product_id_fkey";
             columns: ["product_id"];
@@ -613,6 +623,8 @@ export type Database = {
           is_active: boolean;
           is_featured: boolean;
           name: string;
+          option1_name: string | null;
+          option2_name: string | null;
           search_text: string;
           show_online: boolean;
           slug: string | null;
@@ -628,6 +640,8 @@ export type Database = {
           is_active?: boolean;
           is_featured?: boolean;
           name: string;
+          option1_name?: string | null;
+          option2_name?: string | null;
           search_text?: string;
           show_online?: boolean;
           slug?: string | null;
@@ -643,6 +657,8 @@ export type Database = {
           is_active?: boolean;
           is_featured?: boolean;
           name?: string;
+          option1_name?: string | null;
+          option2_name?: string | null;
           search_text?: string;
           show_online?: boolean;
           slug?: string | null;
@@ -1410,6 +1426,8 @@ export type Database = {
           created_at: string;
           id: string;
           is_active: boolean;
+          option1: string | null;
+          option2: string | null;
           price_kobo: number;
           product_id: string;
           promo_price_kobo: number | null;
@@ -1426,6 +1444,8 @@ export type Database = {
           created_at?: string;
           id?: string;
           is_active?: boolean;
+          option1?: string | null;
+          option2?: string | null;
           price_kobo: number;
           product_id: string;
           promo_price_kobo?: number | null;
@@ -1442,6 +1462,8 @@ export type Database = {
           created_at?: string;
           id?: string;
           is_active?: boolean;
+          option1?: string | null;
+          option2?: string | null;
           price_kobo?: number;
           product_id?: string;
           promo_price_kobo?: number | null;

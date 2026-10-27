@@ -20,6 +20,15 @@ export const IMPORT_COLUMNS = [
     required: false,
     help: "yes or no: show on the website. Blank leaves it as it is.",
   },
+  {
+    key: "option1_name",
+    label: "option1_name",
+    required: false,
+    help: "Variants differ in one or two ways? Name the first, e.g. Size. Same on every row of the product.",
+  },
+  { key: "option1", label: "option1", required: false, help: "This row's value for option 1, e.g. 5 × 7 ft." },
+  { key: "option2_name", label: "option2_name", required: false, help: "Second way they differ, e.g. Colour." },
+  { key: "option2", label: "option2", required: false, help: "This row's value for option 2, e.g. Grey." },
 ] as const;
 
 export type ImportColumn = (typeof IMPORT_COLUMNS)[number]["key"];
@@ -64,6 +73,10 @@ const ALIASES: Record<string, ImportColumn> = {
   website: "show_online",
   onwebsite: "show_online",
   showonwebsite: "show_online",
+  option1name: "option1_name",
+  option1: "option1",
+  option2name: "option2_name",
+  option2: "option2",
 };
 
 export function matchColumn(heading: unknown): ImportColumn | null {

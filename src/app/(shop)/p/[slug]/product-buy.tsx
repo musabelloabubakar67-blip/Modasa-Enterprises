@@ -6,7 +6,46 @@ import { AreaCalculator, RollCalculator } from "@/components/shop/calculators";
 import { formatMoney } from "@/lib/money";
 import { availabilityText, type ShopName } from "@/lib/shop/availability";
 import { addToCart, useCart } from "@/lib/shop/cart";
-import type { ProductDetail } from "@/lib/shop/data";
+import type { ProductDetail, ProductSku } from "@/lib/shop/data";
+import { photoUrl } from "@/lib/shop/images";
+import { useSelectedSku } from "./selection";
+
+const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
+
+/** An option button's look: picked, out of stock, or not made in the other choices (still clickable). */
+function OptionButton({
+  label,
+  photo,
+  picked,
+  out,
+  elsewhere,
+  onClick,
+}: {
+  label: string;
+  photo?: string;
+  picked: boolean;
+  out: boolean;
+  elsewhere?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={picked}
+      onClick={onClick}
+      className={`flex min-h-11 items-center gap-2 border text-sm transition-colors ${photo ? "py-1 pr-4 pl-1" : "px-4"} ${
+        picked ? "border-foreground font-medium" : "border-border hover:border-foreground"
+      } ${elsewhere ? "border-dashed" : ""} ${out ? "text-muted line-through" : ""}`}
+    >
+      {photo && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={photoUrl(photo, 200)} alt="" loading="lazy" className="size-9 object-cover" />
+      )}
+      {label}
+      {out && <span className="sr-only"> (out of stock)</span>}
+    </button>
+  );
+}
 
 export function ProductBuy({
   product,
@@ -20,7 +59,7 @@ export function ProductBuy({
   currency: string;
 }) {
   const { skus, unit } = product;
-  const [skuId, setSkuId] = useState((skus.find((s) => s.availability.max > 0) ?? skus[0]).id);
+  const [skuId, setSkuId] = useSelectedSku();
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState<string | null>(null);
   // Set when the calculator asks for more than can be ordered online.
@@ -39,6 +78,14 @@ export function ProductBuy({
     setQuantity(1);
     setAdded(null);
     setShort(false);
+  };
+  // Picking one option keeps the others if that variant exists; otherwise it moves to one that does.
+  const pickOption = (k: number, value: string) => {
+    const want = sku.options.map((v, i) => (i === k ? value : v));
+    const exact = skus.find((s) => s.options.every((v, i) => same(v, want[i])));
+    const withValue = skus.filter((s) => same(s.options[k], value));
+    const next = exact ?? withValue.find((s) => s.availability.max > 0) ?? withValue[0];
+    if (next) choose(next.id);
   };
   const applyCalculated = (n: number) => {
     setShort(n > room);
@@ -78,32 +125,62 @@ export function ProductBuy({
         <span className="text-muted ml-2 text-sm">per {unit.name.toLowerCase()}</span>
       </p>
 
-      {skus.length > 1 && (
-        <fieldset className="mt-7">
-          <legend className="caps text-muted mb-2.5">
-            Option: <span className="text-foreground">{sku.label ?? sku.code}</span>
-          </legend>
-          <div className="flex flex-wrap gap-2">
-            {skus.map((s) => {
-              const out = s.availability.max === 0;
-              return (
-                <button
-                  key={s.id}
-                  type="button"
-                  aria-pressed={s.id === sku.id}
-                  onClick={() => choose(s.id)}
-                  className={`min-h-11 border px-4 text-sm transition-colors ${
-                    s.id === sku.id ? "border-foreground font-medium" : "border-border hover:border-foreground"
-                  } ${out ? "text-muted line-through" : ""}`}
-                >
-                  {s.label ?? s.code}
-                  {out && <span className="sr-only"> (out of stock)</span>}
-                </button>
-              );
-            })}
-          </div>
-        </fieldset>
-      )}
+      {skus.length > 1 && product.optionNames.length > 0
+        ? product.optionNames.map((name, k) => {
+            const values = skus.reduce<string[]>(
+              (list, s) => (list.some((v) => same(v, s.options[k])) ? list : [...list, s.options[k]]),
+              [],
+            );
+            return (
+              <fieldset key={name} className="mt-7">
+                <legend className="caps text-muted mb-2.5">
+                  {name}: <span className="text-foreground">{sku.options[k]}</span>
+                </legend>
+                <div className="flex flex-wrap gap-2">
+                  {values.map((value) => {
+                    const withValue = skus.filter((s) => same(s.options[k], value));
+                    // The variant this button would pick, keeping the other choices as they are.
+                    const match = withValue.find((s) => s.options.every((v, i) => i === k || same(v, sku.options[i])));
+                    // Photos go on the last option (colour or design), not on sizes, which all look alike.
+                    const photo =
+                      k === product.optionNames.length - 1
+                        ? (match ?? withValue.find((s) => s.images.length))?.images[0]
+                        : undefined;
+                    return (
+                      <OptionButton
+                        key={value}
+                        label={value}
+                        photo={photo}
+                        picked={same(value, sku.options[k])}
+                        out={(match ? [match] : withValue).every((s: ProductSku) => s.availability.max === 0)}
+                        elsewhere={!match}
+                        onClick={() => pickOption(k, value)}
+                      />
+                    );
+                  })}
+                </div>
+              </fieldset>
+            );
+          })
+        : skus.length > 1 && (
+            <fieldset className="mt-7">
+              <legend className="caps text-muted mb-2.5">
+                Option: <span className="text-foreground">{sku.label ?? sku.code}</span>
+              </legend>
+              <div className="flex flex-wrap gap-2">
+                {skus.map((s) => (
+                  <OptionButton
+                    key={s.id}
+                    label={s.label ?? s.code}
+                    photo={s.images[0]}
+                    picked={s.id === sku.id}
+                    out={s.availability.max === 0}
+                    onClick={() => choose(s.id)}
+                  />
+                ))}
+              </div>
+            </fieldset>
+          )}
 
       <p className="mt-6 flex items-start gap-2 text-sm">
         {a.shopIds.length > 0 && <span className="bg-success mt-2 size-1.5 shrink-0 rounded-full" aria-hidden="true" />}

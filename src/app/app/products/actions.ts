@@ -15,6 +15,8 @@ export type SkuFormRow = {
   id?: string;
   code: string;
   variant_label: string;
+  option1: string;
+  option2: string;
   price: string;
   promo_price: string;
   cost: string;
@@ -35,8 +37,11 @@ function positiveOrNull(value: string, label: string, ctx: z.RefinementCtx, path
   return n;
 }
 
-function skuRowsToPayload(rows: SkuFormRow[], ctx: z.RefinementCtx) {
+type OptionNames = { option1_name?: string; option2_name?: string };
+
+function skuRowsToPayload(rows: SkuFormRow[], options: OptionNames, ctx: z.RefinementCtx) {
   const seen = new Set<string>();
+  const combos = new Map<string, number>();
   return rows.map((row, i) => {
     const code = row.code.trim();
     if (!code) ctx.addIssue({ code: "custom", path: [i, "code"], message: "Enter a SKU code." });
@@ -58,10 +63,35 @@ function skuRowsToPayload(rows: SkuFormRow[], ctx: z.RefinementCtx) {
     const barcode = row.barcode.trim();
     if (/\s/.test(barcode)) ctx.addIssue({ code: "custom", path: [i, "barcode"], message: "No spaces in barcodes." });
 
+    // With named options, each variant needs a value for each, and no two variants may have the same ones.
+    // The variant label is then made from them in the database.
+    const option1 = options.option1_name ? (row.option1 ?? "").trim() : "";
+    const option2 = options.option2_name ? (row.option2 ?? "").trim() : "";
+    if (options.option1_name && !option1)
+      ctx.addIssue({
+        code: "custom",
+        path: [i, "option1"],
+        message: `Enter the ${options.option1_name.toLowerCase()}.`,
+      });
+    if (options.option2_name && !option2)
+      ctx.addIssue({
+        code: "custom",
+        path: [i, "option2"],
+        message: `Enter the ${options.option2_name.toLowerCase()}.`,
+      });
+    if (option1 && row.is_active) {
+      const combo = `${option1}|${option2}`.toLowerCase();
+      if (combos.has(combo))
+        ctx.addIssue({ code: "custom", path: [i, "option1"], message: `Same as variant ${combos.get(combo)! + 1}.` });
+      combos.set(combo, i);
+    }
+
     return {
       ...(row.id ? { id: row.id } : {}),
       code,
-      variant_label: row.variant_label.trim() || null,
+      variant_label: options.option1_name ? null : row.variant_label.trim() || null,
+      option1: option1 || null,
+      option2: option2 || null,
       price_kobo: price,
       promo_price_kobo: promo,
       cost_kobo: cost,
@@ -85,6 +115,8 @@ const productSchema = z.object({
   track_batches: z.enum(["on"]).optional(),
   show_online: z.enum(["on"]).optional(),
   is_featured: z.enum(["on"]).optional(),
+  option1_name: z.string().trim().max(40, "Keep it short, e.g. Size.").optional(),
+  option2_name: z.string().trim().max(40, "Keep it short, e.g. Colour.").optional(),
   skus: z
     .string()
     .transform((s, ctx) => {
@@ -113,10 +145,17 @@ export async function saveProduct(_prev: ProductActionState, formData: FormData)
     return { error: "Please fix the highlighted fields.", fieldErrors };
   }
 
+  const { option1_name, option2_name } = parsed.data;
+  if (option2_name && !option1_name)
+    return {
+      error: "Please fix the highlighted fields.",
+      fieldErrors: { option1_name: "Fill in the first option first." },
+    };
+
   const skuErrors: Record<number, Record<string, string>> = {};
   const skus = z
     .array(z.any())
-    .transform((rows, ctx) => skuRowsToPayload(rows as SkuFormRow[], ctx))
+    .transform((rows, ctx) => skuRowsToPayload(rows as SkuFormRow[], { option1_name, option2_name }, ctx))
     .safeParse(parsed.data.skus);
   if (!skus.success) {
     for (const issue of skus.error.issues) {
@@ -138,6 +177,8 @@ export async function saveProduct(_prev: ProductActionState, formData: FormData)
       description: description ?? null,
       is_active: is_active === "on",
       track_batches: track_batches === "on",
+      option1_name: option1_name || null,
+      option2_name: (option1_name && option2_name) || null,
       skus: skus.data,
     },
   });

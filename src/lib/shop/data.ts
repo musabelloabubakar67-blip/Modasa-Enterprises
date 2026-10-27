@@ -205,7 +205,7 @@ export async function listProducts(query: ProductQuery): Promise<{ products: Pro
   const { data, error: detailError } = await admin
     .from("products")
     .select(
-      "id, slug, name, skus(id, variant_label, price_kobo, promo_price_kobo, is_active, sort_order), product_images(storage_path, sort_order)",
+      "id, slug, name, option1_name, option2_name, skus(id, variant_label, option1, option2, price_kobo, promo_price_kobo, is_active, sort_order), product_images(storage_path, sort_order)",
     )
     .in("id", ids);
   if (detailError) throw detailError;
@@ -224,6 +224,10 @@ export async function listProducts(query: ProductQuery): Promise<{ products: Pro
     const shopIds = shops.filter((s) => each.some((a) => a.shopIds.includes(s.id))).map((s) => s.id);
     const onSale = skus.some((s) => s.promo_price_kobo !== null);
     const labels = skus.map((s) => s.variant_label).filter((l): l is string => !!l);
+    const named = optionSummary(
+      [p.option1_name, p.option2_name],
+      skus.map((s) => [s.option1, s.option2]),
+    );
     return [
       {
         id: p.id,
@@ -234,7 +238,8 @@ export async function listProducts(query: ProductQuery): Promise<{ products: Pro
         maxPrice: Math.max(...prices),
         wasPrice: skus.length === 1 && onSale ? skus[0].price_kobo : null,
         onSale,
-        options: labels.length > 1 ? (labels.length <= 3 ? labels.join(" · ") : `${labels.length} options`) : null,
+        options:
+          named ?? (labels.length > 1 ? (labels.length <= 3 ? labels.join(" · ") : `${labels.length} options`) : null),
         availability: {
           shopIds,
           toOrder: shopIds.length === 0 && each.some((a) => a.toOrder),
@@ -246,10 +251,26 @@ export async function listProducts(query: ProductQuery): Promise<{ products: Pro
   return { products, total: count ?? 0 };
 }
 
+/** "3 sizes · 2 colours" for a product with named options; null when it has none or only one variant. */
+function optionSummary(names: (string | null)[], values: (string | null)[][]): string | null {
+  const parts = names.flatMap((name, i) => {
+    if (!name) return [];
+    const count = new Set(values.map((v) => v[i]?.toLowerCase()).filter(Boolean)).size;
+    if (count < 2) return [];
+    const noun = name.toLowerCase();
+    return [`${count} ${noun.endsWith("s") ? noun : `${noun}s`}`];
+  });
+  return parts.length ? parts.join(" · ") : null;
+}
+
 export type ProductSku = {
   id: string;
   code: string;
   label: string | null;
+  /** Values for the product's named options, in the same order as ProductDetail.optionNames. */
+  options: string[];
+  /** Photos of this variant only (also included in ProductDetail.images). */
+  images: string[];
   price: number;
   listPrice: number;
   rollWidthCm: number | null;
@@ -265,6 +286,8 @@ export type ProductDetail = {
   description: string | null;
   category: ShopCategory;
   unit: { name: string; abbreviation: string; allowsDecimal: boolean; coverage: "none" | "roll" | "area" };
+  /** e.g. ["Size", "Colour"]; empty when variants just have a single label. */
+  optionNames: string[];
   images: string[];
   skus: ProductSku[];
 };
@@ -273,9 +296,10 @@ export const getProduct = cache(async (slug: string): Promise<ProductDetail | nu
   const { data: p, error } = await createAdminClient()
     .from("products")
     .select(
-      `id, slug, name, description, categories(id, name), units(name, abbreviation, allows_decimal, coverage),
-       skus(id, code, variant_label, price_kobo, promo_price_kobo, roll_width_cm, roll_length_cm, coverage_m2, is_active, sort_order),
-       product_images(storage_path, sort_order)`,
+      `id, slug, name, description, option1_name, option2_name,
+       categories(id, name), units(name, abbreviation, allows_decimal, coverage),
+       skus(id, code, variant_label, option1, option2, price_kobo, promo_price_kobo, roll_width_cm, roll_length_cm, coverage_m2, is_active, sort_order),
+       product_images(storage_path, sort_order, sku_id)`,
     )
     .eq("slug", slug)
     .eq("is_active", true)
@@ -288,6 +312,12 @@ export const getProduct = cache(async (slug: string): Promise<ProductDetail | nu
 
   const { shops } = await getStorefront();
   const stock = await rawStock(skus.map((s) => s.id));
+  const images = [...p.product_images].sort((a, b) => a.sort_order - b.sort_order);
+  // Only options every variant has a value for; a half-filled option would leave customers stuck.
+  const names = [p.option1_name, p.option2_name];
+  const values = (s: (typeof skus)[number]) => [s.option1, s.option2];
+  const used = [0, 1].filter((i) => names[i] && skus.every((s) => values(s)[i]));
+  const optionNames = used.map((i) => names[i]!);
   return {
     id: p.id,
     slug: p.slug!,
@@ -300,11 +330,14 @@ export const getProduct = cache(async (slug: string): Promise<ProductDetail | nu
       allowsDecimal: p.units.allows_decimal,
       coverage: p.units.coverage,
     },
-    images: [...p.product_images].sort((a, b) => a.sort_order - b.sort_order).map((i) => i.storage_path),
+    optionNames,
+    images: images.map((i) => i.storage_path),
     skus: skus.map((s) => ({
       id: s.id,
       code: s.code,
       label: s.variant_label,
+      options: used.map((i) => values(s)[i]!),
+      images: images.filter((i) => i.sku_id === s.id).map((i) => i.storage_path),
       price: s.promo_price_kobo ?? s.price_kobo,
       listPrice: s.price_kobo,
       rollWidthCm: s.roll_width_cm,
