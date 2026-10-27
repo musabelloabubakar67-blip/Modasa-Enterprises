@@ -154,7 +154,7 @@ export function HeroPhoto({ image }: { image: string | null }) {
       const path = `site/hero-${crypto.randomUUID()}.webp`;
       const { error: uploadError } = await createClient()
         .storage.from(PRODUCT_IMAGES_BUCKET)
-        .upload(path, blob, { contentType: "image/webp" });
+        .upload(path, blob, { contentType: "image/webp", cacheControl: "31536000" });
       if (uploadError) throw uploadError;
       const result = await setHeroImage(path);
       if (result.error) throw new Error(result.error);

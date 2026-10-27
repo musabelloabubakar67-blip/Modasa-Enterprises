@@ -3,9 +3,9 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { PRODUCT_IMAGES_BUCKET } from "@/lib/products";
+import { PHOTO_WIDTHS, PRODUCT_IMAGES_BUCKET, photoFiles } from "@/lib/products";
 import { ProductThumb } from "@/components/product-thumb";
-import { resizeImage } from "@/lib/resize-image";
+import { resizeImageSizes } from "@/lib/resize-image";
 
 type Image = { id: string; storage_path: string; sort_order: number; sku_id: string | null };
 
@@ -37,18 +37,28 @@ export function ProductImages({
     try {
       for (const file of Array.from(files)) {
         if (!file.type.startsWith("image/")) throw new Error(`${file.name} is not an image.`);
-        const blob = await resizeImage(file);
-        const path = `${productId}/${crypto.randomUUID()}.webp`;
-        const { error: uploadError } = await supabase.storage
-          .from(PRODUCT_IMAGES_BUCKET)
-          .upload(path, blob, { contentType: "image/webp" });
-        if (uploadError) throw uploadError;
-        const { error: rowError } = await supabase
-          .from("product_images")
-          .insert({ product_id: productId, storage_path: path, sort_order: ++order });
-        if (rowError) {
-          await supabase.storage.from(PRODUCT_IMAGES_BUCKET).remove([path]);
-          throw rowError;
+        // Each photo is stored at several sizes so pages load a small file for a small picture
+        // (see productImageUrl). The address never changes, so browsers may keep it for a year.
+        const blobs = await resizeImageSizes(file, PHOTO_WIDTHS);
+        const folder = `${productId}/${crypto.randomUUID()}`;
+        const path = `${folder}/${PHOTO_WIDTHS[PHOTO_WIDTHS.length - 1]}.webp`;
+        const uploaded: string[] = [];
+        try {
+          for (const [width, blob] of blobs) {
+            const sized = `${folder}/${width}.webp`;
+            const { error: uploadError } = await supabase.storage
+              .from(PRODUCT_IMAGES_BUCKET)
+              .upload(sized, blob, { contentType: "image/webp", cacheControl: "31536000" });
+            if (uploadError) throw uploadError;
+            uploaded.push(sized);
+          }
+          const { error: rowError } = await supabase
+            .from("product_images")
+            .insert({ product_id: productId, storage_path: path, sort_order: ++order });
+          if (rowError) throw rowError;
+        } catch (e) {
+          if (uploaded.length) await supabase.storage.from(PRODUCT_IMAGES_BUCKET).remove(uploaded);
+          throw e;
         }
       }
     } catch (e) {
@@ -67,7 +77,7 @@ export function ProductImages({
     const supabase = createClient();
     const { error: rowError } = await supabase.from("product_images").delete().eq("id", image.id);
     if (rowError) setError(rowError.message);
-    else await supabase.storage.from(PRODUCT_IMAGES_BUCKET).remove([image.storage_path]);
+    else await supabase.storage.from(PRODUCT_IMAGES_BUCKET).remove(photoFiles(image.storage_path));
     setBusy(false);
     refresh();
   }
