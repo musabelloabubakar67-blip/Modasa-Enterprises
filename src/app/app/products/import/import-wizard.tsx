@@ -6,9 +6,13 @@ import { readGrid, type Grid } from "@/lib/spreadsheet";
 import { IMPORT_COLUMNS, matchColumn, type ImportColumn, type ImportRow } from "./columns";
 import { commitImport, previewImport, type PreviewResult } from "./actions";
 
-/** Finds the heading row (sheets often have a title above it) and turns the rest into rows. */
+/** The heading row: within the first 10 (sheets often have a title above it), with at least 3 known columns. */
+const headingRow = (grid: Grid) =>
+  grid.slice(0, 10).findIndex((r) => r.filter((cell) => matchColumn(cell)).length >= 3);
+
+/** Finds the heading row and turns the rest into rows. */
 function gridToRows(grid: Grid): { rows: ImportRow[]; ignored: string[]; missing: string[] } {
-  const headerIndex = grid.slice(0, 10).findIndex((r) => r.filter((cell) => matchColumn(cell)).length >= 3);
+  const headerIndex = headingRow(grid);
   if (headerIndex === -1) throw new Error("Couldn't find the heading row. Use the template's column names.");
 
   const headings = grid[headerIndex];
@@ -64,7 +68,7 @@ export function ImportWizard() {
     reset();
     setFileName(file.name);
     try {
-      const { rows, ignored, missing } = gridToRows(await readGrid(file));
+      const { rows, ignored, missing } = gridToRows(await readGrid(file, (grid) => headingRow(grid) >= 0));
       if (missing.length)
         throw new Error(`Missing required column${missing.length > 1 ? "s" : ""}: ${missing.join(", ")}.`);
       setRows(rows);
