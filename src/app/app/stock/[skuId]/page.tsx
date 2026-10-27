@@ -60,11 +60,9 @@ export default async function SkuStockPage({ params }: PageProps<"/app/stock/[sk
               Edit product
             </Link>
           )}
-          {(manager || staff.role === "warehouse") && (
-            <Link href={`/app/stock/labels?sku=${sku.id}`} className="btn btn-secondary">
-              Print labels
-            </Link>
-          )}
+          <Link href={`/app/stock/labels?sku=${sku.id}`} className="btn btn-secondary">
+            Print labels
+          </Link>
         </div>
       </div>
 
