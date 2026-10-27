@@ -15,17 +15,24 @@ const optionalText = (max: number) => z.string().max(max).optional();
 
 // ---------- Training copy ----------
 
-/** Wipes products, stock and sales on a training copy. The database refuses it anywhere else. */
+/**
+ * Wipes products, stock and sales on a training copy, and shops and warehouses too unless unticked. The
+ * database refuses it anywhere else.
+ */
 export async function resetTrainingData(_prev: ActionState, formData: FormData): Promise<ActionState> {
   await requireStaff(["owner"]);
   const typed = String(formData.get("confirm") ?? "");
   if (typed.trim().toUpperCase() !== "RESET") return { error: "Type RESET in the box to confirm." };
   const supabase = await createClient();
-  const { error } = await supabase.rpc("reset_training_data");
+  const locations = formData.get("locations") === "on";
+  const { error } = await supabase.rpc("reset_training_data", { p_locations: locations });
   if (error) return { error: error.message };
+  expireLocations();
   revalidatePath("/", "layout");
   return {
-    success: "Training data cleared. Products, stock and sales are empty; logins, settings and locations are kept.",
+    success: locations
+      ? "Training data cleared, including shops and warehouses. Logins and business settings are kept."
+      : "Training data cleared. Products, stock and sales are empty; logins, settings and locations are kept.",
   };
 }
 

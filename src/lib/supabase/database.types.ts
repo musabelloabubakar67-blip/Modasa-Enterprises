@@ -2282,7 +2282,7 @@ export type Database = {
           staff_id: string;
         }[];
       };
-      reset_training_data: { Args: Record<PropertyKey, never>; Returns: undefined };
+      reset_training_data: { Args: { p_locations?: boolean }; Returns: undefined };
       resolve_transfer_shortage: { Args: { p_resolution: string; p_transfer_id: string }; Returns: undefined };
       retry_online_order: { Args: { p_order_id: string }; Returns: Database["public"]["Enums"]["online_order_status"] };
       save_product: { Args: { payload: Json }; Returns: string };

@@ -107,8 +107,10 @@ insert into public.instance_flags (name) values ('training_copy');
 ```
 
 The owner then sees **Settings → Business → Training copy: start again**. It deletes every product, category, stock
-count, adjustment, delivery, transfer, sale, return, shift, customer and online order; logins, business settings,
-locations, units and delivery areas are kept, and numbering starts again from 1. The database refuses the reset
+count, adjustment, delivery, transfer, sale, return, shift, customer and online order, and the shops and
+warehouses too unless *Also delete shops and warehouses* is unticked. Logins, business settings, units and delivery
+areas are kept, and numbering starts again from 1. With cashiers or warehouse staff set up, the locations have to
+stay (those roles need one), and the reset says so. The database refuses the reset
 on any project without that mark, so never run the line above on the live system. Product photos already uploaded
 stay in storage.
 
