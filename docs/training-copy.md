@@ -84,17 +84,18 @@ Signed in as owner:
 ## 5. Load the products and the training location's stock
 
 The business fills in the product workbook (Products tab: one row per size/design, prices, counts per
-location). Turn it into the two import files:
+location in "Count – <location>" columns). The same workbook goes into both imports as it is; each finds the
+Products tab and the columns it needs, and ignores the rest. Location names in the count headings must match
+the locations in the app.
 
-```bash
-node scripts/product-workbook-to-csv.mjs completed-workbook.xlsx out --location "Shop 1"
-```
-
-It lists any rows the import will reject (no item code, no price). Then, in the app:
-
-1. **Products → Import**: upload `out/products.csv`. Check the preview, fix anything flagged, import.
-2. **Stock → Adjustments → Import opening stock**: upload `out/opening-stock.csv`.
+1. **Products → Import**: upload the workbook. Check the preview, fix anything flagged in the workbook, upload
+   it again, import.
+2. **Stock → Adjustments → Import opening stock**: upload the same workbook. It reads the count columns; a blank
+   count means none at that location.
 3. **Stock → Labels**: print labels for a handful of items so cashiers can practise scanning.
+
+To load only one location's counts (e.g. for training), `node scripts/product-workbook-to-csv.mjs
+completed-workbook.xlsx out --location "Shop 1"` writes the two files as CSV instead.
 
 ### Starting again
 

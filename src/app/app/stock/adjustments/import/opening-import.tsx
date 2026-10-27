@@ -4,33 +4,11 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { readGrid } from "@/lib/spreadsheet";
 import { importOpeningStock, type OpeningResult, type OpeningRow } from "./actions";
-
-const COLUMNS: Record<string, keyof Omit<OpeningRow, "_row">> = {
-  location: "location",
-  locationcode: "location",
-  store: "location",
-  skucode: "sku_code",
-  sku: "sku_code",
-  code: "sku_code",
-  itemid: "sku_code",
-  barcode: "sku_code",
-  batch: "batch",
-  batchno: "batch",
-  lot: "batch",
-  quantity: "quantity",
-  qty: "quantity",
-  count: "quantity",
-  counted: "quantity",
-};
-const key = (h: unknown) =>
-  COLUMNS[
-    String(h ?? "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, "")
-  ];
+import { isOpeningSheet, parseOpeningStock } from "./parse";
 
 export function OpeningImport() {
   const [rows, setRows] = useState<OpeningRow[]>([]);
+  const [layout, setLayout] = useState("");
   const [result, setResult] = useState<OpeningResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -39,24 +17,9 @@ export function OpeningImport() {
     setResult(null);
     setError(null);
     try {
-      const grid = await readGrid(file);
-      const headerIndex = grid.slice(0, 10).findIndex((r) => r.filter((c) => key(c)).length >= 3);
-      if (headerIndex === -1) throw new Error("Couldn't find the heading row (location, sku_code, quantity).");
-      const mapping = grid[headerIndex].map(key);
-      const parsed: OpeningRow[] = [];
-      grid.slice(headerIndex + 1).forEach((cells, i) => {
-        const row: OpeningRow = { _row: headerIndex + i + 2 };
-        let any = false;
-        mapping.forEach((k, c) => {
-          const v = cells[c] === null || cells[c] === undefined ? "" : String(cells[c]).trim();
-          if (k && v && !row[k]) {
-            row[k] = v;
-            any = true;
-          }
-        });
-        if (any) parsed.push(row);
-      });
+      const { rows: parsed, layout } = parseOpeningStock(await readGrid(file, isOpeningSheet));
       setRows(parsed);
+      setLayout(layout);
       startTransition(async () => setResult(await importOpeningStock(parsed, false)));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't read that file.");
@@ -102,7 +65,7 @@ export function OpeningImport() {
       {result?.rows && (
         <>
           <p className="text-sm">
-            {rows.length} rows ·{" "}
+            {rows.length} counts ({layout}) ·{" "}
             {result.byLocation?.map((l) => `${l.name}: ${l.lines} item${l.lines === 1 ? "" : "s"}`).join(" · ") ||
               "no valid rows"}
             {failed.length > 0 && <span className="text-danger"> · {failed.length} with errors</span>}

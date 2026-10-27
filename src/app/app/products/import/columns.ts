@@ -34,7 +34,8 @@ export const IMPORT_COLUMNS = [
 export type ImportColumn = (typeof IMPORT_COLUMNS)[number]["key"];
 export type ImportRow = Partial<Record<ImportColumn, string>> & { _row: number };
 
-// Other headings people commonly use, including those in Modasa's existing stock sheets.
+// Other headings people commonly use, including those in Modasa's existing stock sheets and the product
+// workbook (docs/training-copy.md). Its "Count – <location>" columns are for the opening-stock import.
 const ALIASES: Record<string, ImportColumn> = {
   productname: "product_name",
   product: "product_name",
@@ -48,9 +49,11 @@ const ALIASES: Record<string, ImportColumn> = {
   code: "sku_code",
   itemid: "sku_code",
   itemno: "sku_code",
+  itemcode: "sku_code",
   item: "sku_code",
   productitemno: "sku_code",
   variant: "variant",
+  variantsizedesigncolour: "variant",
   size: "variant",
   colour: "variant",
   color: "variant",
@@ -68,6 +71,8 @@ const ALIASES: Record<string, ImportColumn> = {
   rollwidthcm: "roll_width_cm",
   rolllengthcm: "roll_length_cm",
   coveragem2: "coverage_m2",
+  m2perunitsheetspanelstiles: "coverage_m2",
+  mperunitsheetspanelstiles: "coverage_m2", // "m² per unit…": the ² drops out when headings are simplified
   showonline: "show_online",
   online: "show_online",
   website: "show_online",
