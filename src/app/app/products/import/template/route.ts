@@ -37,6 +37,24 @@ const EXAMPLES = [
     "yes",
   ],
   ["Vinyl Floor Tiles", "Flooring", "Box", "VL-68001", "Brown", "18000", "", "", "", "", "", "", "3.34", ""],
+  // Variants that differ in two ways: name the options, give each row its values (the variant column is left blank).
+  ...[
+    ["SHAG-57G", "5 × 7 ft", "Grey", "95000"],
+    ["SHAG-57C", "5 × 7 ft", "Cream", "95000"],
+    ["SHAG-710G", "7 × 10 ft", "Grey", "160000"],
+  ].map(([code, size, colour, price]) => [
+    "Shaggy Rug",
+    "Rugs",
+    "Piece",
+    code,
+    "",
+    price,
+    ...Array(8).fill(""),
+    "Size",
+    size,
+    "Colour",
+    colour,
+  ]),
 ];
 
 export async function GET() {

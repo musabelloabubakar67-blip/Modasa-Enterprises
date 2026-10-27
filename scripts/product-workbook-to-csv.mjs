@@ -34,6 +34,11 @@ const PRODUCT_COLUMNS = {
   "Roll width (cm)": "roll_width_cm",
   "Roll length (cm)": "roll_length_cm",
   "m² per unit (sheets, panels, tiles)": "coverage_m2",
+  // Optional: for variants that differ in two ways (see the product import's option columns).
+  "Option 1 name": "option1_name",
+  "Option 1": "option1",
+  "Option 2 name": "option2_name",
+  "Option 2": "option2",
 };
 const COUNT_PREFIX = "Count – ";
 

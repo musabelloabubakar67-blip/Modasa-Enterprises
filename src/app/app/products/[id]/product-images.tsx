@@ -7,16 +7,19 @@ import { PRODUCT_IMAGES_BUCKET } from "@/lib/products";
 import { ProductThumb } from "@/components/product-thumb";
 import { resizeImage } from "@/lib/resize-image";
 
-type Image = { id: string; storage_path: string; sort_order: number };
+type Image = { id: string; storage_path: string; sort_order: number; sku_id: string | null };
 
 export function ProductImages({
   productId,
   productName,
   images,
+  variants,
 }: {
   productId: string;
   productName: string;
   images: Image[];
+  /** Active variants, so a photo can be marked as showing one of them. */
+  variants: { id: string; label: string }[];
 }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -82,6 +85,18 @@ export function ProductImages({
     refresh();
   }
 
+  async function showsVariant(image: Image, skuId: string) {
+    setBusy(true);
+    setError(null);
+    const { error: updateError } = await createClient()
+      .from("product_images")
+      .update({ sku_id: skuId || null })
+      .eq("id", image.id);
+    if (updateError) setError(updateError.message);
+    setBusy(false);
+    refresh();
+  }
+
   return (
     <section className="card p-6">
       <div className="flex items-center justify-between gap-2">
@@ -107,35 +122,61 @@ export function ProductImages({
       {images.length === 0 ? (
         <p className="text-muted mt-3 text-sm">No photos yet. The first photo is shown in lists and at the till.</p>
       ) : (
-        <ul className="mt-4 flex flex-wrap gap-3">
-          {images.map((image, i) => (
-            <li key={image.id} className="w-28 text-xs">
-              <ProductThumb path={image.storage_path} name={productName} size={112} />
-              <div className="mt-1 flex justify-between">
-                {i === 0 ? (
-                  <span className="text-muted">Main</span>
-                ) : (
+        <>
+          {variants.length > 1 && (
+            <p className="text-muted mt-3 text-sm">
+              Photo of one variant (a colour or design)? Choose it under the photo, and the website shows that photo
+              when a customer picks it.
+            </p>
+          )}
+          <ul className="mt-4 flex flex-wrap gap-3">
+            {images.map((image, i) => (
+              <li key={image.id} className="w-28 text-xs">
+                <ProductThumb path={image.storage_path} name={productName} size={112} />
+                <div className="mt-1 flex justify-between">
+                  {i === 0 ? (
+                    <span className="text-muted">Main</span>
+                  ) : (
+                    <button
+                      type="button"
+                      className="text-accent hover:underline"
+                      onClick={() => makeMain(image)}
+                      disabled={busy}
+                    >
+                      Make main
+                    </button>
+                  )}
                   <button
                     type="button"
-                    className="text-accent hover:underline"
-                    onClick={() => makeMain(image)}
+                    className="text-danger hover:underline"
+                    onClick={() => remove(image)}
                     disabled={busy}
                   >
-                    Make main
+                    Remove
                   </button>
+                </div>
+                {variants.length > 1 && (
+                  <label className="mt-1 block">
+                    <span className="sr-only">Shows</span>
+                    <select
+                      className="input px-1 py-1 text-xs"
+                      value={image.sku_id ?? ""}
+                      onChange={(e) => showsVariant(image, e.target.value)}
+                      disabled={busy}
+                    >
+                      <option value="">Whole product</option>
+                      {variants.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                 )}
-                <button
-                  type="button"
-                  className="text-danger hover:underline"
-                  onClick={() => remove(image)}
-                  disabled={busy}
-                >
-                  Remove
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </section>
   );

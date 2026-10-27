@@ -178,6 +178,29 @@ export async function analyzeImport(supabase: Client, input: ImportRow[]): Promi
         first.result.messages.push(`Note: renames “${existingName}” to “${newName}”.`);
     }
 
+    // Named options: the same names on every row, a value for each, and no two rows alike.
+    const names1 = new Set(group.rows.map((r) => r.row.option1_name?.trim()).filter(Boolean));
+    const names2 = new Set(group.rows.map((r) => r.row.option2_name?.trim()).filter(Boolean));
+    const option1Name = [...names1][0];
+    const option2Name = [...names2][0];
+    if (names1.size > 1 || names2.size > 1)
+      first.result.messages.push("option1_name / option2_name differ between rows of this product.");
+    if (option2Name && !option1Name) first.result.messages.push("option2_name given without option1_name.");
+    const combos = new Map<string, number>();
+    for (const { row, result } of group.rows) {
+      const v1 = row.option1?.trim();
+      const v2 = row.option2?.trim();
+      if (option1Name && !v1) result.messages.push(`Missing option1 (${option1Name}).`);
+      if (option2Name && !v2) result.messages.push(`Missing option2 (${option2Name}).`);
+      if (v1 && !option1Name) result.messages.push("option1 given without option1_name.");
+      if (v2 && !option2Name) result.messages.push("option2 given without option2_name.");
+      if (v1) {
+        const combo = `${v1}|${v2 ?? ""}`.toLowerCase();
+        if (combos.has(combo)) result.messages.push(`Same options as row ${combos.get(combo)}.`);
+        combos.set(combo, row._row);
+      }
+    }
+
     const description = group.rows.map((r) => r.row.description?.trim()).find(Boolean);
     const online = group.rows.map((r) => yesNo(r.row.show_online)).filter((v) => typeof v === "boolean");
     if (new Set(online).size > 1)
@@ -189,6 +212,7 @@ export async function analyzeImport(supabase: Client, input: ImportRow[]): Promi
       unit_id: unitByKey.get(unit),
       ...(description ? { description } : {}),
       ...(online.length > 0 ? { show_online: online[0] } : {}),
+      ...(option1Name ? { option1_name: option1Name, option2_name: option2Name ?? null } : {}),
       skus: group.rows.map(({ row }) => {
         const p = parsedRows.get(row)!;
         // Blank optional cells leave existing values alone, so re-importing a partial sheet is safe.
@@ -196,6 +220,7 @@ export async function analyzeImport(supabase: Client, input: ImportRow[]): Promi
           code: row.sku_code?.trim(),
           price_kobo: p.price,
           ...(row.variant?.trim() ? { variant_label: row.variant.trim() } : {}),
+          ...(option1Name ? { option1: row.option1?.trim(), option2: option2Name ? row.option2?.trim() : null } : {}),
           ...(p.sale !== null ? { promo_price_kobo: p.sale } : {}),
           ...(p.cost !== null ? { cost_kobo: p.cost } : {}),
           ...(p.barcode ? { barcode: p.barcode } : {}),
