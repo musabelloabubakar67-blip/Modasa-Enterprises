@@ -7,7 +7,8 @@ import { LabelSheet, type LabelItem } from "./label-sheet";
 const SKU_FIELDS = "id, code, barcode, variant_label, price_kobo, promo_price_kobo, products(name)";
 
 export default async function LabelsPage({ searchParams }: PageProps<"/app/stock/labels">) {
-  await requireStaff(["owner", "manager", "warehouse"]);
+  // Every role prints labels: cashiers label stock at their shop, warehouse staff on deliveries.
+  await requireStaff();
   const params = await searchParams;
   const receiptId = z.uuid().safeParse(params.receipt).data;
   const skuId = z.uuid().safeParse(params.sku).data;

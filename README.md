@@ -81,7 +81,7 @@ Hosting, the training copy and handover: [`docs/training-copy.md`](docs/training
 - **Breaking up a set** (Stock → Break up a set, owners and managers): when a set is opened and its pieces are sold
   singly, the sets come out of stock and the single-piece item goes in, at one location. The single piece is its own
   item with its own price and cost. Recorded as *Set broken up* movements, which the losses report leaves out.
-- Labels print a CODE128 barcode of the SKU's barcode (or code) on A4 sticker sheets or 50×30 mm thermal labels.
+- Labels (every role; cashiers label stock at their shop) print a CODE128 barcode of the SKU's barcode (or code) on A4 sticker sheets or 50×30 mm thermal labels.
 - Staff names in history come from `staff_directory` (names only), so floor staff never see colleagues' contact
   details. Dates are shown in Africa/Lagos time (`src/lib/dates.ts`).
 
@@ -193,7 +193,7 @@ be tried; in production, checkout is switched off until the key is set.
 | --- | --- |
 | Owner | Everything, including settings, locations and staff |
 | Manager | Day-to-day operations across all locations |
-| Cashier | One shop: sales, receiving transfers, reporting counts and damage (manager approves) |
+| Cashier | One shop: sales, receiving transfers, printing labels, reporting counts and damage (manager approves) |
 | Warehouse staff | One warehouse: receiving deliveries, labels, reporting counts and damage (manager approves) |
 
 ## Build plan
