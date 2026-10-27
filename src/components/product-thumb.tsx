@@ -23,6 +23,12 @@ export function ProductThumb({ path, name, size = 48 }: { path?: string | null; 
   return (
     // Plain <img>: photos come from Supabase Storage, and next/image blocks local IPs in development.
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={productImageUrl(path)} alt="" style={style} className="shrink-0 rounded-md object-cover" loading="lazy" />
+    <img
+      src={productImageUrl(path, size * 2)}
+      alt=""
+      style={style}
+      className="shrink-0 rounded-md object-cover"
+      loading="lazy"
+    />
   );
 }

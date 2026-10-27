@@ -11,7 +11,7 @@ export const PLACEHOLDER = {
  * (a storage path) or linked from elsewhere (a full address).
  */
 export function photoUrl(path: string, width: number) {
-  if (!/^https?:\/\//.test(path)) return productImageUrl(path);
+  if (!/^https?:\/\//.test(path)) return productImageUrl(path, width);
   if (path.includes("images.unsplash.com")) return `${path.split("?")[0]}?auto=format&fit=crop&q=70&w=${width}`;
   return path;
 }
