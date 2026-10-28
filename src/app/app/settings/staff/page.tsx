@@ -1,5 +1,7 @@
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { formatDateTime } from "@/lib/dates";
 import { ROLE_LABELS } from "@/lib/roles";
 import { StaffForm, type LocationOption } from "./staff-form";
 
@@ -7,14 +9,16 @@ export default async function StaffPage() {
   const me = await requireStaff(["owner"]);
   const supabase = await createClient();
 
-  const [{ data: staff, error: staffError }, { data: locations, error: locationsError }] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("id, full_name, email, phone, role, location_id, is_active, locations(name)")
-      .order("is_active", { ascending: false })
-      .order("full_name"),
-    supabase.from("locations").select("id, name, kind").eq("is_active", true).order("kind").order("name"),
-  ]);
+  const [{ data: staff, error: staffError }, { data: locations, error: locationsError }, lastSignIns] =
+    await Promise.all([
+      supabase
+        .from("profiles")
+        .select("id, full_name, email, phone, role, location_id, is_active, locations(name)")
+        .order("is_active", { ascending: false })
+        .order("full_name"),
+      supabase.from("locations").select("id, name, kind").eq("is_active", true).order("kind").order("name"),
+      getLastSignIns(),
+    ]);
   if (staffError) throw staffError;
   if (locationsError) throw locationsError;
 
@@ -32,6 +36,13 @@ export default async function StaffPage() {
                   {person.id === me.id && <span className="text-muted ml-2 text-xs">(you)</span>}
                 </p>
                 <p className="text-muted truncate text-sm">{person.email}</p>
+                {lastSignIns && (
+                  <p className="text-muted text-xs">
+                    {lastSignIns.has(person.id)
+                      ? `Last signed in ${formatDateTime(lastSignIns.get(person.id)!)}`
+                      : "Never signed in"}
+                  </p>
+                )}
               </div>
               <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 text-xs">
                 <span className="bg-background rounded px-2 py-1">{ROLE_LABELS[person.role]}</span>
@@ -58,4 +69,11 @@ export default async function StaffPage() {
       </div>
     </div>
   );
+}
+
+/** When each login last signed in, from Supabase Auth (the owner's view only; needs the service key). */
+async function getLastSignIns() {
+  const { data, error } = await createAdminClient().auth.admin.listUsers({ perPage: 1000 });
+  if (error) return null; // Unknown rather than "never": the line is left out.
+  return new Map(data.users.flatMap((u) => (u.last_sign_in_at ? [[u.id, u.last_sign_in_at] as const] : [])));
 }

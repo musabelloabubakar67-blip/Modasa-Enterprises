@@ -6,6 +6,7 @@ const TABS = [
   { href: "/app/settings/locations", label: "Locations" },
   { href: "/app/settings/staff", label: "Staff" },
   { href: "/app/settings/website", label: "Website" },
+  { href: "/app/settings/security", label: "Security log" },
 ];
 
 export default async function SettingsLayout({ children }: LayoutProps<"/app/settings">) {

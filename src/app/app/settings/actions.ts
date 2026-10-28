@@ -9,7 +9,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { fieldErrorsFrom, formValues, type ActionState } from "@/lib/forms";
 import { parseMoney } from "@/lib/money";
-import { LOCATION_KINDS, STAFF_ROLES, roleNeedsLocation } from "@/lib/roles";
+import { LOCATION_KINDS, ROLE_LABELS, STAFF_ROLES, roleNeedsLocation } from "@/lib/roles";
+import { logSecurity } from "@/lib/security-log";
 
 const optionalText = (max: number) => z.string().max(max).optional();
 
@@ -20,13 +21,19 @@ const optionalText = (max: number) => z.string().max(max).optional();
  * database refuses it anywhere else.
  */
 export async function resetTrainingData(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  await requireStaff(["owner"]);
+  const owner = await requireStaff(["owner"]);
   const typed = String(formData.get("confirm") ?? "");
   if (typed.trim().toUpperCase() !== "RESET") return { error: "Type RESET in the box to confirm." };
   const supabase = await createClient();
   const locations = formData.get("locations") === "on";
   const { error } = await supabase.rpc("reset_training_data", { p_locations: locations });
   if (error) return { error: error.message };
+  await logSecurity(
+    owner.id,
+    "settings",
+    "training_reset",
+    locations ? "cleared the training data, including shops and warehouses" : "cleared the training data",
+  );
   expireLocations();
   revalidatePath("/", "layout");
   return {
@@ -180,6 +187,16 @@ export async function saveStaff(_prev: ActionState, formData: FormData): Promise
         ? { error: "A staff member with that email already exists.", fieldErrors: { email: "Already in use." } }
         : { error: error.message };
     }
+    const { data: location } = locationId
+      ? await createAdminClient().from("locations").select("name").eq("id", locationId).single()
+      : { data: null };
+    await logSecurity(
+      owner.id,
+      "access",
+      "staff_added",
+      `added a login for ${v.full_name} (${ROLE_LABELS[v.role]}${location ? ` at ${location.name}` : ""}, ${v.email})`,
+      locationId,
+    );
     revalidatePath("/app/settings/staff");
     return { success: `${v.full_name} can now sign in with ${v.email}.` };
   }
@@ -205,6 +222,12 @@ export async function saveStaff(_prev: ActionState, formData: FormData): Promise
   if (v.password) {
     const { error: pwError } = await createAdminClient().auth.admin.updateUserById(v.id, { password: v.password });
     if (pwError) return { error: pwError.message };
+    await logSecurity(
+      owner.id,
+      "access",
+      "password_reset",
+      `reset ${isSelf ? "their own" : `${v.full_name}'s`} password`,
+    );
   }
 
   revalidatePath("/app", "layout");

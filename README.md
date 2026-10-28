@@ -196,6 +196,21 @@ be tried; in production, checkout is switched off until the key is set.
 | Cashier | One shop: sales, receiving transfers, printing labels, reporting counts and damage (manager approves) |
 | Warehouse staff | One warehouse: receiving deliveries, labels, reporting counts and damage (manager approves) |
 
+## Security log
+
+Settings → Security log (owner only) lists security-relevant actions as plain sentences, with who did them:
+added, changed or deactivated logins, password resets, failed sign-ins; refunds, tills that didn't balance,
+drawer openings, price and cost changes, cancelled and refunded online orders; approved or rejected counts and
+write-offs, a manager's own counts (applied with no second check), short or cancelled transfers, sets broken
+up; locations, business and VAT details, opening or closing the online shop, delivery fees, and the training
+reset. Ordinary sales, deliveries and new products are left out so it stays readable, and changes saved
+together are one line (a product's five new prices, or a whole import).
+
+Lines are written by database triggers (`supabase/migrations/20261028000019_security_log.sql`); the few
+actions done with the service key are logged from the app (`src/lib/security-log.ts`). Nobody can edit or
+delete lines through the site, and the training reset keeps them. Settings → Staff shows each login's last
+sign-in.
+
 ## Build plan
 
 1. **Foundation** – setup, sign-in, roles, locations, business settings ✅
