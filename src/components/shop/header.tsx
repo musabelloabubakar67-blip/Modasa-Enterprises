@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Storefront } from "@/lib/shop/data";
 import { whatsappNumber } from "@/lib/phone";
 import { CartLink } from "./cart-link";
+import { CategoryNav } from "./category-nav";
 import { SearchIcon } from "./icons";
 import { Logo } from "./logo";
 import { MobileMenu, type MenuLink } from "./mobile-menu";
@@ -69,17 +70,7 @@ export function Header({ shop }: { shop: Storefront }) {
               <CartLink />
             </div>
           </div>
-          <nav aria-label="Categories" className="caps hidden justify-center gap-x-10 pb-4 lg:flex print:hidden">
-            {links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`hover:text-accent transition-colors ${link.sale ? "text-sale" : ""}`}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+          <CategoryNav links={links} />
         </div>
       </header>
     </>

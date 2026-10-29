@@ -228,27 +228,49 @@ function friendlyDbError(error: { code?: string; message: string; details?: stri
 const categorySchema = z.object({
   id: z.uuid().optional(),
   name: z.string({ error: "Enter a name." }).trim().min(1, "Enter a name.").max(80),
-  sort_order: z.coerce.number().int().min(0).max(9999).optional(),
   is_active: z.enum(["on"]).optional(),
 });
 
+/** Adds or renames a category. Its place in the list is changed with the arrows (moveCategory); new ones go last. */
 export async function saveCategory(_prev: ActionState, formData: FormData): Promise<ActionState> {
   await requireStaff(EDITORS);
   const parsed = categorySchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
-  const { id, name, sort_order, is_active } = parsed.data;
+  const { id, name, is_active } = parsed.data;
 
   const supabase = await createClient();
   const { error } = id
     ? await supabase
         .from("categories")
-        .update({ name, sort_order: sort_order ?? 0, is_active: is_active === "on" })
+        .update({ name, is_active: is_active === "on" })
         .eq("id", id)
-    : await supabase.from("categories").insert({ name, sort_order: sort_order ?? 0 });
+    : await supabase.from("categories").insert({ name });
   if (error) return { error: error.code === "23505" ? "A category with that name already exists." : error.message };
 
   revalidatePath("/app/products", "layout");
   return { success: id ? "Category saved." : `Added “${name}”.` };
+}
+
+/** Moves a category one place up or down the list (and the website menu), renumbering the list 10, 20, 30… */
+export async function moveCategory(id: string, direction: "up" | "down") {
+  await requireStaff(EDITORS);
+  const supabase = await createClient();
+  const { data: list, error } = await supabase
+    .from("categories")
+    .select("id, sort_order")
+    .order("sort_order")
+    .order("name");
+  if (error) throw error;
+  const from = list.findIndex((c) => c.id === id);
+  const to = direction === "up" ? from - 1 : from + 1;
+  if (from === -1 || to < 0 || to >= list.length) return;
+  [list[from], list[to]] = [list[to], list[from]];
+  const changed = list.map((c, i) => ({ ...c, next: (i + 1) * 10 })).filter((c) => c.sort_order !== c.next);
+  for (const c of changed) {
+    const { error: updateError } = await supabase.from("categories").update({ sort_order: c.next }).eq("id", c.id);
+    if (updateError) throw updateError;
+  }
+  revalidatePath("/app/products", "layout");
 }
 
 const unitSchema = z.object({
