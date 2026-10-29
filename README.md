@@ -63,7 +63,11 @@ Hosting, the training copy and handover: [`docs/training-copy.md`](docs/training
   option. A photo can belong to one variant (`product_images.sku_id`): the shop shows it when that variant is
   picked, and on its option button.
 - **Import** (`/app/products/import`): one row per SKU; rows matching an existing `sku_code` update it, and
-  blank optional cells leave existing values unchanged. The whole file is saved in one transaction.
+  blank optional cells leave existing values unchanged. The whole file is saved in one transaction. The
+  downloadable **product workbook** (`import/template/workbook.ts`, Excel) has the friendly headings, dropdowns
+  of the current categories and units, and a `Count – <location>` column per active location, so the same file
+  also goes into Stock → Adjustments → Import opening stock. Its Products tab comes first so both importers pick
+  it; the Examples tab is never read.
 - Units with *coverage* (Roll → width × length; area units such as Box, Sheet or Panel → m² per unit) feed the
   wallpaper and area calculators at the till.
 

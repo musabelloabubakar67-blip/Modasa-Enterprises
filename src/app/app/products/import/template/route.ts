@@ -1,71 +1,34 @@
-import Papa from "papaparse";
 import { getStaff } from "@/lib/auth";
-import { IMPORT_COLUMNS } from "../columns";
-
-const EXAMPLES = [
-  [
-    "Centre Rug – Turkey",
-    "Rugs",
-    "Piece",
-    "CRUG-001",
-    "3 × 5",
-    "40000",
-    "",
-    "26000",
-    "",
-    "Turkish centre rug",
-    "",
-    "",
-    "",
-    "yes",
-  ],
-  ["Centre Rug – Turkey", "Rugs", "Piece", "CRUG-002", "4 × 6", "70000", "65000", "45000", "", "", "", "", "", "yes"],
-  [
-    "Wallpaper ALLWP-001",
-    "Wallpaper",
-    "Roll",
-    "ALLWP-001A",
-    "Design A",
-    "4500",
-    "",
-    "",
-    "",
-    "",
-    "53",
-    "1000",
-    "",
-    "yes",
-  ],
-  ["Vinyl Floor Tiles", "Flooring", "Box", "VL-68001", "Brown", "18000", "", "", "", "", "", "", "3.34", ""],
-  // Variants that differ in two ways: name the options, give each row its values (the variant column is left blank).
-  ...[
-    ["SHAG-57G", "5 × 7 ft", "Grey", "95000"],
-    ["SHAG-57C", "5 × 7 ft", "Cream", "95000"],
-    ["SHAG-710G", "7 × 10 ft", "Grey", "160000"],
-  ].map(([code, size, colour, price]) => [
-    "Shaggy Rug",
-    "Rugs",
-    "Piece",
-    code,
-    "",
-    price,
-    ...Array(8).fill(""),
-    "Size",
-    size,
-    "Colour",
-    colour,
-  ]),
-];
+import { getBusinessSettings } from "@/lib/business";
+import { createClient } from "@/lib/supabase/server";
+import { buildProductWorkbook } from "./workbook";
 
 export async function GET() {
   if (!(await getStaff())) return new Response("Unauthorized", { status: 401 });
 
-  const csv = Papa.unparse({ fields: IMPORT_COLUMNS.map((c) => c.label), data: EXAMPLES });
-  // BOM so Excel opens it as UTF-8 (keeps characters like "×" and "₦" intact).
-  return new Response(`\uFEFF${csv}`, {
+  const supabase = await createClient();
+  const [categories, units, locations, business] = await Promise.all([
+    supabase.from("categories").select("name").eq("is_active", true).order("sort_order").order("name"),
+    supabase.from("units").select("name").order("sort_order").order("name"),
+    supabase.from("locations").select("name, kind").eq("is_active", true).order("kind").order("name"),
+    getBusinessSettings(),
+  ]);
+  if (categories.error) throw categories.error;
+  if (units.error) throw units.error;
+  if (locations.error) throw locations.error;
+
+  const buffer = await buildProductWorkbook({
+    businessName: business.name,
+    currency: business.currency,
+    categories: categories.data.map((c) => c.name),
+    units: units.data.map((u) => u.name),
+    locations: locations.data,
+  });
+  return new Response(buffer, {
     headers: {
-      "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": 'attachment; filename="product-import-template.csv"',
+      "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "Content-Disposition": 'attachment; filename="product-workbook.xlsx"',
+      "Cache-Control": "no-store",
     },
   });
 }
