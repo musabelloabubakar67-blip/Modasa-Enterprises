@@ -4,11 +4,7 @@ import { ActionForm, FormMessage, SubmitButton } from "@/components/form";
 import type { Unit } from "@/lib/products";
 import { saveCategory, saveUnit } from "../actions";
 
-export function CategoryForm({
-  category,
-}: {
-  category?: { id: string; name: string; sort_order: number; is_active: boolean };
-}) {
+export function CategoryForm({ category }: { category?: { id: string; name: string; is_active: boolean } }) {
   return (
     <ActionForm action={saveCategory} resetOnSuccess={!category} className="space-y-3">
       {(state) => (
@@ -19,16 +15,6 @@ export function CategoryForm({
             <label className="min-w-40 flex-1">
               <span className="label">{category ? "Name" : "New category"}</span>
               <input name="name" className="input" defaultValue={category?.name} required />
-            </label>
-            <label className="w-24">
-              <span className="label">Order</span>
-              <input
-                name="sort_order"
-                type="number"
-                min={0}
-                className="input"
-                defaultValue={category?.sort_order ?? 0}
-              />
             </label>
             {category && (
               <label className="flex items-center gap-2 pb-2 text-sm">

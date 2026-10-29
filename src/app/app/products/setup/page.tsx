@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { moveCategory } from "../actions";
 import { CategoryForm, UnitForm } from "./forms";
 
 const COVERAGE_LABELS = { none: "—", roll: "Roll size", area: "m² per unit" } as const;
@@ -28,13 +29,37 @@ export default async function CatalogueSetupPage() {
         <div>
           <h2 className="font-semibold">Categories</h2>
           <p className="text-muted text-sm">
-            Lower numbers appear first. Deactivated categories can&apos;t be picked for new products.
+            The website menu shows categories in this order; what doesn&apos;t fit on one line goes under
+            &ldquo;More&rdquo;, so put the ones customers look for most at the top. Deactivated categories can&apos;t be
+            picked for new products.
           </p>
         </div>
         <ul className="card divide-border divide-y">
-          {categories.data.map((c) => (
-            <li key={c.id}>
-              <details className="group">
+          {categories.data.map((c, i) => (
+            <li key={c.id} className="flex items-start">
+              <div className="flex shrink-0 flex-col p-1.5">
+                <form action={moveCategory.bind(null, c.id, "up")}>
+                  <button
+                    type="submit"
+                    disabled={i === 0}
+                    aria-label={`Move ${c.name} up`}
+                    className="text-muted hover:text-foreground px-2 leading-5 disabled:opacity-25"
+                  >
+                    ↑
+                  </button>
+                </form>
+                <form action={moveCategory.bind(null, c.id, "down")}>
+                  <button
+                    type="submit"
+                    disabled={i === categories.data.length - 1}
+                    aria-label={`Move ${c.name} down`}
+                    className="text-muted hover:text-foreground px-2 leading-5 disabled:opacity-25"
+                  >
+                    ↓
+                  </button>
+                </form>
+              </div>
+              <details className="group min-w-0 flex-1">
                 <summary className="flex cursor-pointer list-none items-center justify-between p-3">
                   <span>
                     {c.name}
