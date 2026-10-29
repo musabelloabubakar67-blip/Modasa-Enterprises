@@ -14,20 +14,25 @@ export default async function ImportPage() {
         </Link>
         <h1 className="mt-2 text-2xl font-semibold">Import products</h1>
         <p className="text-muted mt-1 text-sm">
-          Upload a CSV or Excel file with one row per SKU. You&apos;ll see a preview before anything is saved. Rows
-          whose sku_code already exists update that item; blank optional cells leave existing values unchanged.
+          Upload the product workbook (or a CSV) with one row per item. You&apos;ll see a preview before anything is
+          saved. Rows whose item code already exists update that item; blank optional cells leave existing values
+          unchanged. The same workbook&apos;s Count columns then go in under Stock → Adjustments → Import opening stock.
         </p>
       </div>
 
       <div className="card p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-semibold">1. Get the template</h2>
+          <h2 className="font-semibold">1. Get the product workbook</h2>
           <a href="/app/products/import/template" className="btn btn-secondary" download>
-            Download template (CSV)
+            Download workbook (Excel)
           </a>
         </div>
         <details className="mt-3 text-sm">
           <summary className="text-accent cursor-pointer">Column guide</summary>
+          <p className="text-muted mt-2">
+            The workbook has dropdowns with your current categories and units, a Count column for each location, a Read
+            me and an Examples tab.
+          </p>
           <table className="mt-2 w-full">
             <tbody className="divide-border divide-y">
               {IMPORT_COLUMNS.map((c) => (

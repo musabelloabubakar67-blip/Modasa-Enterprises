@@ -14,13 +14,20 @@ export default async function ImportOpeningStockPage() {
       </Link>
       <h2 className="text-xl font-semibold">Import opening stock</h2>
       <div className="card space-y-2 p-6 text-sm">
-        <p>
-          Use this once per location when you go live, after a full count. Upload a CSV or Excel file in either layout:
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p>
+            Use this once per location when you go live, after a full count. Upload a CSV or Excel file in either
+            layout:
+          </p>
+          <a href="/app/products/import/template" className="btn btn-secondary" download>
+            Download product workbook (Excel)
+          </a>
+        </div>
         <p>
           <strong>A count sheet</strong>, like the product workbook: one row per item, an <em>Item code</em> column, and
           a column per location headed &ldquo;Count – <em>location name</em>&rdquo; (e.g. Count – Plaza). A blank count
-          means none there; other columns are ignored, so the same workbook used for the product import works.
+          means none there; other columns are ignored, so the same workbook used for the product import works. The
+          downloadable workbook already has a Count column for each of your locations.
         </p>
         <p>
           <strong>Or a list</strong>, one row per item per location, with these columns:

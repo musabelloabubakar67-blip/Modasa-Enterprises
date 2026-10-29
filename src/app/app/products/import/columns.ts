@@ -1,34 +1,40 @@
-// Import columns, shared by the browser (reading the file) and the server (validating it).
+// Import columns, shared by the browser (reading the file) and the server (validating it). Labels are the
+// headings in the product workbook (template/workbook.ts); matchColumn also accepts the older snake_case names.
 
 export const IMPORT_COLUMNS = [
-  { key: "product_name", label: "product_name", required: true, help: "Rows with the same name become one product." },
-  { key: "category", label: "category", required: true, help: "New categories are created automatically." },
-  { key: "unit", label: "unit", required: true, help: "Piece, Set, Roll, Box… (name or short form)." },
-  { key: "sku_code", label: "sku_code", required: true, help: "Unique code per item, e.g. CRUG-002." },
-  { key: "variant", label: "variant", required: false, help: "Size, colour… e.g. 4 × 6." },
-  { key: "price", label: "price", required: true, help: "Selling price, e.g. 70000." },
-  { key: "sale_price", label: "sale_price", required: false, help: "Optional standing sale price." },
-  { key: "cost_price", label: "cost_price", required: false, help: "Optional. Hidden from cashiers." },
-  { key: "barcode", label: "barcode", required: false, help: "Leave blank to use the SKU code." },
-  { key: "description", label: "description", required: false, help: "Optional product description." },
-  { key: "roll_width_cm", label: "roll_width_cm", required: false, help: "Wallpaper: roll width in cm." },
-  { key: "roll_length_cm", label: "roll_length_cm", required: false, help: "Wallpaper: roll length in cm." },
-  { key: "coverage_m2", label: "coverage_m2", required: false, help: "Tiles, sheets, panels: m² covered by one unit." },
+  { key: "product_name", label: "Product name", required: true, help: "Rows with the same name become one product." },
+  { key: "category", label: "Category", required: true, help: "New categories are created automatically." },
+  { key: "unit", label: "Unit", required: true, help: "Piece, Set, Roll, Box… (name or short form)." },
+  { key: "sku_code", label: "Item code", required: true, help: "Unique code per item, no spaces, e.g. CRUG-002." },
+  { key: "variant", label: "Variant (size / design / colour)", required: false, help: "Size, colour… e.g. 4 × 6." },
+  { key: "price", label: "Selling price", required: true, help: "Selling price, e.g. 70000." },
+  { key: "sale_price", label: "Sale price", required: false, help: "Optional standing sale price." },
+  { key: "cost_price", label: "Cost price", required: false, help: "Optional. Hidden from cashiers." },
+  { key: "barcode", label: "Barcode", required: false, help: "Leave blank to use the SKU code." },
+  { key: "description", label: "Description", required: false, help: "Optional product description." },
+  { key: "roll_width_cm", label: "Roll width (cm)", required: false, help: "Wallpaper: roll width in cm." },
+  { key: "roll_length_cm", label: "Roll length (cm)", required: false, help: "Wallpaper: roll length in cm." },
+  {
+    key: "coverage_m2",
+    label: "m² per unit (sheets, panels, tiles)",
+    required: false,
+    help: "Tiles, sheets, panels: m² covered by one unit.",
+  },
   {
     key: "show_online",
-    label: "show_online",
+    label: "Show on website",
     required: false,
     help: "yes or no: show on the website. Blank leaves it as it is.",
   },
   {
     key: "option1_name",
-    label: "option1_name",
+    label: "Option 1 name",
     required: false,
     help: "Variants differ in one or two ways? Name the first, e.g. Size. Same on every row of the product.",
   },
-  { key: "option1", label: "option1", required: false, help: "This row's value for option 1, e.g. 5 × 7 ft." },
-  { key: "option2_name", label: "option2_name", required: false, help: "Second way they differ, e.g. Colour." },
-  { key: "option2", label: "option2", required: false, help: "This row's value for option 2, e.g. Grey." },
+  { key: "option1", label: "Option 1", required: false, help: "This row's value for option 1, e.g. 5 × 7 ft." },
+  { key: "option2_name", label: "Option 2 name", required: false, help: "Second way they differ, e.g. Colour." },
+  { key: "option2", label: "Option 2", required: false, help: "This row's value for option 2, e.g. Grey." },
 ] as const;
 
 export type ImportColumn = (typeof IMPORT_COLUMNS)[number]["key"];
