@@ -1295,6 +1295,26 @@ export type Database = {
           },
         ];
       };
+      security_log: {
+        Row: {
+          action: string;
+          actor_id: string | null;
+          actor_name: string | null;
+          at: string;
+          category: string;
+          details: Json | null;
+          id: number;
+          location_id: string | null;
+          location_name: string | null;
+          ref_id: string | null;
+          ref_kind: string | null;
+          summary: string;
+          txid: number;
+        };
+        Insert: { [_ in never]: never };
+        Update: { [_ in never]: never };
+        Relationships: [];
+      };
       shifts: {
         Row: {
           close_note: string | null;
@@ -2287,6 +2307,17 @@ export type Database = {
       retry_online_order: { Args: { p_order_id: string }; Returns: Database["public"]["Enums"]["online_order_status"] };
       save_product: { Args: { payload: Json }; Returns: string };
       save_receipt: { Args: { payload: Json }; Returns: string };
+      security_log_add: {
+        Args: {
+          p_action: string;
+          p_actor: string | null;
+          p_category: string;
+          p_location?: string | null;
+          p_summary: string;
+        };
+        Returns: undefined;
+      };
+      security_log_failed_sign_in: { Args: { p_email: string; p_reason: string }; Returns: undefined };
       set_reorder_level: { Args: { p_level: number; p_location_id: string; p_sku_id: string }; Returns: undefined };
       shift_expected: {
         Args: { p_shift_id: string };

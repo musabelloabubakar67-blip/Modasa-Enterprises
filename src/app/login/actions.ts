@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formValues, type ActionState } from "@/lib/forms";
+import { logFailedSignIn } from "@/lib/security-log";
 
 function safeNext(next: string | undefined) {
   // Only allow internal staff paths, never an external URL.
@@ -15,11 +16,15 @@ export async function signIn(_prev: ActionState, formData: FormData): Promise<Ac
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) return { error: "Incorrect email or password." };
+  if (error) {
+    await logFailedSignIn(email, "failed_sign_in");
+    return { error: "Incorrect email or password." };
+  }
 
   const { data: profile } = await supabase.from("profiles").select("is_active").eq("id", data.user.id).maybeSingle();
   if (!profile?.is_active) {
     await supabase.auth.signOut();
+    await logFailedSignIn(email, "deactivated_sign_in");
     return { error: "This account has been deactivated. Ask the owner to reactivate it." };
   }
 
