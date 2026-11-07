@@ -5,6 +5,7 @@ import Link from "next/link";
 import { SkuPicker, skuLabel } from "@/components/sku-picker";
 import { formatMoney, parseMoney, toMoneyInput } from "@/lib/money";
 import { formatQty } from "@/lib/quantity";
+import { ProductThumb } from "@/components/product-thumb";
 import { completeSale, lookupCustomer, tillItemInfo, type TillItem } from "./actions";
 import { Calculator } from "./calculator";
 import { SaleComplete } from "./sale-complete";
@@ -272,8 +273,11 @@ export function Till({ shop, currency }: { shop: { id: string; name: string }; c
               const promo = l.item.promo_price_kobo !== null;
               return (
                 <li key={l.key} className="space-y-2 p-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
+                  <div className="flex items-start gap-3">
+                    {/* Confirms at a glance that the scanned or picked item is the one on the counter. Lines
+                        saved before photos were added have no image and show initials. */}
+                    <ProductThumb path={l.item.image} name={l.item.product_name} size={48} />
+                    <div className="min-w-0 flex-1">
                       <p className="font-medium">{skuLabel(l.item)}</p>
                       <p className="text-muted text-xs">
                         <span className="font-mono">{l.item.code}</span> ·{" "}

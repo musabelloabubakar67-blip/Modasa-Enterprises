@@ -6,6 +6,7 @@ import { z } from "zod";
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { parseMoney } from "@/lib/money";
+import { itemPhoto } from "@/lib/products";
 import type { ActionState } from "@/lib/forms";
 
 export type SkuOption = {
@@ -19,6 +20,8 @@ export type SkuOption = {
   unit: string;
   allows_decimal: boolean;
   track_batches: boolean;
+  /** Storage path of the item's photo (see itemPhoto), when the search provides it. */
+  image?: string | null;
 };
 
 /** Search active SKUs by name, code, variant or barcode. An exact code/barcode match comes first. */
@@ -31,7 +34,7 @@ export async function searchSkus(query: string): Promise<SkuOption[]> {
   const { data, error } = await supabase
     .from("skus")
     .select(
-      "id, code, variant_label, barcode, price_kobo, promo_price_kobo, products!inner(name, track_batches, is_active, search_text, units(abbreviation, allows_decimal))",
+      "id, code, variant_label, barcode, price_kobo, promo_price_kobo, products!inner(name, track_batches, is_active, search_text, units(abbreviation, allows_decimal), product_images(storage_path, sku_id, sort_order))",
     )
     .eq("is_active", true)
     .eq("products.is_active", true)
@@ -60,6 +63,7 @@ export async function searchSkus(query: string): Promise<SkuOption[]> {
       unit: s.products.units.abbreviation,
       allows_decimal: s.products.units.allows_decimal,
       track_batches: s.products.track_batches,
+      image: itemPhoto(s.products.product_images, s.id),
     }));
 }
 

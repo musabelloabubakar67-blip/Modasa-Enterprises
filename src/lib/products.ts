@@ -47,6 +47,18 @@ export function sellingPrice(sku: { price_kobo: number; promo_price_kobo: number
   return sku.promo_price_kobo ?? sku.price_kobo;
 }
 
+/**
+ * The photo to show beside one item (SKU): a photo of that variant, else one of the whole product. Never a
+ * photo of another variant: the silver figurine's picture on the gold one would mislead the cashier.
+ */
+export function itemPhoto(
+  images: { storage_path: string; sku_id: string | null; sort_order: number }[],
+  skuId: string,
+): string | null {
+  const first = (list: typeof images) => list.sort((a, b) => a.sort_order - b.sort_order)[0]?.storage_path ?? null;
+  return first(images.filter((i) => i.sku_id === skuId)) ?? first(images.filter((i) => i.sku_id === null));
+}
+
 export function canEditProducts(role: string) {
   return role === "owner" || role === "manager";
 }

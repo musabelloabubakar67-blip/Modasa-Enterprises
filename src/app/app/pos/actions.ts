@@ -5,6 +5,7 @@ import { z } from "zod";
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { parseMoney } from "@/lib/money";
+import { itemPhoto } from "@/lib/products";
 import type { ActionState } from "@/lib/forms";
 
 const TILL_ROLES = ["owner", "manager", "cashier"] as const;
@@ -23,6 +24,8 @@ export type TillItem = {
   roll_width_cm: number | null;
   roll_length_cm: number | null;
   coverage_m2: number | null;
+  /** Storage path of the item's photo (see itemPhoto), if any. */
+  image: string | null;
   /** Stock at this shop per batch ('' = no batch). */
   batches: { batch: string; quantity: number }[];
   elsewhere: { location_id: string; name: string; kind: "shop" | "warehouse"; quantity: number }[];
@@ -37,7 +40,7 @@ export async function tillItemInfo(skuId: string, shopId: string): Promise<TillI
     supabase
       .from("skus")
       .select(
-        "id, code, variant_label, price_kobo, promo_price_kobo, roll_width_cm, roll_length_cm, coverage_m2, products(name, track_batches, units(abbreviation, allows_decimal, coverage))",
+        "id, code, variant_label, price_kobo, promo_price_kobo, roll_width_cm, roll_length_cm, coverage_m2, products(name, track_batches, units(abbreviation, allows_decimal, coverage), product_images(storage_path, sku_id, sort_order))",
       )
       .eq("id", skuId)
       .maybeSingle(),
@@ -64,6 +67,7 @@ export async function tillItemInfo(skuId: string, shopId: string): Promise<TillI
     roll_width_cm: sku.roll_width_cm,
     roll_length_cm: sku.roll_length_cm,
     coverage_m2: sku.coverage_m2,
+    image: itemPhoto(sku.products.product_images, sku.id),
     batches: (levels ?? [])
       .filter((l) => l.location_id === shopId)
       .map((l) => ({ batch: l.batch, quantity: Number(l.quantity) }))
