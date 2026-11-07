@@ -3,6 +3,8 @@
 //
 //   node scripts/migrations-sql.mjs > setup.sql                    all migrations (new project)
 //   node scripts/migrations-sql.mjs --after 20261001000007 > update.sql   only newer ones
+//   node scripts/migrations-sql.mjs --only 20260930000000 > one.sql        just that one (e.g. one dated
+//                                                                          before the latest applied)
 //
 // The script runs in one transaction, so a failure applies nothing. It also records each migration in
 // supabase_migrations.schema_migrations, the table the CLI uses, so `supabase db push` still works later.
@@ -17,11 +19,18 @@ if (afterIndex !== -1 && !/^\d{14}$/.test(after ?? "")) {
   process.exit(1);
 }
 
+const onlyIndex = process.argv.indexOf("--only");
+const only = onlyIndex === -1 ? "" : process.argv[onlyIndex + 1];
+if (onlyIndex !== -1 && !/^\d{14}$/.test(only ?? "")) {
+  console.error("--only takes a migration version, e.g. 20260930000000");
+  process.exit(1);
+}
+
 const files = fs
   .readdirSync(dir)
   .filter((f) => /^\d{14}_.+\.sql$/.test(f))
   .sort()
-  .filter((f) => f.slice(0, 14) > after);
+  .filter((f) => (only ? f.slice(0, 14) === only : f.slice(0, 14) > after));
 if (!files.length) {
   console.error("No migrations to include.");
   process.exit(1);

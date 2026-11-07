@@ -23,7 +23,11 @@ Check current plans and terms on each provider's pricing page before quoting run
    - **From the dashboard (no tools needed):** open the project's **SQL Editor → New query**, paste the whole
      of `setup.sql` and **Run**. Generate it with `node scripts/migrations-sql.mjs > setup.sql`. It runs in
      one transaction: if anything fails, nothing is applied. For later updates, generate only the new
-     migrations with `--after <latest applied version>`.
+     migrations with `--after <latest applied version>`, or a single one with `--only <version>`.
+     The first migration (`20260930000000_default_table_grants.sql`) gives new tables to signed-in staff
+     and the server key: Supabase projects created since 30 May 2026 no longer do that automatically, and
+     without it the app gets "permission denied" everywhere. A project set up before that date needs it
+     applied once with `--only 20260930000000`.
    - **With the Supabase CLI**, on a computer with Node 22 and this repository:
 
      ```bash
