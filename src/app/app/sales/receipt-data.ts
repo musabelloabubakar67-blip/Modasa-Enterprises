@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 const RECEIPT_SELECT = `id, number, created_at, subtotal_kobo, delivery_fee_kobo, total_kobo, vat_rate, vat_kobo,
+  discount_kobo,
   fulfilment, fulfilment_status, delivery_address, delivery_area, delivery_date, cashier_id,
   locations(name, address, phone), customers(name, phone),
   sale_lines(id, quantity, batch, list_price_kobo, unit_price_kobo, line_total_kobo, returned_quantity, sort_order,

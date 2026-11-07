@@ -686,6 +686,7 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string;
+          discount_limit_pct: number;
           email: string;
           full_name: string;
           id: string;
@@ -706,6 +707,7 @@ export type Database = {
         };
         Update: {
           created_at?: string;
+          discount_limit_pct?: number;
           email?: string;
           full_name?: string;
           id?: string;
@@ -1183,6 +1185,8 @@ export type Database = {
           delivery_area: string | null;
           delivery_date: string | null;
           delivery_fee_kobo: number;
+          discount_kobo: number;
+          discount_reason: string | null;
           fulfilment: Database["public"]["Enums"]["fulfilment"];
           fulfilment_status: Database["public"]["Enums"]["fulfilment_status"];
           fulfilment_updated_at: string | null;
@@ -1207,6 +1211,8 @@ export type Database = {
           delivery_area?: string | null;
           delivery_date?: string | null;
           delivery_fee_kobo?: number;
+          discount_kobo?: number;
+          discount_reason?: string | null;
           fulfilment?: Database["public"]["Enums"]["fulfilment"];
           fulfilment_status?: Database["public"]["Enums"]["fulfilment_status"];
           fulfilment_updated_at?: string | null;
@@ -1231,6 +1237,8 @@ export type Database = {
           delivery_area?: string | null;
           delivery_date?: string | null;
           delivery_fee_kobo?: number;
+          discount_kobo?: number;
+          discount_reason?: string | null;
           fulfilment?: Database["public"]["Enums"]["fulfilment"];
           fulfilment_status?: Database["public"]["Enums"]["fulfilment_status"];
           fulfilment_updated_at?: string | null;
@@ -2198,6 +2206,7 @@ export type Database = {
       };
       create_online_order: { Args: { payload: Json }; Returns: Json };
       create_exchange: { Args: { payload: Json }; Returns: string };
+      discount_limit: { Args: { p_user: string }; Returns: number };
       create_return: { Args: { payload: Json }; Returns: string };
       create_sale: { Args: { payload: Json }; Returns: string };
       create_transfer: { Args: { payload: Json }; Returns: string };
@@ -2297,6 +2306,8 @@ export type Database = {
         Args: { p_from: string; p_location?: string; p_to: string };
         Returns: {
           cash_difference_kobo: number;
+          discounts_count: number;
+          discounts_kobo: number;
           drawer_openings: number;
           returns_count: number;
           returns_kobo: number;
@@ -2322,6 +2333,7 @@ export type Database = {
         Returns: undefined;
       };
       security_log_failed_sign_in: { Args: { p_email: string; p_reason: string }; Returns: undefined };
+      set_discount_limit: { Args: { p_pct: number; p_user: string }; Returns: undefined };
       set_reorder_level: { Args: { p_level: number; p_location_id: string; p_sku_id: string }; Returns: undefined };
       shift_expected: {
         Args: { p_shift_id: string };

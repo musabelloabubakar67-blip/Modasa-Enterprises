@@ -26,6 +26,7 @@ export default async function SalePage({ params }: PageProps<"/app/sales/[id]">)
     .from("sales")
     .select(
       `id, number, created_at, cashier_id, subtotal_kobo, delivery_fee_kobo, total_kobo, vat_kobo, vat_rate, note,
+       discount_kobo, discount_reason,
        fulfilment, fulfilment_status, fulfilment_updated_at, delivery_address, delivery_area, delivery_date,
        locations(name), customers(name, phone, email),
        sale_lines(id, quantity, batch, unit_price_kobo, list_price_kobo, line_total_kobo, returned_quantity, sort_order,
@@ -140,6 +141,15 @@ export default async function SalePage({ params }: PageProps<"/app/sales/[id]">)
             ))}
           </tbody>
           <tfoot className="border-border border-t">
+            {sale.discount_kobo > 0 && (
+              <tr className="text-success">
+                <td className="p-3" colSpan={3}>
+                  Discount given (included in the prices above)
+                  {sale.discount_reason && <span className="text-muted"> · “{sale.discount_reason}”</span>}
+                </td>
+                <td className="p-3 text-right tabular-nums">−{money(sale.discount_kobo)}</td>
+              </tr>
+            )}
             {sale.delivery_fee_kobo > 0 && (
               <tr>
                 <td className="p-3" colSpan={3}>
