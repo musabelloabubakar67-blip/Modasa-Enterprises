@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { searchSkus, type SkuOption } from "@/app/app/stock/actions";
 import { useBarcodeScanner } from "@/lib/use-barcode-scanner";
+import { ProductThumb } from "@/components/product-thumb";
 import { CameraScanner } from "./camera-scanner";
 
 const noopSubscribe = () => () => {};
@@ -169,16 +170,20 @@ export function SkuPicker({
                 key={sku.id}
                 role="option"
                 aria-selected={i === active}
-                className={`cursor-pointer px-3 py-2 text-sm ${i === active ? "bg-accent/10" : ""}`}
+                className={`flex cursor-pointer items-center gap-3 px-3 py-2 text-sm ${i === active ? "bg-accent/10" : ""}`}
                 onMouseDown={(e) => {
                   e.preventDefault();
                   pick(sku);
                 }}
                 onMouseEnter={() => setActive(i)}
               >
-                <span className="font-medium">{sku.product_name}</span>
-                {sku.variant_label && <span> · {sku.variant_label}</span>}
-                <span className="text-muted ml-2 font-mono text-xs">{sku.code}</span>
+                {/* The photo tells look-alike designs apart (gold vs silver figurine) at a glance. */}
+                <ProductThumb path={sku.image} name={sku.product_name} size={36} />
+                <span className="min-w-0">
+                  <span className="font-medium">{sku.product_name}</span>
+                  {sku.variant_label && <span> · {sku.variant_label}</span>}
+                  <span className="text-muted ml-2 font-mono text-xs">{sku.code}</span>
+                </span>
               </li>
             ))}
           </ul>
