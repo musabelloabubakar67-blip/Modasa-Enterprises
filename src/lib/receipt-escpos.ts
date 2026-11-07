@@ -63,10 +63,11 @@ export function receiptToEscPos(
 
   if (sale.returns.length) {
     p.rule();
-    for (const r of sale.returns) p.row(`Returned ${r.number}`, `-${money(r.refund_kobo)}`);
+    for (const r of sale.returns)
+      p.row(`${r.refund_method === "exchange" ? "Exchanged" : "Returned"} ${r.number}`, `-${money(r.refund_kobo)}`);
     const refunded = sale.returns.reduce((s, r) => s + r.refund_kobo, 0);
     p.bold(true)
-      .row("Net paid", money(sale.total_kobo - refunded))
+      .row("Net after returns", money(sale.total_kobo - refunded))
       .bold(false);
   }
 

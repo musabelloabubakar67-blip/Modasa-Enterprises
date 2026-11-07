@@ -16,10 +16,9 @@ import { PAYMENT_LABELS } from "@/lib/payments";
 const METHOD = PAYMENT_LABELS;
 const STATUS = { pending: "Waiting", out_for_delivery: "Out for delivery", completed: "Done" } as const;
 
-export default async function SalePage({ params, searchParams }: PageProps<"/app/sales/[id]">) {
+export default async function SalePage({ params }: PageProps<"/app/sales/[id]">) {
   await requireStaff(["owner", "manager", "cashier"]);
   const { id } = await params;
-  const { returned } = await searchParams;
   if (!z.uuid().safeParse(id).success) notFound();
 
   const supabase = await createClient();
@@ -32,7 +31,7 @@ export default async function SalePage({ params, searchParams }: PageProps<"/app
        sale_lines(id, quantity, batch, unit_price_kobo, list_price_kobo, line_total_kobo, returned_quantity, sort_order,
          skus(id, code, variant_label, products(name, units(abbreviation)))),
        sale_payments(method, amount_kobo, tendered_kobo, reference),
-       returns(id, number, created_at, refund_kobo, refund_method, reason, created_by,
+       returns(id, number, created_at, refund_kobo, refund_method, reason, created_by, exchange_sale_id,
          return_lines(quantity, condition, sale_line_id))`,
     )
     .eq("id", id)
@@ -40,11 +39,16 @@ export default async function SalePage({ params, searchParams }: PageProps<"/app
     .maybeSingle();
   if (!sale) notFound();
 
-  const [{ currency }, names, share] = await Promise.all([
+  const exchangeIds = sale.returns.flatMap((r) => (r.exchange_sale_id ? [r.exchange_sale_id] : []));
+  const [{ currency }, names, share, { data: exchanges }] = await Promise.all([
     getBusinessSettings(),
     getStaffNames([sale.cashier_id, ...sale.returns.map((r) => r.created_by)]),
     getSaleShare(sale.id),
+    exchangeIds.length
+      ? supabase.from("sales").select("id, number").in("id", exchangeIds)
+      : Promise.resolve({ data: [] as { id: string; number: string }[] }),
   ]);
+  const exchangeNumbers = new Map((exchanges ?? []).map((e) => [e.id, e.number]));
   const money = (k: number) => formatMoney(k, currency);
   const canReturn = sale.sale_lines.some((l) => Number(l.returned_quantity) < Number(l.quantity));
 
@@ -59,11 +63,6 @@ export default async function SalePage({ params, searchParams }: PageProps<"/app
         </h2>
         <p className="text-xl font-semibold tabular-nums">{money(sale.total_kobo)}</p>
       </div>
-      {returned && (
-        <p role="status" className="bg-success/10 text-success rounded-md px-3 py-2 text-sm">
-          Return recorded. Give the customer their refund.
-        </p>
-      )}
       <p className="text-muted text-sm">
         {formatDateTime(sale.created_at)} · served by {(sale.cashier_id && names.get(sale.cashier_id)) ?? "—"}
         {sale.customers && (
@@ -83,8 +82,8 @@ export default async function SalePage({ params, searchParams }: PageProps<"/app
           </a>
         )}
         {canReturn && (
-          <Link href={`/app/sales/${sale.id}/return`} className="btn btn-secondary">
-            Return items
+          <Link href={`/app/sales/${sale.id}/exchange`} className="btn btn-secondary">
+            Exchange items
           </Link>
         )}
       </div>
@@ -187,7 +186,7 @@ export default async function SalePage({ params, searchParams }: PageProps<"/app
 
       {sale.returns.length > 0 && (
         <section className="card p-4 text-sm">
-          <h3 className="mb-2 font-semibold">Returns</h3>
+          <h3 className="mb-2 font-semibold">Returns and exchanges</h3>
           <ul className="space-y-2">
             {sale.returns.map((r) => (
               <li key={r.id}>
@@ -198,6 +197,13 @@ export default async function SalePage({ params, searchParams }: PageProps<"/app
                   <span className="text-danger tabular-nums">
                     −{money(r.refund_kobo)} ({METHOD[r.refund_method]})
                   </span>
+                </div>
+                <div>
+                  {r.exchange_sale_id && (
+                    <Link href={`/app/sales/${r.exchange_sale_id}`} className="text-accent hover:underline">
+                      Exchanged for {exchangeNumbers.get(r.exchange_sale_id) ?? "the replacement sale"}
+                    </Link>
+                  )}
                 </div>
                 <p className="text-muted">
                   “{r.reason}” ·{" "}

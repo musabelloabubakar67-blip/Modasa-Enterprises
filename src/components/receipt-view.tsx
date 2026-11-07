@@ -75,9 +75,13 @@ export function ReceiptView({
         <>
           <Rule />
           {sale.returns.map((r) => (
-            <Row key={r.number} label={`Returned ${r.number}`} value={`-${money(r.refund_kobo)}`} />
+            <Row
+              key={r.number}
+              label={`${r.refund_method === "exchange" ? "Exchanged" : "Returned"} ${r.number}`}
+              value={`-${money(r.refund_kobo)}`}
+            />
           ))}
-          <Row label="Net paid" value={money(sale.total_kobo - refunded)} bold />
+          <Row label="Net after returns" value={money(sale.total_kobo - refunded)} bold />
         </>
       )}
 

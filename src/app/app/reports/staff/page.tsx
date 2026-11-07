@@ -39,7 +39,7 @@ export default async function StaffReportPage({ searchParams }: PageProps<"/app/
               <th className="pb-2 text-right font-medium">Sales</th>
               <th className="pb-2 text-right font-medium">Takings</th>
               <th className="pb-2 text-right font-medium">Returns</th>
-              <th className="pb-2 text-right font-medium">Refunded</th>
+              <th className="pb-2 text-right font-medium">Returned</th>
               <th className="pb-2 text-right font-medium" title="Drawer opened without a sale">
                 No-sale opens
               </th>

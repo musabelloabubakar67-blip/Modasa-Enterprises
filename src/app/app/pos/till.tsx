@@ -6,7 +6,8 @@ import { SkuPicker, skuLabel } from "@/components/sku-picker";
 import { formatMoney, parseMoney, toMoneyInput } from "@/lib/money";
 import { formatQty } from "@/lib/quantity";
 import { ProductThumb } from "@/components/product-thumb";
-import { completeSale, lookupCustomer, tillItemInfo, type TillItem } from "./actions";
+import { clearExchange, loadExchange, type ExchangeDraft } from "@/lib/exchange";
+import { completeExchange, completeSale, lookupCustomer, tillItemInfo, type TillItem } from "./actions";
 import { Calculator } from "./calculator";
 import { SaleComplete } from "./sale-complete";
 
@@ -55,6 +56,8 @@ export function Till({ shop, currency }: { shop: { id: string; name: string }; c
   const [payments, setPayments] = useState<Payment[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [completed, setCompleted] = useState<string | null>(null);
+  // An exchange chosen on a sale's Exchange items page: its credit pays towards this sale.
+  const [exchange, setExchange] = useState<ExchangeDraft | null>(null);
   const [pending, startTransition] = useTransition();
   const lookedUp = useRef("");
 
@@ -62,8 +65,9 @@ export function Till({ shop, currency }: { shop: { id: string; name: string }; c
     // Restore after mount: browser storage isn't available during server rendering.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setDraft(loadDraft(storageKey));
+    setExchange(loadExchange(shop.id));
     setLoaded(true);
-  }, [storageKey]);
+  }, [storageKey, shop.id]);
 
   useEffect(() => {
     if (!loaded) return;
@@ -81,6 +85,14 @@ export function Till({ shop, currency }: { shop: { id: string; name: string }; c
   const subtotal = draft.lines.reduce((s, l) => s + lineTotal(l), 0);
   const fee = draft.fulfilment === "delivery" ? (parseMoney(draft.delivery.fee) ?? 0) : 0;
   const total = subtotal + (Number.isNaN(fee) ? 0 : fee);
+  const credit = exchange?.credit_kobo ?? 0;
+
+  function cancelExchange() {
+    if (!confirm("Cancel this exchange? The items stay with the customer and nothing is recorded.")) return;
+    clearExchange(shop.id);
+    setExchange(null);
+    setStage("cart");
+  }
 
   // Quantity in the cart per SKU+batch, to warn when it exceeds what the shop has.
   const inCart = useMemo(() => {
@@ -124,7 +136,13 @@ export function Till({ shop, currency }: { shop: { id: string; name: string }; c
     setError(null);
     const problem = validateCart();
     if (problem) return setError(problem);
-    setPayments([{ method: "cash", amount: toMoneyInput(total), tendered: "", reference: "" }]);
+    // Store policy: an exchange is for items of equal or higher value; the customer tops up the difference.
+    if (exchange && subtotal < credit)
+      return setError(
+        `The replacement must come to at least ${formatMoney(credit, currency)} (the returned items). Add items, or choose dearer ones.`,
+      );
+    const due = total - credit;
+    setPayments(due > 0 ? [{ method: "cash", amount: toMoneyInput(due), tendered: "", reference: "" }] : []);
     setStage("pay");
   }
 
@@ -148,7 +166,7 @@ export function Till({ shop, currency }: { shop: { id: string; name: string }; c
     return null;
   }
 
-  const paid = payments.reduce((s, p) => s + (parseMoney(p.amount) || 0), 0);
+  const paid = credit + payments.reduce((s, p) => s + (parseMoney(p.amount) || 0), 0);
   const remaining = total - paid;
 
   function complete() {
@@ -170,7 +188,7 @@ export function Till({ shop, currency }: { shop: { id: string; name: string }; c
       );
 
     startTransition(async () => {
-      const result = await completeSale({
+      const sale = {
         location_id: shop.id,
         note: draft.note || undefined,
         customer: draft.customer.name.trim()
@@ -198,8 +216,26 @@ export function Till({ shop, currency }: { shop: { id: string; name: string }; c
                 fee_kobo: fee,
               }
             : undefined,
-      });
+      };
+      const result = exchange
+        ? await completeExchange({
+            return: {
+              sale_id: exchange.sale_id,
+              reason: exchange.reason,
+              lines: exchange.lines.map((l) => ({
+                sale_line_id: l.sale_line_id,
+                quantity: l.quantity,
+                condition: l.condition,
+              })),
+            },
+            sale,
+          })
+        : await completeSale(sale);
       if (result.error) return setError(result.error);
+      if (exchange) {
+        clearExchange(shop.id);
+        setExchange(null);
+      }
       setCompleted(result.saleId!);
       setDraft(EMPTY);
       setStage("cart");
@@ -222,6 +258,23 @@ export function Till({ shop, currency }: { shop: { id: string; name: string }; c
     <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
       {/* Cart */}
       <section className="space-y-3">
+        {exchange && (
+          <div className="card border-accent/40 bg-accent/5 space-y-1 p-4 text-sm" role="status">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <p className="font-semibold">
+                Exchange for {exchange.sale_number}: credit {formatMoney(credit, currency)}
+              </p>
+              <button type="button" className="text-muted text-xs hover:underline" onClick={cancelExchange}>
+                Cancel exchange
+              </button>
+            </div>
+            <p className="text-muted">
+              Coming back: {exchange.lines.map((l) => `${formatQty(l.quantity)} × ${l.label}`).join(", ")}. Add the
+              replacement items: they must come to at least {formatMoney(credit, currency)}, and the customer pays any
+              difference.
+            </p>
+          </div>
+        )}
         {stage === "cart" && <SkuPicker onPick={pick} autoFocus captureScans />}
 
         {unavailable && (
@@ -542,7 +595,9 @@ export function Till({ shop, currency }: { shop: { id: string; name: string }; c
                 disabled={draft.lines.length === 0}
                 onClick={startPayment}
               >
-                Charge {formatMoney(total, currency)}
+                {exchange
+                  ? `Charge ${formatMoney(Math.max(total - credit, 0), currency)} (after credit)`
+                  : `Charge ${formatMoney(total, currency)}`}
               </button>
               {draft.lines.length > 0 && (
                 <button
@@ -556,6 +611,14 @@ export function Till({ shop, currency }: { shop: { id: string; name: string }; c
             </div>
           ) : (
             <div className="space-y-3">
+              {exchange && (
+                <div className="bg-background flex justify-between gap-2 rounded-md p-3 text-sm">
+                  <span>
+                    Exchange credit <span className="text-muted">· {exchange.sale_number}</span>
+                  </span>
+                  <span className="font-medium tabular-nums">{formatMoney(credit, currency)}</span>
+                </div>
+              )}
               {payments.map((p, i) => {
                 const amount = parseMoney(p.amount) || 0;
                 const tendered = parseMoney(p.tendered);

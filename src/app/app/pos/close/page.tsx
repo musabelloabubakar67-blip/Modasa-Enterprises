@@ -42,7 +42,7 @@ export default async function CloseTillPage({ searchParams }: PageProps<"/app/po
   ]);
   // Website payments never pass through the till, so they aren't part of cash-up.
   const rows = (expected ?? [])
-    .filter((e) => e.method !== "online")
+    .filter((e) => e.method !== "online" && e.method !== "exchange")
     .map((e) => ({
       method: e.method,
       sales: e.sales_kobo,

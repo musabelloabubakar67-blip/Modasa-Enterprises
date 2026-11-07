@@ -5,9 +5,9 @@ import { requireStaff } from "@/lib/auth";
 import { getBusinessSettings } from "@/lib/business";
 import { formatDateTime } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
-import { ReturnForm } from "./return-form";
+import { ExchangeForm } from "./exchange-form";
 
-export default async function ReturnPage({ params }: PageProps<"/app/sales/[id]/return">) {
+export default async function ExchangePage({ params }: PageProps<"/app/sales/[id]/exchange">) {
   await requireStaff(["owner", "manager", "cashier"]);
   const { id } = await params;
   if (!z.uuid().safeParse(id).success) notFound();
@@ -34,18 +34,18 @@ export default async function ReturnPage({ params }: PageProps<"/app/sales/[id]/
       <Link href={`/app/sales/${sale.id}`} className="text-muted text-sm hover:underline">
         ← {sale.number}
       </Link>
-      <h2 className="text-xl font-semibold">Return items</h2>
+      <h2 className="text-xl font-semibold">Exchange items</h2>
       <p className="text-muted text-sm">
         Sold {formatDateTime(sale.created_at)} at {sale.locations.name}.
         {receipt_footer && <> Policy on receipts: “{receipt_footer}”</>}
       </p>
       {!shift ? (
         <p className="card p-6 text-sm">
-          Open the till at {sale.locations.name} first — refunds come out of the till session.
+          Open the till at {sale.locations.name} first: the replacement is rung up there.
         </p>
       ) : (
-        <ReturnForm
-          saleId={sale.id}
+        <ExchangeForm
+          sale={{ id: sale.id, number: sale.number, locationId: sale.location_id }}
           currency={currency}
           lines={sale.sale_lines
             .filter((l) => Number(l.returned_quantity) < Number(l.quantity))

@@ -1,8 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { z } from "zod";
 import { requireStaff } from "@/lib/auth";
 import { getBusinessSettings } from "@/lib/business";
 import { formatMoney } from "@/lib/money";
@@ -57,34 +55,6 @@ export async function updateFulfilment(
   if (error) return { error: error.message };
   revalidatePath("/app/sales", "layout");
   return { success: "Updated." };
-}
-
-const returnSchema = z.object({
-  sale_id: z.uuid(),
-  refund_method: z.enum(["cash", "card", "transfer"]),
-  reason: z.string().trim().min(1, "Give a reason for the return.").max(300),
-  lines: z
-    .array(
-      z.object({
-        sale_line_id: z.uuid(),
-        quantity: z.number().min(0),
-        condition: z.enum(["restock", "damaged"]),
-      }),
-    )
-    .refine((lines) => lines.some((l) => l.quantity > 0), "Choose at least one item to return."),
-});
-
-export async function createReturn(input: z.input<typeof returnSchema>): Promise<ActionState> {
-  await requireStaff(TILL_ROLES);
-  const parsed = returnSchema.safeParse(input);
-  if (!parsed.success) return { error: parsed.error.issues[0].message };
-  const supabase = await createClient();
-  const { error } = await supabase.rpc("create_return", {
-    payload: { ...parsed.data, lines: parsed.data.lines.filter((l) => l.quantity > 0) },
-  });
-  if (error) return { error: error.message };
-  revalidatePath("/app", "layout");
-  redirect(`/app/sales/${parsed.data.sale_id}?returned=1`);
 }
 
 /** Everything needed to print a receipt directly on the till's printer (desktop app). */

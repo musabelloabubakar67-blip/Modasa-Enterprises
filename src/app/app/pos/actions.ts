@@ -160,6 +160,39 @@ export async function completeSale(input: SaleInput): Promise<{ error?: string; 
   return { saleId: data };
 }
 
+const exchangeSchema = z.object({
+  return: z.object({
+    sale_id: z.uuid(),
+    reason: z.string().trim().min(1, "Give a reason for the exchange.").max(300),
+    lines: z
+      .array(
+        z.object({
+          sale_line_id: z.uuid(),
+          quantity: z.number().positive(),
+          condition: z.enum(["restock", "damaged"]),
+        }),
+      )
+      .min(1, "Choose at least one item to bring back."),
+  }),
+  // The top-up only: the exchange credit is added by the database. Empty when the credit covers it all.
+  sale: saleSchema.extend({ payments: saleSchema.shape.payments.unwrap().array() }),
+});
+
+export type ExchangeInput = z.input<typeof exchangeSchema>;
+
+/** Takes the returned items back and sells the replacement, in one go. See create_exchange. */
+export async function completeExchange(input: ExchangeInput): Promise<{ error?: string; saleId?: string }> {
+  await requireStaff(TILL_ROLES);
+  const parsed = exchangeSchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("create_exchange", { payload: parsed.data });
+  if (error) return { error: error.message };
+  revalidatePath("/app", "layout");
+  return { saleId: data };
+}
+
 export async function closeTill(
   shiftId: string,
   counted: { cash: string; card: string; transfer: string },
