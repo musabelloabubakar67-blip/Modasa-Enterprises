@@ -4,7 +4,12 @@
 export const IMPORT_COLUMNS = [
   { key: "product_name", label: "Product name", required: true, help: "Rows with the same name become one product." },
   { key: "category", label: "Category", required: true, help: "New categories are created automatically." },
-  { key: "unit", label: "Unit", required: true, help: "Piece, Set, Roll, Box… (name or short form)." },
+  {
+    key: "unit",
+    label: "Unit",
+    required: true,
+    help: "Piece, Set, Roll, Box… (name or short form). A new one is created on import; near-misses are flagged as typos.",
+  },
   { key: "sku_code", label: "Item code", required: true, help: "Unique code per item, no spaces, e.g. CRUG-002." },
   { key: "variant", label: "Variant (size / design / colour)", required: false, help: "Size, colour… e.g. 4 × 6." },
   { key: "price", label: "Selling price", required: true, help: "Selling price, e.g. 70000." },

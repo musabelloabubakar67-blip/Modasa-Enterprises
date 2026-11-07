@@ -13,6 +13,14 @@ export type RowResult = {
   messages: string[];
 };
 
+/** A unit the file uses that doesn't exist yet; created on import, before the products. */
+export type NewUnit = {
+  name: string;
+  abbreviation: string;
+  /** From the size columns of its rows: roll width/length → roll, m² per unit → area. */
+  coverage: "none" | "roll" | "area";
+};
+
 export type ImportAnalysis = {
   rows: RowResult[];
   summary: {
@@ -21,9 +29,14 @@ export type ImportAnalysis = {
     newSkus: number;
     updatedSkus: number;
     newCategories: string[];
+    /** Created as whole-number units; tick "Allow decimals" afterwards for ones sold in fractions. */
+    newUnits: NewUnit[];
     errors: number;
   };
-  /** Ready to pass to the import_products database function. Only meaningful when errors = 0. */
+  /**
+   * Ready to pass to the import_products database function. Only meaningful when errors = 0. Products in a
+   * new unit carry `unit_name` instead of `unit_id` until commitImport has created the unit.
+   */
   payload: Json[];
 };
 
@@ -60,6 +73,49 @@ function yesNo(value: string | undefined) {
   return null;
 }
 
+/** Unit names as compared for typos: "Square metre", "square-metre" and "squaremetre" are the same. */
+const squash = (s: string) => lower(s).replace(/[^a-z0-9]/g, "");
+
+/** Edits (insert, delete, change, swap two neighbours) to turn a into b. "Peice" → "Piece" is 1. */
+function editDistance(a: string, b: string) {
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++)
+    for (let j = 1; j <= b.length; j++) {
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1])
+        d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+    }
+  return d[a.length][b.length];
+}
+
+/**
+ * The existing unit a new-looking name is probably a typo of: same letters ignoring spaces and
+ * punctuation, a plural ("Pieces"), or one slip ("Peice"; two in long names). Short abbreviations like
+ * "m" are left out, or every short word would look like a typo.
+ */
+function likelyTypo(name: string, units: { name: string; abbreviation: string }[]) {
+  const n = squash(name);
+  for (const u of units) {
+    for (const known of [u.name, u.abbreviation]) {
+      const k = squash(known);
+      if (k.length < 3) continue;
+      if (n === k || n === `${k}s` || n === `${k}es` || k === `${n}s`) return u.name;
+      if (Math.min(n.length, k.length) >= 4 && editDistance(n, k) <= (k.length >= 8 ? 2 : 1)) return u.name;
+    }
+  }
+  return null;
+}
+
+/** A short form for a new unit: the name itself when short ("bag", "sheet"), else its start ("pack."). */
+function abbreviate(name: string, taken: Set<string>) {
+  const letters = lower(name).replace(/[^a-z0-9]/g, "");
+  const base = letters.length <= 6 ? letters : `${letters.slice(0, 4)}.`;
+  let abbr = base || "unit";
+  for (let i = 2; taken.has(abbr); i++) abbr = `${base}${i}`;
+  return abbr;
+}
+
 export async function analyzeImport(supabase: Client, input: ImportRow[]): Promise<ImportAnalysis> {
   const [units, categories, products, skus] = await Promise.all([
     fetchAll((a, b) => supabase.from("units").select("id, name, abbreviation").range(a, b)),
@@ -85,6 +141,8 @@ export async function analyzeImport(supabase: Client, input: ImportRow[]): Promi
   const seenCodes = new Map<string, number>();
   const seenScanCodes = new Map<string, number>();
   const newCategories = new Map<string, string>();
+  // New units by lower-cased name: what the file calls it, and the size columns its rows fill.
+  const newUnits = new Map<string, { name: string; roll: boolean; area: boolean; rows: RowResult[] }>();
   const parsedRows = new Map<ImportRow, Parsed>();
 
   for (const row of input) {
@@ -96,9 +154,19 @@ export async function analyzeImport(supabase: Client, input: ImportRow[]): Promi
 
     if (!name) messages.push("Missing product_name.");
     if (!row.category?.trim()) messages.push("Missing category.");
-    if (!row.unit?.trim()) messages.push("Missing unit.");
-    else if (!unitByKey.has(lower(row.unit)))
-      messages.push(`Unknown unit “${row.unit}”. Use one of: ${units.map((u) => u.name).join(", ")}.`);
+    const unitName = row.unit?.trim() ?? "";
+    if (!unitName) messages.push("Missing unit.");
+    else if (!unitByKey.has(lower(unitName))) {
+      const typo = likelyTypo(unitName, units);
+      if (typo) messages.push(`Unknown unit “${unitName}”. Did you mean ${typo}? Correct it, or add the unit first.`);
+      else {
+        const pending = newUnits.get(lower(unitName)) ?? { name: unitName, roll: false, area: false, rows: [] };
+        pending.roll ||= Boolean(row.roll_width_cm?.trim() || row.roll_length_cm?.trim());
+        pending.area ||= Boolean(row.coverage_m2?.trim());
+        pending.rows.push(result);
+        newUnits.set(lower(unitName), pending);
+      }
+    }
 
     if (!code) messages.push("Missing sku_code.");
     else if (/\s/.test(code)) messages.push("sku_code can't contain spaces.");
@@ -161,6 +229,24 @@ export async function analyzeImport(supabase: Client, input: ImportRow[]): Promi
     parsedRows.set(row, { price, sale, cost, rollWidth, rollLength, coverage, barcode });
   }
 
+  // A new unit is a roll unit or an area unit, not both: the till's calculators need to know which.
+  const takenAbbreviations = new Set(units.flatMap((u) => [lower(u.name), lower(u.abbreviation)]));
+  const unitsToCreate: NewUnit[] = [];
+  for (const pending of newUnits.values()) {
+    if (pending.roll && pending.area) {
+      for (const r of pending.rows)
+        r.messages.push(`New unit “${pending.name}” has rows with roll sizes and rows with m² per unit. Use one kind.`);
+      continue;
+    }
+    const abbreviation = abbreviate(pending.name, takenAbbreviations);
+    takenAbbreviations.add(abbreviation);
+    unitsToCreate.push({
+      name: pending.name,
+      abbreviation,
+      coverage: pending.roll ? "roll" : pending.area ? "area" : "none",
+    });
+  }
+
   const payload: Json[] = [];
 
   for (const group of groups.values()) {
@@ -209,7 +295,7 @@ export async function analyzeImport(supabase: Client, input: ImportRow[]): Promi
       ...(group.existingId ? { id: group.existingId } : {}),
       name: first.row.product_name?.trim(),
       category_name: first.row.category?.trim(),
-      unit_id: unitByKey.get(unit),
+      ...(unitByKey.has(unit) ? { unit_id: unitByKey.get(unit) } : { unit_name: first.row.unit?.trim() }),
       ...(description ? { description } : {}),
       ...(online.length > 0 ? { show_online: online[0] } : {}),
       ...(option1Name ? { option1_name: option1Name, option2_name: option2Name ?? null } : {}),
@@ -248,6 +334,7 @@ export async function analyzeImport(supabase: Client, input: ImportRow[]): Promi
       newSkus: results.filter((r) => r.status === "new").length,
       updatedSkus: results.filter((r) => r.status === "update").length,
       newCategories: [...newCategories.values()],
+      newUnits: unitsToCreate,
       errors: results.filter((r) => r.status === "error").length,
     },
     payload,

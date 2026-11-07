@@ -160,7 +160,11 @@ export async function buildProductWorkbook({ businessName, currency, categories,
       "text",
     ],
     [
-      "8. Unit must be one from the list. A new unit (Bag, Panel…) must be added first: Products → Categories & units.",
+      "8. Unit: pick one from the list. A new one (Bag, Panel…) is created on import, counted in whole numbers. Check the preview's list.",
+      "text",
+    ],
+    [
+      '   Sold in fractions, like metres? Tick "Allow decimals" on the new unit afterwards: Products → Categories & units.',
       "text",
     ],
     [
@@ -235,9 +239,10 @@ export async function buildProductWorkbook({ businessName, currency, categories,
     allowBlank: true,
     formulae: [listRef("B", units.length)],
     showErrorMessage: true,
-    errorStyle: "stop",
-    errorTitle: "Unknown unit",
-    error: "Pick a unit from the list. A new unit must be added first under Products → Categories & units.",
+    errorStyle: "warning",
+    errorTitle: "New unit?",
+    error:
+      "That isn't one of the units in the system. It will be created as a new whole-number unit (roll or m² from the size columns): check the spelling.",
   });
   validations.add(range("Show on website"), {
     type: "list",
