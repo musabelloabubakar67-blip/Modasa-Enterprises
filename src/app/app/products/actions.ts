@@ -273,6 +273,52 @@ export async function moveCategory(id: string, direction: "up" | "down") {
   revalidatePath("/app/products", "layout");
 }
 
+/** Products using a category or unit, archived ones included (they still point at it). */
+async function productsUsing(column: "category_id" | "unit_id", id: string) {
+  const supabase = await createClient();
+  const { count, error } = await supabase.from("products").select("id", { count: "exact", head: true }).eq(column, id);
+  if (error) throw error;
+  return count ?? 0;
+}
+
+const plural = (n: number) => `${n} product${n === 1 ? "" : "s"}`;
+
+/** Deletes a category nothing uses. One in use stays: move its products first, or untick Active to hide it. */
+export async function deleteCategory(id: string): Promise<ActionState> {
+  await requireStaff(EDITORS);
+  if (!z.uuid().safeParse(id).success) return { error: "Category not found." };
+  const used = await productsUsing("category_id", id);
+  if (used)
+    return {
+      error: `Can't delete: ${plural(used)} (archived ones included) are in this category. Move them to another category first, or untick Active to hide it.`,
+    };
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("categories").delete().eq("id", id).select("id");
+  if (error) return { error: error.code === "23503" ? "Can't delete: products are in this category." : error.message };
+  // No row back means the database didn't allow it (its update for deleting hasn't been applied).
+  if (!data.length)
+    return { error: "Couldn't delete this category. Ask the owner to apply the latest database update." };
+  revalidatePath("/app/products", "layout");
+  return { success: "Category deleted." };
+}
+
+/** Deletes a unit nothing uses. One in use stays: change those products' unit (Sold by) first. */
+export async function deleteUnit(id: string): Promise<ActionState> {
+  await requireStaff(EDITORS);
+  if (!z.uuid().safeParse(id).success) return { error: "Unit not found." };
+  const used = await productsUsing("unit_id", id);
+  if (used)
+    return {
+      error: `Can't delete: ${plural(used)} (archived ones included) are sold by this unit. Change their Sold by first.`,
+    };
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("units").delete().eq("id", id).select("id");
+  if (error) return { error: error.code === "23503" ? "Can't delete: products are sold by this unit." : error.message };
+  if (!data.length) return { error: "Couldn't delete this unit. Ask the owner to apply the latest database update." };
+  revalidatePath("/app/products", "layout");
+  return { success: "Unit deleted." };
+}
+
 const unitSchema = z.object({
   id: z.uuid().optional(),
   name: z.string({ error: "Enter a name." }).trim().min(1, "Enter a name.").max(40),
