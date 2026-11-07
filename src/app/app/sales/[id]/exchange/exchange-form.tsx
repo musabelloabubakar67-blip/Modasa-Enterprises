@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { saveExchange } from "@/lib/exchange";
 import { formatMoney } from "@/lib/money";
 import { formatQty } from "@/lib/quantity";
-import { createReturn } from "../../actions";
 
 type Line = {
   id: string;
@@ -15,14 +16,25 @@ type Line = {
   unit_price_kobo: number;
 };
 
-export function ReturnForm({ saleId, lines, currency }: { saleId: string; lines: Line[]; currency: string }) {
+/**
+ * Chooses what comes back in an exchange, then hands over to the till, where the replacement is rung up.
+ * Nothing is saved until the exchange is completed there.
+ */
+export function ExchangeForm({
+  sale,
+  lines,
+  currency,
+}: {
+  sale: { id: string; number: string; locationId: string };
+  lines: Line[];
+  currency: string;
+}) {
+  const router = useRouter();
   const [values, setValues] = useState(() => lines.map(() => ({ quantity: "0", condition: "restock" as const })));
-  const [method, setMethod] = useState<"cash" | "card" | "transfer">("cash");
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
 
-  const refund = lines.reduce((s, l, i) => s + Math.round(l.unit_price_kobo * (Number(values[i].quantity) || 0)), 0);
+  const credit = lines.reduce((s, l, i) => s + Math.round(l.unit_price_kobo * (Number(values[i].quantity) || 0)), 0);
   const set = (i: number, patch: Partial<(typeof values)[number]>) =>
     setValues((v) => v.map((x, j) => (j === i ? ({ ...x, ...patch } as (typeof values)[number]) : x)));
 
@@ -34,22 +46,30 @@ export function ReturnForm({ saleId, lines, currency }: { saleId: string; lines:
         return setError(`${l.label}: return between 0 and ${formatQty(l.returnable)}.`);
       if (!l.allows_decimal && !Number.isInteger(q)) return setError(`${l.label} is returned in whole ${l.unit}.`);
     }
-    if (refund === 0) return setError("Choose at least one item to return.");
-    if (!reason.trim()) return setError("Give a reason for the return.");
-    if (!confirm(`Refund ${formatMoney(refund, currency)} by ${method}?`)) return;
-    startTransition(async () => {
-      const result = await createReturn({
-        sale_id: saleId,
-        refund_method: method,
-        reason,
-        lines: lines.map((l, i) => ({
-          sale_line_id: l.id,
-          quantity: Number(values[i].quantity) || 0,
-          condition: values[i].condition,
-        })),
-      });
-      if (result?.error) setError(result.error);
+    if (credit === 0) return setError("Choose at least one item to bring back.");
+    if (!reason.trim()) return setError("Give a reason for the exchange.");
+    const saved = saveExchange(sale.locationId, {
+      sale_id: sale.id,
+      sale_number: sale.number,
+      reason: reason.trim(),
+      credit_kobo: credit,
+      lines: lines.flatMap((l, i) => {
+        const quantity = Number(values[i].quantity) || 0;
+        return quantity > 0
+          ? [
+              {
+                sale_line_id: l.id,
+                quantity,
+                condition: values[i].condition,
+                label: l.label,
+                credit_kobo: Math.round(l.unit_price_kobo * quantity),
+              },
+            ]
+          : [];
+      }),
     });
+    if (!saved) return setError("This browser can't store the exchange. Check it isn't in private mode.");
+    router.push(`/app/pos?shop=${sale.locationId}`);
   }
 
   return (
@@ -102,23 +122,18 @@ export function ReturnForm({ saleId, lines, currency }: { saleId: string; lines:
             placeholder="e.g. Wrong size, colour doesn't match"
           />
         </label>
-        <label className="block">
-          <span className="label">Refund by</span>
-          <select className="input" value={method} onChange={(e) => setMethod(e.target.value as typeof method)}>
-            <option value="cash">Cash (from the till)</option>
-            <option value="transfer">Bank transfer</option>
-            <option value="card">Card reversal</option>
-          </select>
-        </label>
-        <div className="flex items-end justify-between gap-2">
-          <p className="text-lg font-semibold">Refund {formatMoney(refund, currency)}</p>
+        <div className="flex items-end justify-between gap-2 sm:col-span-2">
+          <p className="text-muted text-sm">
+            The customer chooses replacement items worth at least this much, and tops up any difference.
+          </p>
+          <p className="shrink-0 text-lg font-semibold">Credit {formatMoney(credit, currency)}</p>
         </div>
       </section>
       <p className="text-muted text-xs">
-        For an exchange, record the return here, then ring up the new item as a normal sale.
+        No cash refunds: returned items are exchanged for items of equal or higher value, chosen now.
       </p>
-      <button type="button" className="btn btn-primary" disabled={pending} onClick={submit}>
-        {pending ? "Working…" : "Record return and refund"}
+      <button type="button" className="btn btn-primary" onClick={submit}>
+        Continue at the till →
       </button>
     </div>
   );

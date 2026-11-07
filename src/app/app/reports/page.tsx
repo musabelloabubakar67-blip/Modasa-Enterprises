@@ -46,11 +46,11 @@ export default async function SalesReportPage({ searchParams }: PageProps<"/app/
         <Stat
           label="Net sales"
           value={money(gross - refunds)}
-          note={refunds ? `${money(gross)} sold, ${money(refunds)} refunded` : undefined}
+          note={refunds ? `${money(gross)} sold, ${money(refunds)} returned` : undefined}
         />
         <Stat label="Number of sales" value={String(count)} note={`${items} items`} />
         <Stat label="Average sale" value={count ? money(Math.round(gross / count / 100) * 100) : "–"} />
-        <Stat label="Refunds" value={money(refunds)} />
+        <Stat label="Returned (exchanged)" value={money(refunds)} />
       </section>
 
       {days.length > 1 && (
@@ -113,7 +113,7 @@ export default async function SalesReportPage({ searchParams }: PageProps<"/app/
               <tr>
                 <th className="pb-2 font-medium">Method</th>
                 <th className="pb-2 text-right font-medium">Received</th>
-                <th className="pb-2 text-right font-medium">Refunded</th>
+                <th className="pb-2 text-right font-medium">Returned</th>
                 <th className="pb-2 text-right font-medium">Net</th>
               </tr>
             </thead>

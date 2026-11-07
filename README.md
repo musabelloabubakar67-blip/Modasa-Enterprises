@@ -112,7 +112,11 @@ Hosting, the training copy and handover: [`docs/training-copy.md`](docs/training
   shop at the time of sale either way, so set-aside goods can't be sold twice.
 - Receipts print at 80 mm from the browser and are shared on WhatsApp as a private link (`/r/<token>`).
 - VAT is a switch in Business settings; prices include VAT and receipts show the VAT portion when on.
-- Returns go back into stock or are written off as damaged; refunds come out of the open till session.
+- **No cash refunds: returns are exchanges.** On the sale, *Exchange items* picks what comes back (good → back
+  in stock, damaged → written off); the till then sells the replacement, which must be worth at least what was
+  returned (store policy), and the customer tops up any difference. `create_exchange` does both in one
+  transaction; the returned value is an `exchange` payment on the new sale that nets to zero in cash-ups and
+  reports. The database refuses any other refund method and any exchange credit not made by an exchange.
 - Wallpaper (rolls by strips, pattern repeat) and area (tiles, marble sheets, wall panels + waste %) calculators:
   `src/lib/calculators.ts`.
 - Till PC setup: [docs/till-setup.md](docs/till-setup.md).

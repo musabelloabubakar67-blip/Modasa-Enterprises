@@ -47,7 +47,7 @@ export default async function SalesPage({ searchParams }: PageProps<"/app/sales"
   const [{ data: sales, error }, { currency }] = await Promise.all([query, getBusinessSettings()]);
   if (error) throw error;
 
-  const byMethod = { cash: 0, card: 0, transfer: 0, online: 0 };
+  const byMethod = { cash: 0, card: 0, transfer: 0, online: 0, exchange: 0 };
   let refunds = 0;
   for (const s of sales) {
     s.sale_payments.forEach((p) => (byMethod[p.method] += p.amount_kobo));
@@ -91,13 +91,15 @@ export default async function SalesPage({ searchParams }: PageProps<"/app/sales"
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
           <Stat label={`Sales on ${formatDate(date)}`} value={`${sales.length}`} />
           <Stat label="Total sold" value={formatMoney(total, currency)} />
-          {(Object.keys(METHOD) as (keyof typeof METHOD)[]).map((m) => (
-            <Stat key={m} label={`${METHOD[m]} (net)`} value={formatMoney(byMethod[m], currency)} />
-          ))}
+          {(Object.keys(METHOD) as (keyof typeof METHOD)[])
+            .filter((m) => m !== "exchange")
+            .map((m) => (
+              <Stat key={m} label={`${METHOD[m]} (net)`} value={formatMoney(byMethod[m], currency)} />
+            ))}
         </div>
       )}
       {!q && refunds > 0 && (
-        <p className="text-muted text-sm">Refunds on these sales: {formatMoney(refunds, currency)}</p>
+        <p className="text-muted text-sm">Items returned on these sales: {formatMoney(refunds, currency)}</p>
       )}
 
       <ul className="card divide-border divide-y">

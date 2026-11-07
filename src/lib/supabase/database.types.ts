@@ -980,6 +980,7 @@ export type Database = {
         Row: {
           created_at: string;
           created_by: string | null;
+          exchange_sale_id: string | null;
           id: string;
           location_id: string;
           number: string;
@@ -992,6 +993,7 @@ export type Database = {
         Insert: {
           created_at?: string;
           created_by?: string | null;
+          exchange_sale_id?: string | null;
           id?: string;
           location_id: string;
           number?: string;
@@ -1004,6 +1006,7 @@ export type Database = {
         Update: {
           created_at?: string;
           created_by?: string | null;
+          exchange_sale_id?: string | null;
           id?: string;
           location_id?: string;
           number?: string;
@@ -2194,6 +2197,7 @@ export type Database = {
         Returns: undefined;
       };
       create_online_order: { Args: { payload: Json }; Returns: Json };
+      create_exchange: { Args: { payload: Json }; Returns: string };
       create_return: { Args: { payload: Json }; Returns: string };
       create_sale: { Args: { payload: Json }; Returns: string };
       create_transfer: { Args: { payload: Json }; Returns: string };
@@ -2361,7 +2365,7 @@ export type Database = {
         | "set_split";
       online_order_status:
         "pending_payment" | "paid" | "awaiting_stock" | "confirmed" | "expired" | "cancelled" | "refunded";
-      payment_method: "cash" | "card" | "transfer" | "online";
+      payment_method: "cash" | "card" | "transfer" | "online" | "exchange";
       receipt_status: "draft" | "posted" | "cancelled";
       return_condition: "restock" | "damaged";
       shift_status: "open" | "closed";
@@ -2503,7 +2507,7 @@ export const Constants = {
         "cancelled",
         "refunded",
       ],
-      payment_method: ["cash", "card", "transfer", "online"],
+      payment_method: ["cash", "card", "transfer", "online", "exchange"],
       receipt_status: ["draft", "posted", "cancelled"],
       return_condition: ["restock", "damaged"],
       shift_status: ["open", "closed"],
