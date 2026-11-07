@@ -112,6 +112,11 @@ Hosting, the training copy and handover: [`docs/training-copy.md`](docs/training
   shop at the time of sale either way, so set-aside goods can't be sold twice.
 - Receipts print at 80 mm from the browser and are shared on WhatsApp as a private link (`/r/<token>`).
 - VAT is a switch in Business settings; prices include VAT and receipts show the VAT portion when on.
+- **Discounts** are one per sale, on the items, as a percentage or an amount, with a reason, up to the
+  seller's own limit (Sales → Discount limits: the owner sets anyone's, managers set cashiers'; the owner has
+  none). Below cost is refused unless the owner gives it, and exchanges take no discount. The discount is
+  spread over the sale's lines, so a later exchange credits what was actually paid. Discounts and limit changes
+  are in the security log and the Staff report.
 - **No cash refunds: returns are exchanges.** On the sale, *Exchange items* picks what comes back (good → back
   in stock, damaged → written off); the till then sells the replacement, which must be worth at least what was
   returned (store policy), and the customer tops up any difference. `create_exchange` does both in one

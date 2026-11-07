@@ -58,6 +58,7 @@ export function ReceiptView({
 
       <Rule />
       <Row label="Subtotal" value={money(sale.subtotal_kobo)} />
+      {sale.discount_kobo > 0 && <Row label="Includes discount" value={money(sale.discount_kobo)} />}
       {sale.delivery_fee_kobo > 0 && <Row label="Delivery" value={money(sale.delivery_fee_kobo)} />}
       <Row label="TOTAL" value={money(sale.total_kobo)} bold />
       {sale.vat_kobo > 0 && <Row label={`Incl. VAT ${Number(sale.vat_rate)}%`} value={money(sale.vat_kobo)} />}

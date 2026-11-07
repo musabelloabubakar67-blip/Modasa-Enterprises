@@ -136,6 +136,14 @@ const saleSchema = z.object({
     )
     .min(1, "Add a payment."),
   fulfilment: z.enum(["taken", "collect_later", "delivery"]),
+  // A percentage, or an amount in kobo. Checked against the seller's limit by the database.
+  discount: z
+    .object({
+      type: z.enum(["percent", "amount"]),
+      value: z.number().positive(),
+      reason: z.string().trim().min(1, "Give a reason for the discount.").max(200),
+    })
+    .optional(),
   delivery: z
     .object({
       address: z.string().trim().max(300),

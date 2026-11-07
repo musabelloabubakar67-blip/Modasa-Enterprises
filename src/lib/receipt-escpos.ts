@@ -46,6 +46,7 @@ export function receiptToEscPos(
 
   p.rule();
   p.row("Subtotal", money(sale.subtotal_kobo));
+  if (sale.discount_kobo > 0) p.row("Includes discount", money(sale.discount_kobo));
   if (sale.delivery_fee_kobo > 0) p.row("Delivery", money(sale.delivery_fee_kobo));
   // Double-size text halves the line width.
   p.bold(true)

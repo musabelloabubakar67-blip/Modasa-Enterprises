@@ -43,6 +43,7 @@ export default async function StaffReportPage({ searchParams }: PageProps<"/app/
               <th className="pb-2 text-right font-medium" title="Drawer opened without a sale">
                 No-sale opens
               </th>
+              <th className="pb-2 text-right font-medium">Discounts</th>
               <th className="pb-2 text-right font-medium">Tills closed</th>
               <th className="pb-2 text-right font-medium">Cash difference</th>
             </tr>
@@ -50,7 +51,7 @@ export default async function StaffReportPage({ searchParams }: PageProps<"/app/
           <tbody className="divide-border divide-y">
             {sorted.length === 0 && (
               <tr>
-                <td colSpan={8} className="text-muted py-6 text-center">
+                <td colSpan={9} className="text-muted py-6 text-center">
                   No staff activity in this period.
                 </td>
               </tr>
@@ -66,6 +67,9 @@ export default async function StaffReportPage({ searchParams }: PageProps<"/app/
                   className={`py-2 text-right tabular-nums ${r.drawer_openings > 5 ? "font-medium text-amber-700" : ""}`}
                 >
                   {r.drawer_openings || "–"}
+                </td>
+                <td className="py-2 text-right tabular-nums">
+                  {r.discounts_count ? `${money(r.discounts_kobo)} (${r.discounts_count})` : "–"}
                 </td>
                 <td className="py-2 text-right tabular-nums">{r.sessions_closed || "–"}</td>
                 <td
@@ -83,8 +87,8 @@ export default async function StaffReportPage({ searchParams }: PageProps<"/app/
         </table>
       </section>
       <p className="text-muted text-xs">
-        Frequent no-sale drawer openings or repeated cash shortfalls are worth a conversation. See each session&apos;s
-        details under Sales → Till sessions.
+        Frequent no-sale drawer openings, repeated cash shortfalls or many discounts are worth a conversation. See each
+        session&apos;s details under Sales → Till sessions.
       </p>
     </>
   );

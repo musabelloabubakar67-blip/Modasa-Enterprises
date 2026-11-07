@@ -86,7 +86,10 @@ export default async function PosPage({ searchParams }: PageProps<"/app/pos">) {
     );
   }
 
-  const names = await getStaffNames([shift.opened_by]);
+  const [names, { data: discountLimit }] = await Promise.all([
+    getStaffNames([shift.opened_by]),
+    supabase.rpc("discount_limit", { p_user: staff.id }),
+  ]);
 
   return (
     <div className="space-y-3">
@@ -107,7 +110,7 @@ export default async function PosPage({ searchParams }: PageProps<"/app/pos">) {
           </Link>
         </div>
       </div>
-      <Till shop={{ id: shop.id, name: shop.name }} currency={business.currency} />
+      <Till shop={{ id: shop.id, name: shop.name }} currency={business.currency} discountLimit={discountLimit ?? 0} />
     </div>
   );
 }

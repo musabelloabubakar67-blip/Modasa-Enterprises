@@ -15,8 +15,12 @@ type Line = { key: string; item: TillItem; batch: string; quantity: string };
 type Fulfilment = "taken" | "collect_later" | "delivery";
 type Payment = { method: "cash" | "card" | "transfer"; amount: string; tendered: string; reference: string };
 
+type Discount = { type: "percent" | "amount"; value: string; reason: string };
+
 type Draft = {
   lines: Line[];
+  /** One discount on the items, within the seller's limit. Not allowed on an exchange. */
+  discount: Discount | null;
   customer: { name: string; phone: string; email: string };
   fulfilment: Fulfilment;
   delivery: { address: string; area: string; date: string; fee: string };
@@ -25,6 +29,7 @@ type Draft = {
 
 const EMPTY: Draft = {
   lines: [],
+  discount: null,
   customer: { name: "", phone: "", email: "" },
   fulfilment: "taken",
   delivery: { address: "", area: "", date: "", fee: "" },
@@ -46,7 +51,16 @@ function loadDraft(key: string): Draft {
   }
 }
 
-export function Till({ shop, currency }: { shop: { id: string; name: string }; currency: string }) {
+export function Till({
+  shop,
+  currency,
+  discountLimit,
+}: {
+  shop: { id: string; name: string };
+  currency: string;
+  /** The largest discount this person may give, as a percentage (100 for the owner). */
+  discountLimit: number;
+}) {
   const storageKey = `till-draft:${shop.id}`;
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [loaded, setLoaded] = useState(false);
@@ -84,8 +98,16 @@ export function Till({ shop, currency }: { shop: { id: string; name: string }; c
 
   const subtotal = draft.lines.reduce((s, l) => s + lineTotal(l), 0);
   const fee = draft.fulfilment === "delivery" ? (parseMoney(draft.delivery.fee) ?? 0) : 0;
-  const total = subtotal + (Number.isNaN(fee) ? 0 : fee);
   const credit = exchange?.credit_kobo ?? 0;
+  // Discount: a percentage or an amount on the items. NaN while what's typed isn't a number.
+  const discount = !exchange && draft.discount ? draft.discount : null;
+  const discountKobo = !discount
+    ? 0
+    : discount.type === "percent"
+      ? Math.round((subtotal * Number(discount.value)) / 100)
+      : (parseMoney(discount.value) ?? NaN);
+  const discountPct = subtotal > 0 && discountKobo > 0 ? (discountKobo / subtotal) * 100 : 0;
+  const total = subtotal - (Number.isNaN(discountKobo) ? 0 : discountKobo) + (Number.isNaN(fee) ? 0 : fee);
 
   function cancelExchange() {
     if (!confirm("Cancel this exchange? The items stay with the customer and nothing is recorded.")) return;
@@ -163,6 +185,12 @@ export function Till({ shop, currency }: { shop: { id: string; name: string }; c
       return "Enter the customer's name and phone number for collection or delivery.";
     if (draft.fulfilment === "delivery" && !draft.delivery.address.trim()) return "Enter the delivery address.";
     if (Number.isNaN(fee)) return "Check the delivery fee.";
+    if (discount) {
+      if (!(discountKobo > 0) || discountKobo > subtotal) return "Check the discount.";
+      if (discountPct > discountLimit + 1e-9)
+        return `That discount is ${formatQty(Math.round(discountPct * 10) / 10)}%. Your limit is ${formatQty(discountLimit)}%.`;
+      if (!discount.reason.trim()) return "Give a reason for the discount.";
+    }
     return null;
   }
 
@@ -207,6 +235,13 @@ export function Till({ shop, currency }: { shop: { id: string; name: string }; c
           reference: p.reference || undefined,
         })),
         fulfilment: draft.fulfilment,
+        discount: discount
+          ? {
+              type: discount.type,
+              value: discount.type === "percent" ? Number(discount.value) : discountKobo,
+              reason: discount.reason.trim(),
+            }
+          : undefined,
         delivery:
           draft.fulfilment === "delivery"
             ? {
@@ -575,6 +610,12 @@ export function Till({ shop, currency }: { shop: { id: string; name: string }; c
               <dt className="text-muted">Items</dt>
               <dd className="tabular-nums">{formatMoney(subtotal, currency)}</dd>
             </div>
+            {discount && discountKobo > 0 && (
+              <div className="text-success flex justify-between">
+                <dt>Discount ({formatQty(Math.round(discountPct * 10) / 10)}%)</dt>
+                <dd className="tabular-nums">−{formatMoney(discountKobo, currency)}</dd>
+              </div>
+            )}
             {draft.fulfilment === "delivery" && (
               <div className="flex justify-between">
                 <dt className="text-muted">Delivery</dt>
@@ -586,6 +627,10 @@ export function Till({ shop, currency }: { shop: { id: string; name: string }; c
               <dd className="tabular-nums">{formatMoney(total, currency)}</dd>
             </div>
           </dl>
+
+          {stage === "cart" && !exchange && discountLimit > 0 && (
+            <DiscountBox discount={draft.discount} limit={discountLimit} onChange={(d) => set({ discount: d })} />
+          )}
 
           {stage === "cart" ? (
             <div className="flex gap-2">
@@ -731,6 +776,72 @@ export function Till({ shop, currency }: { shop: { id: string; name: string }; c
           }}
         />
       )}
+    </div>
+  );
+}
+
+/** Add, change or remove the sale's discount. The limit is checked again by the database. */
+function DiscountBox({
+  discount,
+  limit,
+  onChange,
+}: {
+  discount: Discount | null;
+  limit: number;
+  onChange: (d: Discount | null) => void;
+}) {
+  if (!discount)
+    return (
+      <button
+        type="button"
+        className="text-accent text-sm hover:underline"
+        onClick={() => onChange({ type: "percent", value: "", reason: "" })}
+      >
+        + Discount {limit < 100 && <span className="text-muted">(up to {formatQty(limit)}%)</span>}
+      </button>
+    );
+  return (
+    <div className="bg-background space-y-2 rounded-md p-3 text-sm">
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-medium">Discount</span>
+        <button type="button" className="text-danger text-xs hover:underline" onClick={() => onChange(null)}>
+          Remove
+        </button>
+      </div>
+      <div className="flex gap-2">
+        <div className="grid grid-cols-2 gap-1" role="radiogroup" aria-label="Discount type">
+          {(["percent", "amount"] as const).map((t) => (
+            <button
+              key={t}
+              type="button"
+              role="radio"
+              aria-checked={discount.type === t}
+              onClick={() => onChange({ ...discount, type: t, value: "" })}
+              className={`rounded-md border px-3 py-2 text-xs ${discount.type === t ? "border-accent bg-accent/10 text-accent font-medium" : "border-border bg-surface"}`}
+            >
+              {t === "percent" ? "%" : "₦"}
+            </button>
+          ))}
+        </div>
+        <input
+          className="input tabular-nums"
+          inputMode="decimal"
+          aria-label={discount.type === "percent" ? "Discount percentage" : "Discount amount"}
+          placeholder={discount.type === "percent" ? "e.g. 10" : "e.g. 5000"}
+          value={discount.value}
+          onChange={(e) => onChange({ ...discount, value: e.target.value })}
+        />
+      </div>
+      <input
+        className="input"
+        aria-label="Discount reason"
+        placeholder="Reason (required), e.g. loyal customer"
+        value={discount.reason}
+        onChange={(e) => onChange({ ...discount, reason: e.target.value })}
+      />
+      <p className="text-muted text-xs">
+        {limit >= 100 ? "No limit." : `Your limit: ${formatQty(limit)}% of the items.`}
+      </p>
     </div>
   );
 }
