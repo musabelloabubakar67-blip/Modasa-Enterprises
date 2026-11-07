@@ -1,8 +1,40 @@
 "use client";
 
+import { useState, useTransition } from "react";
 import { ActionForm, FormMessage, SubmitButton } from "@/components/form";
+import type { ActionState } from "@/lib/forms";
 import type { Unit } from "@/lib/products";
-import { saveCategory, saveUnit } from "../actions";
+import { deleteCategory, deleteUnit, saveCategory, saveUnit } from "../actions";
+
+/** Deletes after a confirmation; shows why when the category or unit is still in use. */
+function DeleteButton({ label, onDelete }: { label: string; onDelete: () => Promise<ActionState> }) {
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+  return (
+    <>
+      <button
+        type="button"
+        className="btn text-danger"
+        disabled={pending}
+        onClick={() => {
+          if (!confirm(`Delete “${label}”? This can't be undone.`)) return;
+          setError(null);
+          startTransition(async () => {
+            const result = await onDelete();
+            if (result.error) setError(result.error);
+          });
+        }}
+      >
+        {pending ? "Deleting…" : "Delete"}
+      </button>
+      {error && (
+        <p role="alert" className="text-danger w-full text-sm">
+          {error}
+        </p>
+      )}
+    </>
+  );
+}
 
 export function CategoryForm({ category }: { category?: { id: string; name: string; is_active: boolean } }) {
   return (
@@ -23,6 +55,7 @@ export function CategoryForm({ category }: { category?: { id: string; name: stri
               </label>
             )}
             <SubmitButton>{category ? "Save" : "Add"}</SubmitButton>
+            {category && <DeleteButton label={category.name} onDelete={() => deleteCategory(category.id)} />}
           </div>
         </>
       )}
@@ -59,6 +92,7 @@ export function UnitForm({ unit }: { unit?: Unit }) {
               Allow decimals (e.g. 2.5 m)
             </label>
             <SubmitButton>{unit ? "Save" : "Add"}</SubmitButton>
+            {unit && <DeleteButton label={unit.name} onDelete={() => deleteUnit(unit.id)} />}
           </div>
         </>
       )}
