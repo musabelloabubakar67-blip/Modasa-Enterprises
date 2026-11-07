@@ -163,6 +163,21 @@ export function ImportWizard() {
               New categories will be created: <strong>{analysis.summary.newCategories.join(", ")}</strong>
             </p>
           )}
+          {analysis.summary.newUnits.length > 0 && (
+            <p className="text-sm">
+              New units will be created:{" "}
+              <strong>
+                {analysis.summary.newUnits
+                  .map(
+                    (u) =>
+                      `${u.name} (whole numbers${u.coverage === "roll" ? ", roll size" : u.coverage === "area" ? ", m² per unit" : ""})`,
+                  )
+                  .join(", ")}
+              </strong>
+              . Sold in fractions, like metres? Tick &ldquo;Allow decimals&rdquo; on it afterwards under Categories
+              &amp; units.
+            </p>
+          )}
 
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
