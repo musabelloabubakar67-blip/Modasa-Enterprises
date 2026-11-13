@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // Staff screens. Everything else is the public online shop.
-const STAFF_PATHS = ["/app", "/login", "/setup"];
+const STAFF_PATHS = ["/app", "/login", "/setup", "/locked"];
 const isStaffPath = (path: string) => STAFF_PATHS.some((p) => path === p || path.startsWith(`${p}/`));
 
 /**

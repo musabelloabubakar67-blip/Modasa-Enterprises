@@ -1708,6 +1708,94 @@ export type Database = {
           },
         ];
       };
+      till_pins: {
+        Row: {
+          failed_attempts: number;
+          locked_at: string | null;
+          pin_hash: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          failed_attempts?: number;
+          locked_at?: string | null;
+          pin_hash: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          failed_attempts?: number;
+          locked_at?: string | null;
+          pin_hash?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "till_pins_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: true;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "till_pins_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: true;
+            referencedRelation: "staff_directory";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      till_sessions: {
+        Row: {
+          created_at: string;
+          location_id: string | null;
+          locked_at: string | null;
+          pin: boolean;
+          session_id: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          location_id?: string | null;
+          locked_at?: string | null;
+          pin?: boolean;
+          session_id: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          location_id?: string | null;
+          locked_at?: string | null;
+          pin?: boolean;
+          session_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "till_sessions_location_id_fkey";
+            columns: ["location_id"];
+            isOneToOne: false;
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "till_sessions_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "till_sessions_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "staff_directory";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       transfer_items: {
         Row: {
           batch: string;
@@ -2334,6 +2422,7 @@ export type Database = {
       };
       security_log_failed_sign_in: { Args: { p_email: string; p_reason: string }; Returns: undefined };
       set_discount_limit: { Args: { p_pct: number; p_user: string }; Returns: undefined };
+      set_till_pin: { Args: { p_pin: string }; Returns: undefined };
       set_reorder_level: { Args: { p_level: number; p_location_id: string; p_sku_id: string }; Returns: undefined };
       shift_expected: {
         Args: { p_shift_id: string };
@@ -2354,6 +2443,17 @@ export type Database = {
         }[];
       };
       submit_adjustment: { Args: { payload: Json }; Returns: string };
+      till_people: {
+        Args: { p_location: string };
+        Returns: {
+          full_name: string;
+          has_pin: boolean;
+          id: string;
+          pin_locked: boolean;
+          role: Database["public"]["Enums"]["staff_role"];
+        }[];
+      };
+      till_pin_check: { Args: { p_location: string; p_pin: string; p_user: string }; Returns: string };
       update_fulfilment: {
         Args: { p_sale_id: string; p_status: Database["public"]["Enums"]["fulfilment_status"] };
         Returns: undefined;

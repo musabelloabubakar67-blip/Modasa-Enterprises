@@ -386,22 +386,28 @@ r = await cashier("rpc/create_return", {
   },
 });
 check("can't return more than was bought", !r.ok, r.msg);
-r = await cashier("rpc/create_return", {
+const damagedReturn = {
+  sale_id: firstSale,
+  reason: "Handle broken",
+  lines: [{ sale_line_id: lines[0].id, quantity: 1, condition: "damaged" }],
+};
+r = await cashier("rpc/create_return", { payload: { ...damagedReturn, refund_method: "cash" } });
+check("no cash refunds", !r.ok, r.msg);
+// Exchanged for the same item: the broken one is written off, the replacement leaves stock, no money changes hands.
+r = await cashier("rpc/create_exchange", {
   payload: {
-    sale_id: firstSale,
-    refund_method: "cash",
-    reason: "Handle broken",
-    lines: [{ sale_line_id: lines[0].id, quantity: 1, condition: "damaged" }],
+    return: damagedReturn,
+    sale: { location_id: loc.SH1, lines: [{ sku_id: sku["LX21-KC12S"], quantity: 1 }], payments: [] },
   },
 });
-check("damaged return refunded in cash", r.ok, r.msg);
-check("damaged return doesn't go back on sale", (await level("LX21-KC12S", "SH1")) === stockBeforeReturn);
+check("damaged item exchanged for the same", r.ok, r.msg);
+check("damaged return doesn't go back on sale", (await level("LX21-KC12S", "SH1")) === stockBeforeReturn - 1);
 
 const expected = Object.fromEntries(
   (await cashier("rpc/shift_expected", { p_shift_id: shift })).data.map((e) => [e.method, e.expected_kobo]),
 );
-// float 10,000 + cash sales (42,000 + 26,000 + 21,000) − refund 21,000
-check("expected cash = float + sales − refunds", expected.cash === 1000000 + 4200000 + 2600000 + 2100000 - 2100000);
+// float 10,000 + cash sales (42,000 + 26,000 + 21,000); the exchange moved no cash
+check("expected cash = float + cash sales", expected.cash === 1000000 + 4200000 + 2600000 + 2100000);
 check("expected card and transfer", expected.card === 2000000 && expected.transfer === 1825000);
 r = await wh("rpc/log_drawer_open", { p_location_id: loc.SH1, p_reason: "x" });
 check("warehouse staff can't open a shop drawer", !r.ok, r.msg);
@@ -545,6 +551,57 @@ r = await cashier("delivery_areas", { name: "Test area", fee_kobo: 100 });
 check("cashier can't add delivery areas", !r.ok, r.msg);
 r = await anon("rpc/create_online_order", { payload: {} });
 check("signed-out visitors can't create orders directly", !r.ok);
+
+console.log("\n— Till PINs —");
+const cashierId = (await cashier("rpc/till_people", { p_location: loc.SH1 })).data.find(
+  (p) => p.role === "cashier",
+)?.id;
+r = await cashier("rpc/set_till_pin", { p_pin: "1111" });
+check("a too-easy PIN is refused", !r.ok, r.msg);
+r = await cashier("rpc/set_till_pin", { p_pin: "12a4" });
+check("a PIN must be 4 digits", !r.ok, r.msg);
+r = await cashier("rpc/set_till_pin", { p_pin: "2580" });
+check("cashier sets their own PIN", r.ok, r.msg);
+r = await wh("rpc/set_till_pin", { p_pin: "2580" });
+check("warehouse staff can't set a till PIN", !r.ok, r.msg);
+r = await cashier("till_pins?select=pin_hash");
+check("nobody can read PIN hashes", !r.ok || r.data.length === 0, r.msg);
+r = await owner("till_pins?select=pin_hash");
+check("not even the owner", !r.ok || r.data.length === 0, r.msg);
+const people = (await owner("rpc/till_people", { p_location: loc.SH1 })).data;
+check(
+  "the locked till lists the shop's cashier with a PIN",
+  people.some((p) => p.id === cashierId && p.has_pin),
+  JSON.stringify(people),
+);
+const pinCheck = (who, pin, location = loc.SH1) =>
+  who("rpc/till_pin_check", { p_user: cashierId, p_pin: pin, p_location: location }).then((x) => x.data);
+check("the right PIN is accepted", (await pinCheck(owner, "2580")) === "ok");
+check("not at another shop", (await pinCheck(owner, "2580", loc.SH2)) === "not_allowed");
+check("warehouse staff can't check PINs", (await pinCheck(wh, "2580")) === "not_allowed");
+const tries = [];
+for (let i = 0; i < 5; i++) tries.push(await pinCheck(owner, "9999"));
+check("five wrong PINs lock it", tries.join() === "wrong,wrong,wrong,wrong,locked", tries.join());
+check("then even the right PIN is refused", (await pinCheck(owner, "2580")) === "locked");
+await cashier("rpc/set_till_pin", { p_pin: "3691" });
+check("setting a new PIN unlocks it", (await pinCheck(owner, "3691")) === "ok");
+r = await cashier("till_sessions", { session_id: crypto.randomUUID(), user_id: cashierId, pin: false });
+check("staff can't write till sessions", !r.ok, r.msg);
+// A PIN sign-in can't change the PIN: mark the cashier's session as one, as the app does.
+const cashierToken = await login(env.DEV_CASHIER_EMAIL, env.DEV_CASHIER_PASSWORD);
+const sessionId = JSON.parse(Buffer.from(cashierToken.split(".")[1], "base64url").toString()).session_id;
+await fetch(`${url}/rest/v1/till_sessions`, {
+  method: "POST",
+  headers: {
+    apikey: env.SUPABASE_SECRET_KEY,
+    Authorization: `Bearer ${env.SUPABASE_SECRET_KEY}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({ session_id: sessionId, user_id: cashierId, location_id: loc.SH1, pin: true }),
+});
+r = await client(cashierToken)("rpc/set_till_pin", { p_pin: "4826" });
+check("a PIN sign-in can't change the PIN", !r.ok, r.msg);
+check("staff see their own till sessions only", (await owner("till_sessions?select=session_id")).data.length === 0);
 
 console.log(failures ? `\n${failures} check(s) FAILED` : "\nAll checks passed");
 process.exit(failures ? 1 : 0);
