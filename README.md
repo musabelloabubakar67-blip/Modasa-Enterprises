@@ -107,7 +107,7 @@ Hosting, the training copy and handover: [`docs/training-copy.md`](docs/training
 - A sale needs an **open till session** (`shifts`), opened with a cash float. Closing the till compares what
   was counted with what the system expected per payment method (float + sales − refunds).
 - Prices always come from the catalogue (sale price if set). Payments must add up to the total exactly;
-  one sale can be split across cash, POS card and transfer. No discounts or deposits yet.
+  one sale can be split across cash, POS card and transfer. No deposits yet.
 - Handover is *takes now*, *collects later* or *delivery* (address, area, date, fee, status). Stock leaves the
   shop at the time of sale either way, so set-aside goods can't be sold twice.
 - Receipts print at 80 mm from the browser and are shared on WhatsApp as a private link (`/r/<token>`).
@@ -122,6 +122,16 @@ Hosting, the training copy and handover: [`docs/training-copy.md`](docs/training
   returned (store policy), and the customer tops up any difference. `create_exchange` does both in one
   transaction; the returned value is an `exchange` payment on the new sale that nets to zero in cash-ups and
   reports. The database refuses any other refund method and any exchange credit not made by an exchange.
+- **Shared tills: Switch cashier.** Each person sets a 4-digit PIN for themselves under *Till PIN* (after
+  re-entering their password). On the till, *Switch cashier* (or 2 minutes without use) locks it to a list of
+  names; tapping a name and entering the PIN carries on in the same till session under that person, so sales,
+  discount limits and the security log follow whoever is selling. Five wrong PINs lock that PIN until its owner
+  sets a new one. A PIN sign-in is the till only: it gets the cashier's screens, even for a manager, and
+  anything else needs the email and password. The Auth server has no PIN login, so after `till_pin_check` says
+  yes the app makes a one-time sign-in token with the service key (nothing is emailed) and marks the new session
+  in `till_sessions` before the browser gets it (`supabase/migrations/20261113000024_till_pins.sql`,
+  `src/app/locked/actions.ts`). The lock and the till-only limit are enforced by the app; database rights still
+  follow the person's role.
 - Wallpaper (rolls by strips, pattern repeat) and area (tiles, marble sheets, wall panels + waste %) calculators:
   `src/lib/calculators.ts`.
 - Till PC setup: [docs/till-setup.md](docs/till-setup.md).
@@ -212,7 +222,7 @@ be tried; in production, checkout is switched off until the key is set.
 ## Security log
 
 Settings → Security log (owner only) lists security-relevant actions as plain sentences, with who did them:
-added, changed or deactivated logins, password resets, failed sign-ins; refunds, tills that didn't balance,
+added, changed or deactivated logins, password resets, failed sign-ins, till PINs set or locked by wrong tries; refunds, tills that didn't balance,
 drawer openings, price and cost changes, cancelled and refunded online orders; approved or rejected counts and
 write-offs, a manager's own counts (applied with no second check), short or cancelled transfers, sets broken
 up; locations, business and VAT details, opening or closing the online shop, delivery fees, and the training

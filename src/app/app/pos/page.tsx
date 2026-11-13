@@ -10,6 +10,7 @@ import { getActiveLocations, isManager } from "../stock/data";
 import { OpenTill } from "./open-till";
 import { Till } from "./till";
 import { OpenDrawerButton, TillSettingsButton } from "@/components/receipt-printer";
+import { SwitchCashierButton, TillIdleLock } from "@/components/till-idle-lock";
 
 export default async function PosPage({ searchParams }: PageProps<"/app/pos">) {
   const staff = await requireStaff(["owner", "manager", "cashier"]);
@@ -99,7 +100,8 @@ export default async function PosPage({ searchParams }: PageProps<"/app/pos">) {
           {(shift.opened_by && names.get(shift.opened_by)) ?? "—"} · float{" "}
           {formatMoney(shift.opening_float_kobo, business.currency)}
         </p>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <SwitchCashierButton locationId={shop.id} />
           <OpenDrawerButton locationId={shop.id} />
           <TillSettingsButton />
           <Link href={`/app/sales?shop=${shop.id}`} className="btn btn-secondary">
@@ -110,6 +112,8 @@ export default async function PosPage({ searchParams }: PageProps<"/app/pos">) {
           </Link>
         </div>
       </div>
+      {/* PIN sign-ins lock from any page (see the staff layout); other sign-ins lock here, at the till. */}
+      {!staff.tillOnly && <TillIdleLock locationId={shop.id} />}
       <Till shop={{ id: shop.id, name: shop.name }} currency={business.currency} discountLimit={discountLimit ?? 0} />
     </div>
   );

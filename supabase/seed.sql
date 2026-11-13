@@ -247,7 +247,9 @@ begin
     end loop;
   end loop;
 
-  -- A few returns and write-offs in the history.
+  -- A few returns and write-offs in the history. They date from before returns became exchange-only, so the
+  -- rule is switched off while they are written.
+  alter table public.returns disable trigger returns_exchange_only;
   for v_line in
     select l.id from public.sale_lines l join public.sales s on s.id = l.sale_id
     where s.created_at < now() - interval '3 days' order by random() limit 4
@@ -263,6 +265,7 @@ begin
     perform public.apply_stock_movement(l.sku_id, s.location_id, '', 1, 'return', 'return', v_ret, 'Demo return')
     from public.sale_lines l join public.sales s on s.id = l.sale_id where l.id = v_line;
   end loop;
+  alter table public.returns enable trigger returns_exchange_only;
 
   perform public.apply_stock_movement(s.id, l.id, '', -1, 'damage', null, null, 'Broken · dropped while unpacking')
   from public.skus s, public.locations l where s.code = 'T3-7G' and l.code = 'WH-B';

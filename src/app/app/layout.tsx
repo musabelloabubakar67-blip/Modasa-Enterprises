@@ -4,6 +4,8 @@ import { navFor } from "@/lib/nav";
 import { ROLE_LABELS } from "@/lib/roles";
 import { signOut } from "@/app/login/actions";
 import { LogoMark } from "@/components/logo-mark";
+import { SwitchCashierButton, TillIdleLock } from "@/components/till-idle-lock";
+import Link from "next/link";
 import { NavLinks } from "./nav-links";
 import { getNavBadges } from "./nav-badges";
 
@@ -24,23 +26,42 @@ export default async function StaffLayout({ children }: LayoutProps<"/app">) {
               <span className="truncate">{business.name}</span>
             </p>
             <p className="text-muted truncate text-xs md:mt-1">
-              {staff.fullName} · {ROLE_LABELS[staff.role]}
+              {staff.fullName} · {ROLE_LABELS[staff.realRole]}
+              {staff.tillOnly ? " (PIN)" : ""}
               {staff.locationName ? ` · ${staff.locationName}` : ""}
             </p>
           </div>
-          <form action={signOut} className="md:hidden">
+          <div className="flex shrink-0 gap-3 md:hidden">
+            {!staff.tillOnly && staff.role !== "warehouse" && (
+              <Link href="/app/till-pin" className="text-muted hover:text-foreground text-sm">
+                Till PIN
+              </Link>
+            )}
+            <form action={signOut}>
+              <button type="submit" className="text-muted hover:text-foreground text-sm">
+                Sign out
+              </button>
+            </form>
+          </div>
+        </div>
+        <NavLinks items={items} badges={badges} />
+        <div className="hidden space-y-2 px-4 py-4 md:block">
+          {staff.tillOnly && staff.locationId && (
+            <SwitchCashierButton locationId={staff.locationId} className="btn btn-secondary w-full" />
+          )}
+          {!staff.tillOnly && staff.role !== "warehouse" && (
+            <Link href="/app/till-pin" className="text-muted hover:text-foreground block text-sm">
+              Till PIN
+            </Link>
+          )}
+          <form action={signOut}>
             <button type="submit" className="text-muted hover:text-foreground text-sm">
               Sign out
             </button>
           </form>
         </div>
-        <NavLinks items={items} badges={badges} />
-        <form action={signOut} className="hidden px-4 py-4 md:block">
-          <button type="submit" className="text-muted hover:text-foreground text-sm">
-            Sign out
-          </button>
-        </form>
       </aside>
+      {staff.tillOnly && staff.locationId && <TillIdleLock locationId={staff.locationId} />}
       <main className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8 print:p-0">{children}</main>
     </div>
   );

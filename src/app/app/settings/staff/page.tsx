@@ -9,7 +9,7 @@ export default async function StaffPage() {
   const me = await requireStaff(["owner"]);
   const supabase = await createClient();
 
-  const [{ data: staff, error: staffError }, { data: locations, error: locationsError }, lastSignIns] =
+  const [{ data: staff, error: staffError }, { data: locations, error: locationsError }, lastSignIns, pins] =
     await Promise.all([
       supabase
         .from("profiles")
@@ -18,6 +18,7 @@ export default async function StaffPage() {
         .order("full_name"),
       supabase.from("locations").select("id, name, kind").eq("is_active", true).order("kind").order("name"),
       getLastSignIns(),
+      getTillPins(),
     ]);
   if (staffError) throw staffError;
   if (locationsError) throw locationsError;
@@ -47,6 +48,10 @@ export default async function StaffPage() {
               <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 text-xs">
                 <span className="bg-background rounded px-2 py-1">{ROLE_LABELS[person.role]}</span>
                 <span className="bg-background rounded px-2 py-1">{person.locations?.name ?? "All locations"}</span>
+                {pins.get(person.id) === "locked" && (
+                  <span className="bg-danger/10 text-danger rounded px-2 py-1">Till PIN locked</span>
+                )}
+                {pins.get(person.id) === "set" && <span className="bg-background rounded px-2 py-1">Till PIN</span>}
                 {!person.is_active && <span className="bg-danger/10 text-danger rounded px-2 py-1">Inactive</span>}
               </div>
             </summary>
@@ -76,4 +81,10 @@ async function getLastSignIns() {
   const { data, error } = await createAdminClient().auth.admin.listUsers({ perPage: 1000 });
   if (error) return null; // Unknown rather than "never": the line is left out.
   return new Map(data.users.flatMap((u) => (u.last_sign_in_at ? [[u.id, u.last_sign_in_at] as const] : [])));
+}
+
+/** Who has a till PIN, and whose is locked after wrong tries. The PINs themselves are never read. */
+async function getTillPins() {
+  const { data } = await createAdminClient().from("till_pins").select("user_id, locked_at");
+  return new Map((data ?? []).map((p) => [p.user_id, p.locked_at ? ("locked" as const) : ("set" as const)]));
 }
