@@ -65,10 +65,10 @@ export default async function ProductsPage({ searchParams }: PageProps<"/app/pro
             <Link href="/app/products/setup" className="btn btn-secondary">
               Categories &amp; units
             </Link>
-            <Link href="/app/products/import" className="btn btn-secondary">
+            <Link href="/app/products/import" data-tour="import-products" className="btn btn-secondary">
               Import
             </Link>
-            <Link href="/app/products/new" className="btn btn-primary">
+            <Link href="/app/products/new" data-tour="new-product" className="btn btn-primary">
               New product
             </Link>
           </div>

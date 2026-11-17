@@ -25,7 +25,7 @@ export default async function PendingPage() {
       <p className="text-muted text-sm">
         Paid for, but not yet with the customer. These items have already left stock — keep them aside.
       </p>
-      <ul className="space-y-3">
+      <ul data-tour="pending-list" className="space-y-3">
         {sales.length === 0 && <li className="card text-muted p-6 text-center text-sm">Nothing waiting.</li>}
         {sales.map((s) => (
           <li key={s.id} className="card space-y-2 p-4">

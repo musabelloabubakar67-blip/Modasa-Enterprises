@@ -61,7 +61,7 @@ export default async function CloseTillPage({ searchParams }: PageProps<"/app/po
         {count ?? 0} sale{count === 1 ? "" : "s"}
       </p>
 
-      <div className="card overflow-x-auto">
+      <div data-tour="close-expected" className="card overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="text-muted border-border border-b text-left">
             <tr>
@@ -82,7 +82,9 @@ export default async function CloseTillPage({ searchParams }: PageProps<"/app/po
                 <td className="p-3 text-right tabular-nums">
                   {r.refunds ? `−${formatMoney(r.refunds, currency)}` : "–"}
                 </td>
-                <td className="p-3 text-right font-semibold tabular-nums">{formatMoney(r.expected, currency)}</td>
+                <td data-tour={`expected-${r.method}`} className="p-3 text-right font-semibold tabular-nums">
+                  {formatMoney(r.expected, currency)}
+                </td>
               </tr>
             ))}
           </tbody>

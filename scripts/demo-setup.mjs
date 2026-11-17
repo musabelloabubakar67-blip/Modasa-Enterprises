@@ -1,6 +1,6 @@
 // Prepares the local database for recording the demo tour (src/tour/script.ts), on top of the seed:
-// named staff with PINs, the seed's sales shared out among the cashiers, Shop 1's till open for today,
-// and yesterday's rug sale to Amaka Obi that the tour exchanges.
+// named staff with PINs, the seed's sales shared out among the cashiers, and yesterday's rug sale to Amaka
+// Obi that the tour exchanges. Today's tills start closed.
 // Local only, and it changes data. Run it on a freshly reset database:
 //   npm run demo:reset        (= npx supabase db reset && node scripts/demo-setup.mjs)
 import fs from "node:fs";
@@ -143,8 +143,7 @@ await rest(`sales?id=eq.${amakaSale}`, {
 await rest(`stock_movements?reference_id=eq.${amakaSale}`, { method: "PATCH", body: { created_at: yesterday } });
 await rest(`shifts?id=eq.${tempShift}`, { method: "DELETE" });
 
-// ---------- Today: Ada opens Shop 1's till with a ₦10,000 float ----------
-await rest("rpc/open_shift", { method: "POST", body: { p_location_id: loc.SH1, p_float_kobo: 1000000 }, token: ada });
+// Today's tills start closed: the tour opens Shop 1's.
 
 console.log("Demo data ready. Now (re)start the app: npm run build && npm start (or npm run dev).");
 console.log("Then open http://localhost:3000/login?tour=1 and press Enter.");

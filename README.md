@@ -139,14 +139,18 @@ Hosting, the training copy and handover: [`docs/training-copy.md`](docs/training
 ## Demo tour (recording a demo)
 
 A self-running tour for screen-recording: Mo, a rug mascot, presents the app in a speech bubble while a fake cursor
-really uses it (clicks, typing, page changes), with a spotlight on what's being shown. Local copy only.
+really uses it (clicks, typing, file uploads, page changes), with a spotlight on what's being shown. During a tour the
+till's idle lock is paused, "Are you sure?" prompts are answered yes and Print does nothing. Local copy only.
 
 1. In `.env.local` add `NEXT_PUBLIC_DEMO_TOUR=1` and `DEMO_TOUR_PASSWORD=` (any password).
 2. `npm run demo:reset`: fresh local data plus demo staff (Kemi the owner; Ada and Bisi, cashiers at Shop 1, PINs 2580
-   and 1470), Shop 1's till open, and yesterday's rug sale to Amaka Obi for the exchange scene. Run it before every
+   and 1470), all tills closed, and yesterday's rug sale to Amaka Obi for the exchange scene. Run it before every
    take, then (re)start the app: `npm run build && npm start` (no development badge on screen).
 3. Open `http://localhost:3000/login?tour=1`, start recording, press **Enter**. **Space** pauses, **Esc** stops.
-   `?tour=1&scene=exchange` starts from one scene (welcome, switch, sale, exchange, stock, reports, goodbye).
+   `?tour=1&scene=labels` starts from one scene: welcome, open (till and Switch cashier), sale, till-extras (out of
+   stock, delivery, collection list), exchange, close (cash-up), product (adding one), import (workbook), delivery
+   (from a supplier), stock (and a transfer), count (and history), labels, reports, goodbye. The delivery and labels
+   scenes use the towel sets the product scene creates. The whole tour takes about 15 minutes.
 
 Everything Mo says and does is in `src/tour/script.ts`, in order; the elements it uses carry `data-tour="…"`
 attributes. Each scene signs in the right demo person off camera (`src/tour/actions.ts`, which refuses to work unless

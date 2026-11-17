@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Mascot } from "./mascot";
 import { pace, scenes } from "./script";
 import type { Step } from "./steps";
-import { ensureTourUser } from "./actions";
+import { demoFile, ensureTourUser } from "./actions";
 
 /**
  * Plays the demo tour (script.ts) on the real app: Mo talks in a speech bubble, a fake cursor clicks and
@@ -145,6 +145,13 @@ export default function TourRunner() {
           await sleep(350, id);
           avoid(el);
           spotEl.current = el;
+          // Don't let the cursor sit on top of what Mo is pointing at.
+          const r = rectOf(el);
+          setCursor((c) =>
+            c && c.x > r.x - 30 && c.x < r.x + r.w + 30 && c.y > r.y - 40 && c.y < r.y + r.h + 30
+              ? { ...c, x: Math.min(r.x + r.w + 24, window.innerWidth - 40), y: r.y + r.h / 2 }
+              : c,
+          );
         } else spotEl.current = null;
         setLine(step.text);
         setShown(0);
@@ -181,9 +188,13 @@ export default function TourRunner() {
         const el = (await find(step.target, step.match, id)) as HTMLInputElement;
         await moveCursorTo(el, id);
         el.focus({ preventScroll: true });
+        // Built from what's been typed, not the field's current value: some fields put a 0 back when emptied.
+        const start = step.clear ? "" : el.value;
         if (step.clear) setValue(el, "");
+        let typed = "";
         for (const ch of step.text) {
-          setValue(el, el.value + ch);
+          typed += ch;
+          setValue(el, start + typed);
           await sleep(pace.typingMs, id);
         }
         await sleep(pace.afterActionMs, id);
@@ -192,7 +203,9 @@ export default function TourRunner() {
       case "choose": {
         const el = (await find(step.target, undefined, id)) as HTMLSelectElement;
         await moveCursorTo(el, id);
-        const option = [...el.options].find((o) => o.text.trim() === step.option || o.value === step.option);
+        const option =
+          [...el.options].find((o) => o.text.trim() === step.option || o.value === step.option) ??
+          [...el.options].find((o) => o.text.trim().startsWith(step.option));
         if (!option) throw new Error(`"${step.target}" has no option "${step.option}".`);
         setValue(el, option.value);
         await sleep(pace.afterActionMs, id);
@@ -223,6 +236,43 @@ export default function TourRunner() {
         await sleep(2100, id);
         setWaving(false);
         return;
+      case "when": {
+        let present = false;
+        for (let waited = 0; waited < 2000 && !present; waited += 150) {
+          present = !!locate(step.target);
+          if (!present) await sleep(150, id);
+        }
+        if (present) for (const sub of step.steps) await runStep(sub, index, id);
+        return;
+      }
+      case "upload": {
+        const el = await find(step.target, undefined, id);
+        const input =
+          el instanceof HTMLInputElement && el.type === "file"
+            ? el
+            : el.querySelector<HTMLInputElement>('input[type="file"]');
+        if (!input) throw new Error(`"${step.target}" has no file picker.`);
+        await moveCursorTo(el, id);
+        setCursor((c) => c && { ...c, pressed: true });
+        const file = await demoFile(step.file);
+        if (!file) throw new Error(`The demo file "${step.file}" isn't available.`);
+        const bytes = Uint8Array.from(atob(file.base64), (ch) => ch.charCodeAt(0));
+        const transfer = new DataTransfer();
+        transfer.items.add(new File([bytes], file.name, { type: file.type }));
+        input.files = transfer.files;
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+        setCursor((c) => c && { ...c, pressed: false });
+        await sleep(pace.afterActionMs, id);
+        return;
+      }
+      case "typeFrom": {
+        const source = await find(step.source, undefined, id);
+        const shown = Number((source.textContent ?? "").replace(/[^\d.]/g, ""));
+        if (!Number.isFinite(shown)) throw new Error(`"${step.source}" doesn't show an amount.`);
+        const amount = Math.round((shown + (step.adjust ?? 0)) * 100) / 100;
+        await runStep({ kind: "type", target: step.target, text: String(amount), clear: true }, index, id);
+        return;
+      }
       case "signInAs": {
         const result = await ensureTourUser(step.who);
         if (result.error) throw new Error(result.error);
@@ -327,13 +377,16 @@ export default function TourRunner() {
     return () => window.removeEventListener("keydown", onKey, { capture: true });
   });
 
-  // While the tour runs, "Are you sure?" questions are answered yes so it doesn't stall.
+  // While the tour runs, "Are you sure?" questions are answered yes so it doesn't stall, and Print does nothing.
   useEffect(() => {
     if (phase !== "running" && phase !== "paused") return;
-    const original = window.confirm;
+    // Printing would open the browser's print dialog over the recording and freeze the tour.
+    const original = { confirm: window.confirm, print: window.print };
     window.confirm = () => true;
+    window.print = () => {};
     return () => {
-      window.confirm = original;
+      window.confirm = original.confirm;
+      window.print = original.print;
     };
   }, [phase]);
 

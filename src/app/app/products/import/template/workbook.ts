@@ -67,9 +67,18 @@ export type WorkbookInput = {
   categories: string[];
   units: string[];
   locations: { name: string; kind: string }[];
+  /** Rows already filled in on the Products tab, in column order (the demo tour uploads one). Usually none. */
+  rows?: (string | number | null)[][];
 };
 
-export async function buildProductWorkbook({ businessName, currency, categories, units, locations }: WorkbookInput) {
+export async function buildProductWorkbook({
+  businessName,
+  currency,
+  categories,
+  units,
+  locations,
+  rows = [],
+}: WorkbookInput) {
   const cur = currency === "NGN" ? "₦" : currency;
   const columns = [
     ...productColumns(cur),
@@ -219,6 +228,8 @@ export async function buildProductWorkbook({ businessName, currency, categories,
     cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: colour } };
     cell.note = c.note;
   });
+
+  rows.forEach((values) => sheet.addRow(values.map((v) => (v === "" ? null : v))));
 
   const listRef = (column: string, count: number) => `Lists!$${column}$2:$${column}$${Math.max(count, 1) + 1}`;
   // ExcelJS supports dropdowns but its type definitions leave them out.

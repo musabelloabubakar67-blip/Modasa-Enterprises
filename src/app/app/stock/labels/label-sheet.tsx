@@ -105,7 +105,7 @@ export function LabelSheet({
         }
       `}</style>
 
-      <div className="card space-y-4 p-4 print:hidden">
+      <div data-tour="label-settings" className="card space-y-4 p-4 print:hidden">
         {source && <p className="text-muted text-sm">{source}</p>}
         <div className="flex flex-wrap items-end gap-3">
           <label>
@@ -141,6 +141,7 @@ export function LabelSheet({
           </label>
           <button
             type="button"
+            data-tour="print-labels"
             className="btn btn-primary ml-auto"
             disabled={labels.length === 0}
             onClick={() => window.print()}
@@ -154,7 +155,7 @@ export function LabelSheet({
           onPick={(sku) => setItems((list) => [...list, { sku, batch: "", copies: 1 }])}
         />
         {items.length > 0 && (
-          <ul className="divide-border divide-y text-sm">
+          <ul data-tour="label-items" className="divide-border divide-y text-sm">
             {items.map((item, i) => (
               <li key={i} className="flex items-center gap-3 py-2">
                 <span className="min-w-0 flex-1 truncate">
@@ -164,6 +165,7 @@ export function LabelSheet({
                 <label className="flex items-center gap-1">
                   <span className="text-muted text-xs">Copies</span>
                   <input
+                    data-tour={`label-copies-${i}`}
                     type="number"
                     min={0}
                     max={500}
@@ -196,7 +198,7 @@ export function LabelSheet({
       </div>
 
       {/* Preview on screen; exactly what prints. */}
-      <div className="space-y-4 overflow-x-auto print:space-y-0 print:overflow-visible">
+      <div data-tour="label-preview" className="space-y-4 overflow-x-auto print:space-y-0 print:overflow-visible">
         {pages.map((page, p) => (
           <div
             key={p}

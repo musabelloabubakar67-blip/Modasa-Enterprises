@@ -317,7 +317,7 @@ export function Till({
         {stage === "cart" && <SkuPicker onPick={pick} autoFocus captureScans />}
 
         {unavailable && (
-          <div className="card space-y-2 border-amber-400 p-4 text-sm" role="status">
+          <div data-tour="not-in-stock" className="card space-y-2 border-amber-400 p-4 text-sm" role="status">
             <p>
               <strong>{skuLabel(unavailable)}</strong> is not in stock at {shop.name}
               {unavailable.inTransitHere > 0 && ` (${formatQty(unavailable.inTransitHere)} on the way)`}.
@@ -347,6 +347,7 @@ export function Till({
             )}
             <button
               type="button"
+              data-tour="not-in-stock-dismiss"
               className="text-muted block text-xs hover:underline"
               onClick={() => setUnavailable(null)}
             >
@@ -536,7 +537,7 @@ export function Till({
 
         <section className="card space-y-3 p-4">
           <h2 className="font-semibold">Handover</h2>
-          <div className="grid grid-cols-3 gap-1" role="radiogroup" aria-label="Handover">
+          <div data-tour="handover" className="grid grid-cols-3 gap-1" role="radiogroup" aria-label="Handover">
             {(
               [
                 ["taken", "Takes now"],
@@ -562,6 +563,7 @@ export function Till({
               <textarea
                 className="input"
                 rows={2}
+                data-tour="delivery-address"
                 placeholder="Delivery address"
                 value={draft.delivery.address}
                 disabled={stage === "pay"}
@@ -571,6 +573,7 @@ export function Till({
               <div className="grid grid-cols-2 gap-2">
                 <input
                   className="input"
+                  data-tour="delivery-area"
                   placeholder="Area, e.g. Lekki"
                   value={draft.delivery.area}
                   disabled={stage === "pay"}
@@ -588,6 +591,7 @@ export function Till({
               </div>
               <input
                 className="input tabular-nums"
+                data-tour="delivery-fee"
                 placeholder={`Delivery fee (${currency})`}
                 inputMode="decimal"
                 value={draft.delivery.fee}
@@ -705,6 +709,7 @@ export function Till({
                       <label className="block">
                         <span className="label text-xs">Cash received (for change)</span>
                         <input
+                          data-tour={`pay-tendered-${i}`}
                           className="input tabular-nums"
                           inputMode="decimal"
                           value={p.tendered}
@@ -714,7 +719,7 @@ export function Till({
                           }
                         />
                         {change > 0 && (
-                          <span className="mt-1 block text-sm font-semibold">
+                          <span data-tour={`pay-change-${i}`} className="mt-1 block text-sm font-semibold">
                             Change: {formatMoney(change, currency)}
                           </span>
                         )}

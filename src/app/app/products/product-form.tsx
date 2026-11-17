@@ -112,6 +112,7 @@ export function ProductForm({
               <Field label="Name" name="name" error={errors.name}>
                 <input
                   id="name"
+                  data-tour="product-name"
                   name="name"
                   className="input"
                   defaultValue={product?.name}
@@ -123,6 +124,7 @@ export function ProductForm({
                 <Field label="Category" name="category_id" error={errors.category_id}>
                   <select
                     id="category_id"
+                    data-tour="product-category"
                     name="category_id"
                     className="input"
                     defaultValue={product?.category_id ?? ""}
@@ -148,6 +150,7 @@ export function ProductForm({
                 >
                   <select
                     id="unit_id"
+                    data-tour="product-unit"
                     name="unit_id"
                     className="input"
                     value={unitId}
@@ -165,6 +168,7 @@ export function ProductForm({
               <Field label="Description" name="description" error={errors.description} hint="Optional.">
                 <textarea
                   id="description"
+                  data-tour="product-description"
                   name="description"
                   rows={2}
                   className="input"
@@ -264,11 +268,16 @@ export function ProductForm({
                     ? Math.round(((sell - cost) / sell) * 100)
                     : null;
                 return (
-                  <div key={i} className={`card space-y-3 p-4 ${sku.is_active ? "" : "opacity-60"}`}>
+                  <div
+                    key={i}
+                    data-tour={`sku-${i}`}
+                    className={`card space-y-3 p-4 ${sku.is_active ? "" : "opacity-60"}`}
+                  >
                     <div className="grid gap-3 sm:grid-cols-3">
                       <Field label="SKU code" name={id("code")} error={e.code}>
                         <input
                           id={id("code")}
+                          data-tour={id("code")}
                           className="input font-mono"
                           value={sku.code}
                           onChange={(ev) => update(i, { code: ev.target.value })}
@@ -313,6 +322,7 @@ export function ProductForm({
                         >
                           <input
                             id={id("variant")}
+                            data-tour={id("variant")}
                             className="input"
                             value={sku.variant_label}
                             onChange={(ev) => update(i, { variant_label: ev.target.value })}
@@ -338,6 +348,7 @@ export function ProductForm({
                       <Field label={`Price (${currency})`} name={id("price")} error={e.price}>
                         <input
                           id={id("price")}
+                          data-tour={id("price")}
                           className="input tabular-nums"
                           inputMode="decimal"
                           value={sku.price}
@@ -371,6 +382,7 @@ export function ProductForm({
                       >
                         <input
                           id={id("cost")}
+                          data-tour={id("cost")}
                           className="input tabular-nums"
                           inputMode="decimal"
                           value={sku.cost}
@@ -456,6 +468,7 @@ export function ProductForm({
 
               <button
                 type="button"
+                data-tour="add-sku"
                 className="btn btn-secondary"
                 onClick={() => setSkus((rows) => [...rows, emptySku()])}
               >
@@ -463,7 +476,7 @@ export function ProductForm({
               </button>
             </section>
 
-            <div className="flex gap-2">
+            <div data-tour="product-save" className="flex gap-2">
               <SubmitButton>{product ? "Save product" : "Create product"}</SubmitButton>
             </div>
           </>

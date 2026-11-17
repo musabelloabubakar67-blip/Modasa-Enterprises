@@ -113,6 +113,7 @@ export function ReceiptForm({
           </label>
           <select
             id="location_id"
+            data-tour="delivery-warehouse"
             className="input"
             value={form.location_id}
             onChange={(e) => set({ location_id: e.target.value })}
@@ -143,6 +144,7 @@ export function ReceiptForm({
           </label>
           <input
             id="supplier_name"
+            data-tour="delivery-supplier"
             className="input"
             value={form.supplier_name}
             onChange={(e) => set({ supplier_name: e.target.value })}
@@ -155,6 +157,7 @@ export function ReceiptForm({
           </label>
           <input
             id="supplier_reference"
+            data-tour="delivery-invoice"
             className="input"
             value={form.supplier_reference}
             onChange={(e) => set({ supplier_reference: e.target.value })}
@@ -182,7 +185,7 @@ export function ReceiptForm({
         {form.lines.length === 0 ? (
           <p className="card text-muted p-4 text-sm">No items yet. Search above or scan a barcode.</p>
         ) : (
-          <ul className="card divide-border divide-y">
+          <ul data-tour="delivery-lines" className="card divide-border divide-y">
             {form.lines.map((line, i) => (
               <li key={`${line.sku.id}-${i}`} className="grid gap-3 p-3 sm:grid-cols-[1fr_auto] sm:items-end">
                 <div>
@@ -204,6 +207,7 @@ export function ReceiptForm({
                   <label className="w-24">
                     <span className="label text-xs">Qty ({line.sku.unit})</span>
                     <input
+                      data-tour={`delivery-qty-${i}`}
                       className="input text-right tabular-nums"
                       inputMode={line.sku.allows_decimal ? "decimal" : "numeric"}
                       value={line.quantity}
@@ -214,6 +218,7 @@ export function ReceiptForm({
                     <label className="w-32">
                       <span className="label text-xs">Unit cost ({currency})</span>
                       <input
+                        data-tour={`delivery-cost-${i}`}
                         className="input text-right tabular-nums"
                         inputMode="decimal"
                         value={line.unit_cost}
@@ -246,6 +251,7 @@ export function ReceiptForm({
         <button
           type="button"
           className="btn btn-primary"
+          data-tour="post-delivery"
           disabled={pending || !form.lines.length}
           onClick={() => submit(true)}
         >

@@ -108,7 +108,7 @@ export function ProductImages({
   }
 
   return (
-    <section className="card p-6">
+    <section data-tour="product-photos" className="card p-6">
       <div className="flex items-center justify-between gap-2">
         <h2 className="font-semibold">Photos</h2>
         <label className={`btn btn-secondary ${busy ? "pointer-events-none opacity-60" : ""}`}>

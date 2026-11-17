@@ -30,7 +30,7 @@ export default async function DeliveriesPage({ searchParams }: PageProps<"/app/s
         <p className="text-muted text-sm">
           Goods arriving from suppliers. Deliveries can only be received at a warehouse.
         </p>
-        <Link href="/app/stock/deliveries/new" className="btn btn-primary">
+        <Link href="/app/stock/deliveries/new" data-tour="new-delivery" className="btn btn-primary">
           New delivery
         </Link>
       </div>

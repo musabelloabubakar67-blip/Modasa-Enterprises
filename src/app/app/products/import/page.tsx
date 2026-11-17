@@ -23,7 +23,7 @@ export default async function ImportPage() {
       <div className="card p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-semibold">1. Get the product workbook</h2>
-          <a href="/app/products/import/template" className="btn btn-secondary" download>
+          <a href="/app/products/import/template" data-tour="download-workbook" className="btn btn-secondary" download>
             Download workbook (Excel)
           </a>
         </div>
