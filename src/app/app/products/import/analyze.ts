@@ -73,8 +73,12 @@ function yesNo(value: string | undefined) {
   return null;
 }
 
-/** Unit names as compared for typos: "Square metre", "square-metre" and "squaremetre" are the same. */
-const squash = (s: string) => lower(s).replace(/[^a-z0-9]/g, "");
+/** Names as compared for typos: "Square metre", "square-metre" and "squaremetre" are the same, and so are "Décor" and "Decor". */
+const squash = (s: string) =>
+  lower(s)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "");
 
 /** Edits (insert, delete, change, swap two neighbours) to turn a into b. "Peice" → "Piece" is 1. */
 function editDistance(a: string, b: string) {
@@ -130,6 +134,13 @@ export async function analyzeImport(supabase: Client, input: ImportRow[]): Promi
     unitByKey.set(lower(u.abbreviation), u.id);
   }
   const categoryNames = new Set(categories.map((c) => lower(c.name)));
+  // "Decor" for "Décor", "Kitchen and Dining" spacing aside: the same category, not a new one.
+  const categoryBySquash = new Map(categories.map((c) => [squash(c.name), c.name]));
+  const categoryTypo = (name: string) => {
+    const n = squash(name);
+    if (n.length < 4) return null;
+    return categories.find((c) => squash(c.name).length >= 4 && editDistance(n, squash(c.name)) <= 1)?.name ?? null;
+  };
   const productsByName = new Map<string, string[]>();
   for (const p of products) productsByName.set(lower(p.name), [...(productsByName.get(lower(p.name)) ?? []), p.id]);
   const productNameById = new Map(products.map((p) => [p.id, p.name]));
@@ -152,10 +163,22 @@ export async function analyzeImport(supabase: Client, input: ImportRow[]): Promi
     const result: RowResult = { row: row._row, status: "new", product: name, code, messages };
     results.push(result);
 
-    if (!name) messages.push("Missing product_name.");
-    if (!row.category?.trim()) messages.push("Missing category.");
+    if (!name) messages.push("Missing Product name.");
+    const typedCategory = row.category?.trim() ?? "";
+    if (!typedCategory) messages.push("Missing Category.");
+    else if (!categoryNames.has(lower(typedCategory))) {
+      const same = categoryBySquash.get(squash(typedCategory));
+      if (same) row.category = same;
+      else {
+        const typo = categoryTypo(typedCategory);
+        if (typo)
+          messages.push(
+            `Unknown category “${typedCategory}”. Did you mean ${typo}? Correct it, or add the category first.`,
+          );
+      }
+    }
     const unitName = row.unit?.trim() ?? "";
-    if (!unitName) messages.push("Missing unit.");
+    if (!unitName) messages.push("Missing Unit.");
     else if (!unitByKey.has(lower(unitName))) {
       const typo = likelyTypo(unitName, units);
       if (typo) messages.push(`Unknown unit “${unitName}”. Did you mean ${typo}? Correct it, or add the unit first.`);
@@ -168,32 +191,32 @@ export async function analyzeImport(supabase: Client, input: ImportRow[]): Promi
       }
     }
 
-    if (!code) messages.push("Missing sku_code.");
-    else if (/\s/.test(code)) messages.push("sku_code can't contain spaces.");
-    else if (seenCodes.has(lower(code))) messages.push(`sku_code also used on row ${seenCodes.get(lower(code))}.`);
+    if (!code) messages.push("Missing Item code.");
+    else if (/\s/.test(code)) messages.push("Item code can't contain spaces.");
+    else if (seenCodes.has(lower(code))) messages.push(`Item code also used on row ${seenCodes.get(lower(code))}.`);
     if (code) seenCodes.set(lower(code), row._row);
 
     const price = parseMoney(row.price);
     const sale = parseMoney(row.sale_price);
     const cost = parseMoney(row.cost_price);
-    if (price === null) messages.push("Missing price.");
-    else if (Number.isNaN(price)) messages.push(`Invalid price “${row.price}”.`);
-    if (Number.isNaN(sale)) messages.push(`Invalid sale_price “${row.sale_price}”.`);
+    if (price === null) messages.push("Missing Selling price.");
+    else if (Number.isNaN(price)) messages.push(`Selling price “${row.price}” isn't a number.`);
+    if (Number.isNaN(sale)) messages.push(`Sale price “${row.sale_price}” isn't a number.`);
     else if (sale !== null && price !== null && !Number.isNaN(price) && sale >= price)
-      messages.push("sale_price must be below price.");
-    if (Number.isNaN(cost)) messages.push(`Invalid cost_price “${row.cost_price}”.`);
+      messages.push("Sale price must be below the Selling price.");
+    if (Number.isNaN(cost)) messages.push(`Cost price “${row.cost_price}” isn't a number.`);
 
-    const rollWidth = positive(row.roll_width_cm, "roll_width_cm", messages);
-    const rollLength = positive(row.roll_length_cm, "roll_length_cm", messages);
-    const coverage = positive(row.coverage_m2, "coverage_m2", messages);
+    const rollWidth = positive(row.roll_width_cm, "Roll width", messages);
+    const rollLength = positive(row.roll_length_cm, "Roll length", messages);
+    const coverage = positive(row.coverage_m2, "m² per unit", messages);
 
-    if (yesNo(row.show_online) === null) messages.push(`show_online must be yes or no, not “${row.show_online}”.`);
+    if (yesNo(row.show_online) === null) messages.push(`Show on website must be yes or no, not “${row.show_online}”.`);
 
     const existing = code ? skuByCode.get(lower(code)) : undefined;
     const barcode = row.barcode?.trim();
-    if (barcode && /\s/.test(barcode)) messages.push("barcode can't contain spaces.");
+    if (barcode && /\s/.test(barcode)) messages.push("Barcode can't contain spaces.");
     const scanCode = lower(barcode || code);
-    const alreadyFlagged = messages.some((m) => m.startsWith("sku_code also used"));
+    const alreadyFlagged = messages.some((m) => m.startsWith("Item code also used"));
     if (scanCode && !alreadyFlagged) {
       const clash = skuByScanCode.get(scanCode);
       if (clash && clash.id !== existing?.id)
@@ -219,7 +242,8 @@ export async function analyzeImport(supabase: Client, input: ImportRow[]): Promi
     }
 
     const category = row.category?.trim();
-    if (category && !categoryNames.has(lower(category)) && !newCategories.has(lower(category)))
+    const categoryTypoFlagged = messages.some((m) => m.startsWith("Unknown category"));
+    if (category && !categoryTypoFlagged && !categoryNames.has(lower(category)) && !newCategories.has(lower(category)))
       newCategories.set(lower(category), category);
 
     const group = groups.get(groupKey) ?? { existingId: existingProductId, rows: [] };

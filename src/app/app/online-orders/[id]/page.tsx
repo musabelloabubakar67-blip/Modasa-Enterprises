@@ -151,7 +151,7 @@ export default async function OnlineOrderPage({ params }: PageProps<"/app/online
             <tr key={i}>
               <td className="p-3">
                 {l.skus.products.name}
-                {l.skus.variant_label && ` (${l.skus.variant_label})`}{" "}
+                {l.skus.variant_label && ` · ${l.skus.variant_label}`}{" "}
                 <span className="text-muted font-mono text-xs">{l.skus.code}</span>
               </td>
               <td className="p-3 text-right tabular-nums">{Number(l.quantity)}</td>

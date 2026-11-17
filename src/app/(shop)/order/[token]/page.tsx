@@ -51,7 +51,7 @@ function describe(
         title: "Thank you. Your order is confirmed",
         text: delivery
           ? `We are getting your items ready, usually within ${leadTime}, and will call you to agree a delivery time.`
-          : `We are bringing your items to ${shopName}, usually within ${leadTime}. We will let you know when they are ready to collect.`,
+          : `We are bringing your items to ${shopName}, usually within ${leadTime}. We will call or WhatsApp you when they are ready to collect.`,
       };
     case "confirmed": {
       const stage = order.sales?.fulfilment_status ?? "pending";
