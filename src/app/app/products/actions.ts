@@ -7,6 +7,7 @@ import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { parseMoney } from "@/lib/money";
 import type { ActionState } from "@/lib/forms";
+import { friendlyError } from "@/lib/errors";
 
 const EDITORS = ["owner", "manager"] as const;
 
@@ -189,7 +190,7 @@ export async function saveProduct(_prev: ProductActionState, formData: FormData)
     .from("products")
     .update({ show_online: show_online === "on", is_featured: is_featured === "on" })
     .eq("id", productId);
-  if (webError) return { error: webError.message };
+  if (webError) return { error: friendlyError(webError) };
 
   revalidatePath("/app/products", "layout");
   // Reload the page so the form shows exactly what was stored (including ids of new SKUs).
@@ -217,10 +218,10 @@ function friendlyDbError(error: { code?: string; message: string; details?: stri
     if (error.message.includes("skus_scan_code_key"))
       return "A barcode or SKU code is already used by another item. Each code must scan to exactly one item.";
     if (error.message.includes("skus_code_key")) return "One of these SKU codes is already used by another item.";
-    return error.message;
+    return friendlyError(error);
   }
   if (error.code === "42501") return "You don't have permission to edit products.";
-  return error.message;
+  return friendlyError(error);
 }
 
 // ---------- Categories & units ----------
@@ -245,7 +246,8 @@ export async function saveCategory(_prev: ActionState, formData: FormData): Prom
         .update({ name, is_active: is_active === "on" })
         .eq("id", id)
     : await supabase.from("categories").insert({ name });
-  if (error) return { error: error.code === "23505" ? "A category with that name already exists." : error.message };
+  if (error)
+    return { error: error.code === "23505" ? "A category with that name already exists." : friendlyError(error) };
 
   revalidatePath("/app/products", "layout");
   return { success: id ? "Category saved." : `Added “${name}”.` };
@@ -294,7 +296,8 @@ export async function deleteCategory(id: string): Promise<ActionState> {
     };
   const supabase = await createClient();
   const { data, error } = await supabase.from("categories").delete().eq("id", id).select("id");
-  if (error) return { error: error.code === "23503" ? "Can't delete: products are in this category." : error.message };
+  if (error)
+    return { error: error.code === "23503" ? "Can't delete: products are in this category." : friendlyError(error) };
   // No row back means the database didn't allow it (its update for deleting hasn't been applied).
   if (!data.length)
     return { error: "Couldn't delete this category. Ask the owner to apply the latest database update." };
@@ -313,7 +316,8 @@ export async function deleteUnit(id: string): Promise<ActionState> {
     };
   const supabase = await createClient();
   const { data, error } = await supabase.from("units").delete().eq("id", id).select("id");
-  if (error) return { error: error.code === "23503" ? "Can't delete: products are sold by this unit." : error.message };
+  if (error)
+    return { error: error.code === "23503" ? "Can't delete: products are sold by this unit." : friendlyError(error) };
   if (!data.length) return { error: "Couldn't delete this unit. Ask the owner to apply the latest database update." };
   revalidatePath("/app/products", "layout");
   return { success: "Unit deleted." };
@@ -338,7 +342,7 @@ export async function saveUnit(_prev: ActionState, formData: FormData): Promise<
   const { error } = id
     ? await supabase.from("units").update(row).eq("id", id)
     : await supabase.from("units").insert(row);
-  if (error) return { error: error.code === "23505" ? "A unit with that name already exists." : error.message };
+  if (error) return { error: error.code === "23505" ? "A unit with that name already exists." : friendlyError(error) };
 
   revalidatePath("/app/products", "layout");
   return { success: id ? "Unit saved." : `Added “${rest.name}”.` };

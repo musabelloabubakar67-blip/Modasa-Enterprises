@@ -7,6 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { needsSetup } from "@/lib/setup";
 import { fieldErrorsFrom, formValues, type ActionState } from "@/lib/forms";
+import { friendlyError } from "@/lib/errors";
 
 const schema = z.object({
   businessName: z.string({ error: "Enter the business name." }).max(120),
@@ -29,7 +30,7 @@ export async function completeSetup(_prev: ActionState, formData: FormData): Pro
     .from("business_settings")
     .update({ name: businessName, updated_at: new Date().toISOString() })
     .eq("id", 1);
-  if (settingsError) return { error: settingsError.message };
+  if (settingsError) return { error: friendlyError(settingsError) };
   expireBusinessSettings();
 
   const { error: userError } = await admin.auth.admin.createUser({
@@ -38,11 +39,11 @@ export async function completeSetup(_prev: ActionState, formData: FormData): Pro
     email_confirm: true,
     user_metadata: { full_name: fullName, role: "owner" },
   });
-  if (userError) return { error: userError.message };
+  if (userError) return { error: friendlyError(userError) };
 
   const supabase = await createClient();
   const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-  if (signInError) return { error: signInError.message };
+  if (signInError) return { error: friendlyError(signInError) };
 
   redirect("/app");
 }

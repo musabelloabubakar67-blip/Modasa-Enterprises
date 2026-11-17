@@ -5,6 +5,7 @@ import Link from "next/link";
 import { readGrid } from "@/lib/spreadsheet";
 import { importOpeningStock, type OpeningResult, type OpeningRow } from "./actions";
 import { isOpeningSheet, parseOpeningStock } from "./parse";
+import { friendlyError } from "@/lib/errors";
 
 export function OpeningImport() {
   const [rows, setRows] = useState<OpeningRow[]>([]);
@@ -22,7 +23,12 @@ export function OpeningImport() {
       setLayout(layout);
       startTransition(async () => setResult(await importOpeningStock(parsed, false)));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't read that file.");
+      setError(
+        friendlyError(
+          e instanceof Error ? e : null,
+          "Couldn't read that file. Save it as Excel (.xlsx) or CSV and try again.",
+        ),
+      );
     }
   }
 

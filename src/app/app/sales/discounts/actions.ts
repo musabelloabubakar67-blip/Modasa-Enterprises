@@ -5,6 +5,7 @@ import { z } from "zod";
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionState } from "@/lib/forms";
+import { friendlyError } from "@/lib/errors";
 
 const schema = z.object({
   id: z.uuid(),
@@ -18,7 +19,7 @@ export async function saveDiscountLimit(_prev: ActionState, formData: FormData):
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const supabase = await createClient();
   const { error } = await supabase.rpc("set_discount_limit", { p_user: parsed.data.id, p_pct: parsed.data.pct });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
   revalidatePath("/app/sales/discounts");
   return { success: "Saved." };
 }

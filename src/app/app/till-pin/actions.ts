@@ -6,6 +6,7 @@ import { requireStaff } from "@/lib/auth";
 import { env } from "@/lib/env";
 import { fieldErrorsFrom, formValues, type ActionState } from "@/lib/forms";
 import { createClient } from "@/lib/supabase/server";
+import { friendlyError } from "@/lib/errors";
 
 const pinSchema = z
   .object({
@@ -33,6 +34,6 @@ export async function setTillPin(_prev: ActionState, formData: FormData): Promis
   await check.auth.signOut({ scope: "local" }); // that check's own sign-in isn't needed
 
   const { error } = await (await createClient()).rpc("set_till_pin", { p_pin: parsed.data.pin });
-  if (error) return { error: error.message, fieldErrors: { pin: error.message } };
+  if (error) return { error: friendlyError(error), fieldErrors: { pin: error.message } };
   return { success: "PIN saved. Use it to switch in at the till." };
 }

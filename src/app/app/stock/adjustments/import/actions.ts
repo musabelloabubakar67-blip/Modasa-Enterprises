@@ -5,6 +5,7 @@ import { z } from "zod";
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { fetchAll } from "@/lib/supabase/fetch-all";
+import { friendlyError } from "@/lib/errors";
 
 export type OpeningRow = { _row: number; location?: string; sku_code?: string; batch?: string; quantity?: string };
 export type OpeningRowResult = { row: number; location: string; code: string; quantity: string; messages: string[] };
@@ -105,7 +106,7 @@ export async function importOpeningStock(input: OpeningRow[], commit: boolean): 
     if (error) {
       revalidatePath("/app/stock", "layout");
       return {
-        error: `Stopped at ${group.name}: ${error.message}.${imported.length ? ` Already imported: ${imported.map((i) => i.name).join(", ")}.` : ""}`,
+        error: `Stopped at ${group.name}: ${friendlyError(error)}.${imported.length ? ` Already imported: ${imported.map((i) => i.name).join(", ")}.` : ""}`,
         imported,
       };
     }

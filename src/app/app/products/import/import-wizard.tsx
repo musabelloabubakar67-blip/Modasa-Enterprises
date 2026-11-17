@@ -5,6 +5,7 @@ import Link from "next/link";
 import { readGrid, type Grid } from "@/lib/spreadsheet";
 import { IMPORT_COLUMNS, matchColumn, type ImportColumn, type ImportRow } from "./columns";
 import { commitImport, previewImport, type PreviewResult } from "./actions";
+import { friendlyError } from "@/lib/errors";
 
 /** The heading row: within the first 10 (sheets often have a title above it), with at least 3 known columns. */
 const headingRow = (grid: Grid) =>
@@ -79,7 +80,12 @@ export function ImportWizard() {
         if (result.error) setError(result.error);
       });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't read that file.");
+      setError(
+        friendlyError(
+          e instanceof Error ? e : null,
+          "Couldn't read that file. Save it as Excel (.xlsx) or CSV and try again.",
+        ),
+      );
     }
   }
 

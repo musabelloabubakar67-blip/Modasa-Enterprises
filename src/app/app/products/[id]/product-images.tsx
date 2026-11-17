@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { PHOTO_WIDTHS, PRODUCT_IMAGES_BUCKET, photoFiles } from "@/lib/products";
 import { ProductThumb } from "@/components/product-thumb";
 import { resizeImageSizes } from "@/lib/resize-image";
+import { friendlyError } from "@/lib/errors";
 
 type Image = { id: string; storage_path: string; sort_order: number; sku_id: string | null };
 
@@ -62,7 +63,9 @@ export function ProductImages({
         }
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Upload failed.");
+      setError(
+        friendlyError(e instanceof Error ? e : null, "The photo didn't upload. Try again, or try a smaller photo."),
+      );
     } finally {
       setBusy(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -76,7 +79,7 @@ export function ProductImages({
     setError(null);
     const supabase = createClient();
     const { error: rowError } = await supabase.from("product_images").delete().eq("id", image.id);
-    if (rowError) setError(rowError.message);
+    if (rowError) setError(friendlyError(rowError));
     else await supabase.storage.from(PRODUCT_IMAGES_BUCKET).remove(photoFiles(image.storage_path));
     setBusy(false);
     refresh();
@@ -90,7 +93,7 @@ export function ProductImages({
       .from("product_images")
       .update({ sort_order: first - 1 })
       .eq("id", image.id);
-    if (updateError) setError(updateError.message);
+    if (updateError) setError(friendlyError(updateError));
     setBusy(false);
     refresh();
   }
@@ -102,7 +105,7 @@ export function ProductImages({
       .from("product_images")
       .update({ sku_id: skuId || null })
       .eq("id", image.id);
-    if (updateError) setError(updateError.message);
+    if (updateError) setError(friendlyError(updateError));
     setBusy(false);
     refresh();
   }

@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { Json } from "@/lib/supabase/database.types";
 import { analyzeImport, type ImportAnalysis } from "./analyze";
 import { IMPORT_COLUMNS, MAX_IMPORT_ROWS, type ImportRow } from "./columns";
+import { friendlyError } from "@/lib/errors";
 
 const rowsSchema = z
   .array(
@@ -58,7 +59,7 @@ export async function commitImport(rows: ImportRow[]): Promise<CommitResult> {
       .from("units")
       .insert(newUnits.map((u, i) => ({ ...u, sort_order: (last?.sort_order ?? 0) + i + 1 })))
       .select("id, name");
-    if (unitError) return { error: `Nothing was imported: couldn't add the new units (${unitError.message}).` };
+    if (unitError) return { error: `Nothing was imported: couldn't add the new units (${friendlyError(unitError)}).` };
     createdUnitIds = created.map((u) => u.id);
     const idByName = new Map(created.map((u) => [u.name.toLowerCase(), u.id]));
     payload = payload.map((p) => {
@@ -71,7 +72,7 @@ export async function commitImport(rows: ImportRow[]): Promise<CommitResult> {
   if (error) {
     // Keep it all-or-nothing: take back the units added for this import.
     if (createdUnitIds.length) await supabase.from("units").delete().in("id", createdUnitIds);
-    return { error: `Nothing was imported: ${error.message}` };
+    return { error: `Nothing was imported: ${friendlyError(error)}` };
   }
 
   revalidatePath("/app/products", "layout");

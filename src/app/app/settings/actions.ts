@@ -11,6 +11,7 @@ import { fieldErrorsFrom, formValues, type ActionState } from "@/lib/forms";
 import { parseMoney } from "@/lib/money";
 import { LOCATION_KINDS, ROLE_LABELS, STAFF_ROLES, roleNeedsLocation } from "@/lib/roles";
 import { logSecurity } from "@/lib/security-log";
+import { friendlyError } from "@/lib/errors";
 
 const optionalText = (max: number) => z.string().max(max).optional();
 
@@ -27,7 +28,7 @@ export async function resetTrainingData(_prev: ActionState, formData: FormData):
   const supabase = await createClient();
   const locations = formData.get("locations") === "on";
   const { error } = await supabase.rpc("reset_training_data", { p_locations: locations });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
   await logSecurity(
     owner.id,
     "settings",
@@ -85,7 +86,7 @@ export async function updateBusiness(_prev: ActionState, formData: FormData): Pr
       updated_at: new Date().toISOString(),
     })
     .eq("id", 1);
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   expireBusinessSettings();
   revalidatePath("/", "layout");
@@ -126,7 +127,7 @@ export async function saveLocation(_prev: ActionState, formData: FormData): Prom
   if (error) {
     if (error.code === "23505")
       return { error: "Another location already uses that code.", fieldErrors: { code: "Already in use." } };
-    return { error: error.message };
+    return { error: friendlyError(error) };
   }
 
   expireLocations();
@@ -185,7 +186,7 @@ export async function saveStaff(_prev: ActionState, formData: FormData): Promise
       const taken = /already.*registered|already exists/i.test(error.message);
       return taken
         ? { error: "A staff member with that email already exists.", fieldErrors: { email: "Already in use." } }
-        : { error: error.message };
+        : { error: friendlyError(error) };
     }
     const { data: location } = locationId
       ? await createAdminClient().from("locations").select("name").eq("id", locationId).single()
@@ -217,11 +218,11 @@ export async function saveStaff(_prev: ActionState, formData: FormData): Promise
       is_active: v.is_active === "on",
     })
     .eq("id", v.id);
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   if (v.password) {
     const { error: pwError } = await createAdminClient().auth.admin.updateUserById(v.id, { password: v.password });
-    if (pwError) return { error: pwError.message };
+    if (pwError) return { error: friendlyError(pwError) };
     await logSecurity(
       owner.id,
       "access",
@@ -277,7 +278,7 @@ export async function updateWebsite(_prev: ActionState, formData: FormData): Pro
       updated_at: new Date().toISOString(),
     })
     .eq("id", 1);
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   expireBusinessSettings();
   revalidatePath("/", "layout");
@@ -290,7 +291,7 @@ export async function setHeroImage(path: string | null): Promise<ActionState> {
   if (path !== null && !/^site\/[\w-]+\.webp$/.test(path)) return { error: "Invalid image." };
   const supabase = await createClient();
   const { error } = await supabase.from("business_settings").update({ hero_image: path }).eq("id", 1);
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
   expireBusinessSettings();
   revalidatePath("/", "layout");
   return { success: path ? "Photo updated." : "Photo removed." };
@@ -320,7 +321,8 @@ export async function saveDeliveryArea(_prev: ActionState, formData: FormData): 
         .update({ name, fee_kobo: fee, sort_order, is_active: is_active === "on" })
         .eq("id", id)
     : await supabase.from("delivery_areas").insert({ name, fee_kobo: fee, sort_order });
-  if (error) return { error: error.code === "23505" ? "There is already an area with that name." : error.message };
+  if (error)
+    return { error: error.code === "23505" ? "There is already an area with that name." : friendlyError(error) };
 
   revalidatePath("/", "layout");
   return { success: id ? "Area saved." : `Added ${name}.` };

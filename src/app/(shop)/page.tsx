@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { ProductCard, ProductGrid } from "@/components/shop/product-card";
 import { ShopClosed } from "@/components/shop/shop-closed";
 import { ShopList } from "@/components/shop/shop-list";
-import { categoryPhotos, getStorefront, listProducts, sellsByCoverage } from "@/lib/shop/data";
+import { categoryPhotos, getStorefront, listProducts } from "@/lib/shop/data";
 import { PLACEHOLDER, photoUrl } from "@/lib/shop/images";
 import { needsSetup } from "@/lib/setup";
 
@@ -12,11 +12,10 @@ export default async function HomePage() {
   const shop = await getStorefront();
   if (!shop.enabled) return <ShopClosed shop={shop} />;
 
-  const [featured, sale, photos, coverage] = await Promise.all([
+  const [featured, sale, photos] = await Promise.all([
     listProducts({ featured: true, limit: 8 }),
     shop.hasSale ? listProducts({ sale: true, limit: 4 }) : null,
     categoryPhotos(),
-    sellsByCoverage(),
   ]);
   // With nothing marked as featured yet, show the newest items instead.
   const favourites =
@@ -90,34 +89,6 @@ export default async function HomePage() {
               <ProductCard key={p.id} product={p} {...card} />
             ))}
           </ProductGrid>
-        </section>
-      )}
-
-      {(coverage.rolls || coverage.area) && (
-        <section className="bg-tint shop-reveal grid md:grid-cols-2">
-          <div className="min-h-[280px] md:min-h-[520px]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={photoUrl(PLACEHOLDER.calculator, 1200)}
-              alt=""
-              loading="lazy"
-              className="size-full object-cover"
-            />
-          </div>
-          <div className="self-center px-5 py-12 md:p-20">
-            <p className="caps text-accent">{coverage.rolls ? "Wallpaper calculator" : "Flooring calculator"}</p>
-            <h2 className="mt-3.5 mb-4 font-serif text-[clamp(30px,3.6vw,44px)] leading-[1.1] text-balance">
-              {coverage.rolls ? "How many rolls do you need?" : "How many boxes do you need?"}
-            </h2>
-            <p className="text-muted mb-7 max-w-[420px]">
-              {coverage.rolls
-                ? "Enter your wall sizes and we will work out the rolls for you. We supply them from one batch wherever we can, so the shade matches."
-                : "Enter the size of your floor and we will work out the boxes, with a little extra for cuts."}
-            </p>
-            <Link href="/calculator" className="shop-btn">
-              Try the calculator
-            </Link>
-          </div>
         </section>
       )}
 

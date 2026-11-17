@@ -367,22 +367,6 @@ export async function categoryPhotos(): Promise<Record<string, string>> {
   return photos;
 }
 
-/** Whether anything sold online is measured by the roll or by area (so the calculator is worth showing). */
-export async function sellsByCoverage(): Promise<{ rolls: boolean; area: boolean }> {
-  const { data, error } = await createAdminClient()
-    .from("products")
-    .select("units!inner(coverage)")
-    .eq("is_active", true)
-    .eq("show_online", true)
-    .neq("units.coverage", "none")
-    .limit(200);
-  if (error) throw error;
-  return {
-    rolls: data.some((p) => p.units.coverage === "roll"),
-    area: data.some((p) => p.units.coverage === "area"),
-  };
-}
-
 // ---------- Cart ----------
 
 export type CartItem = { skuId: string; quantity: number };
