@@ -7,6 +7,7 @@ import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionState } from "@/lib/forms";
 import type { SkuOption } from "../stock/actions";
+import { friendlyError } from "@/lib/errors";
 
 const qty = z
   .string()
@@ -37,7 +38,7 @@ export async function createTransfer(input: CreateTransferInput): Promise<Action
   const { data: id, error } = await supabase.rpc("create_transfer", {
     payload: { ...v, note: v.note ?? null, lines: v.lines.map((l) => ({ ...l, quantity: Number(l.quantity) })) },
   });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   revalidatePath("/app/transfers", "layout");
   redirect(`/app/transfers/${id}?created=1`);
@@ -71,7 +72,7 @@ export async function dispatchTransfer(
     p_items: [...combined.values()],
     p_note: note,
   });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
   revalidatePath("/app", "layout");
   redirect(`/app/transfers/${id}?dispatched=1`);
 }
@@ -90,7 +91,7 @@ export async function receiveTransfer(id: string, items: z.input<typeof receiveS
     p_transfer_id: id,
     p_items: parsed.data.map((i) => ({ ...i, received_quantity: Number(i.received_quantity) })),
   });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
   revalidatePath("/app", "layout");
   redirect(`/app/transfers/${id}?received=1`);
 }
@@ -99,7 +100,7 @@ export async function cancelTransfer(id: string, reason: string): Promise<Action
   await requireStaff();
   const supabase = await createClient();
   const { error } = await supabase.rpc("cancel_transfer", { p_transfer_id: id, p_reason: reason });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
   revalidatePath("/app/transfers", "layout");
   return { success: "Request cancelled." };
 }
@@ -108,7 +109,7 @@ export async function resolveShortage(id: string, resolution: string): Promise<A
   await requireStaff(["owner", "manager"]);
   const supabase = await createClient();
   const { error } = await supabase.rpc("resolve_transfer_shortage", { p_transfer_id: id, p_resolution: resolution });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
   revalidatePath("/app/transfers", "layout");
   return { success: "Shortage resolved." };
 }

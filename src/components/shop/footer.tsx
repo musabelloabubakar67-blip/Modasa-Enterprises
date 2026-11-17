@@ -50,11 +50,6 @@ export function Footer({ shop }: { shop: Storefront }) {
                   Returns
                 </Link>
               </li>
-              <li>
-                <Link href="/calculator" className={link}>
-                  Roll &amp; tile calculator
-                </Link>
-              </li>
             </ul>
           </nav>
           <div>

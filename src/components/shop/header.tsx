@@ -15,7 +15,6 @@ export function Header({ shop }: { shop: Storefront }) {
   ];
   const more: MenuLink[] = [
     { href: "/our-shops", label: "Our shops" },
-    { href: "/calculator", label: "Roll & tile calculator" },
     { href: "/help", label: "Delivery & returns" },
   ];
   const whatsapp = shop.whatsapp ? `https://wa.me/${whatsappNumber(shop.whatsapp)}` : null;

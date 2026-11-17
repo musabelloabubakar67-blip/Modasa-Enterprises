@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { AreaCalculator, RollCalculator } from "@/components/shop/calculators";
 import { formatMoney } from "@/lib/money";
 import { availabilityText, type ShopName } from "@/lib/shop/availability";
 import { addToCart, useCart } from "@/lib/shop/cart";
@@ -62,11 +61,12 @@ export function ProductBuy({
   const [skuId, setSkuId] = useSelectedSku();
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState<string | null>(null);
-  // Set when the calculator asks for more than can be ordered online.
-  const [short, setShort] = useState(false);
   const cart = useCart();
 
   const sku = skus.find((s) => s.id === skuId)!;
+  // Variants with no option name: "Size" when they are measurements or counts (4 × 6, 9 pcs), "Option" for
+  // designs and colours ("Plain White"). Products whose rows name their options show those names instead.
+  const variantsAreSizes = skus.every((s) => /\d/.test(s.label ?? ""));
   const a = sku.availability;
   const inCart = cart.find((i) => i.skuId === sku.id)?.quantity ?? 0;
   const room = Math.max(0, a.max - inCart);
@@ -77,7 +77,6 @@ export function ProductBuy({
     setSkuId(id);
     setQuantity(1);
     setAdded(null);
-    setShort(false);
   };
   // Picking one option keeps the others if that variant exists; otherwise it moves to one that does.
   const pickOption = (k: number, value: string) => {
@@ -87,29 +86,11 @@ export function ProductBuy({
     const next = exact ?? withValue.find((s) => s.availability.max > 0) ?? withValue[0];
     if (next) choose(next.id);
   };
-  const applyCalculated = (n: number) => {
-    setShort(n > room);
-    setQuantity(clamp(n));
-  };
-
   const add = () => {
     addToCart(sku.id, quantity, a.max);
     setAdded(`${quantity} × ${product.name}${sku.label ? ` (${sku.label})` : ""}`);
     setQuantity(1);
   };
-
-  const calculator =
-    unit.coverage === "roll" && sku.rollWidthCm && sku.rollLengthCm ? (
-      <RollCalculator
-        key={sku.id}
-        rollWidthCm={sku.rollWidthCm}
-        rollLengthCm={sku.rollLengthCm}
-        fixedRoll
-        onUse={applyCalculated}
-      />
-    ) : unit.coverage === "area" && sku.coverageM2 ? (
-      <AreaCalculator key={sku.id} coverageM2={sku.coverageM2} fixedCoverage onUse={applyCalculated} />
-    ) : null;
 
   return (
     <div>
@@ -165,7 +146,7 @@ export function ProductBuy({
         : skus.length > 1 && (
             <fieldset className="mt-7">
               <legend className="caps text-muted mb-2.5">
-                Option: <span className="text-foreground">{sku.label ?? sku.code}</span>
+                {variantsAreSizes ? "Size" : "Option"}: <span className="text-foreground">{sku.label ?? sku.code}</span>
               </legend>
               <div className="flex flex-wrap gap-2">
                 {skus.map((s) => (
@@ -227,12 +208,6 @@ export function ProductBuy({
         </div>
       )}
 
-      {short && (
-        <p role="status" className="text-muted mt-3 text-sm">
-          Only {room} can be ordered online right now. Message us if you need more and we will arrange it.
-        </p>
-      )}
-
       {added && (
         <p
           role="status"
@@ -243,16 +218,6 @@ export function ProductBuy({
             View cart
           </Link>
         </p>
-      )}
-
-      {calculator && (
-        <details className="border-border mt-8 border-y py-4">
-          <summary className="caps flex min-h-9 cursor-pointer list-none items-center justify-between">
-            {unit.coverage === "roll" ? "How many rolls do I need?" : "How many boxes do I need?"}
-            <span aria-hidden="true">+</span>
-          </summary>
-          <div className="pt-4">{calculator}</div>
-        </details>
       )}
     </div>
   );

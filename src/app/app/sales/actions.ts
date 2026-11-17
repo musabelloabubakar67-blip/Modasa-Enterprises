@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { ActionState } from "@/lib/forms";
 import { getStaffNames } from "@/lib/staff-names";
 import { getReceiptById } from "./receipt-data";
+import { friendlyError } from "@/lib/errors";
 
 const TILL_ROLES = ["owner", "manager", "cashier"] as const;
 
@@ -52,7 +53,7 @@ export async function updateFulfilment(
   await requireStaff(TILL_ROLES);
   const supabase = await createClient();
   const { error } = await supabase.rpc("update_fulfilment", { p_sale_id: saleId, p_status: status });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
   revalidatePath("/app/sales", "layout");
   return { success: "Updated." };
 }
@@ -76,6 +77,6 @@ export async function logDrawerOpen(locationId: string, reason: string): Promise
   await requireStaff(TILL_ROLES);
   const supabase = await createClient();
   const { error } = await supabase.rpc("log_drawer_open", { p_location_id: locationId, p_reason: reason });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
   return { success: "Logged." };
 }

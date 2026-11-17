@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { parseMoney } from "@/lib/money";
 import { itemPhoto } from "@/lib/products";
 import type { ActionState } from "@/lib/forms";
+import { friendlyError } from "@/lib/errors";
 
 const TILL_ROLES = ["owner", "manager", "cashier"] as const;
 
@@ -100,7 +101,7 @@ export async function openTill(shopId: string, float: string): Promise<ActionSta
   if (kobo === null || Number.isNaN(kobo)) return { error: "Enter the cash float, e.g. 10000 (or 0)." };
   const supabase = await createClient();
   const { error } = await supabase.rpc("open_shift", { p_location_id: shopId, p_float_kobo: kobo });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
   revalidatePath("/app/pos");
   return { success: "Till opened." };
 }
@@ -163,7 +164,7 @@ export async function completeSale(input: SaleInput): Promise<{ error?: string; 
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("create_sale", { payload: parsed.data });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
   revalidatePath("/app", "layout");
   return { saleId: data };
 }
@@ -196,7 +197,7 @@ export async function completeExchange(input: ExchangeInput): Promise<{ error?: 
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("create_exchange", { payload: parsed.data });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
   revalidatePath("/app", "layout");
   return { saleId: data };
 }
@@ -221,7 +222,7 @@ export async function closeTill(
     p_counted_transfer: transfer as number,
     p_note: note,
   });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
   revalidatePath("/app", "layout");
   return { success: "Till closed." };
 }

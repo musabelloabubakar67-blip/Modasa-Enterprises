@@ -3,7 +3,6 @@ import { productImageUrl } from "@/lib/products";
 // Stock placeholders shown until the business uploads its own photographs.
 export const PLACEHOLDER = {
   hero: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace",
-  calculator: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6",
 };
 
 /**

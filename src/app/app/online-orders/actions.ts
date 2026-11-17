@@ -5,6 +5,7 @@ import { z } from "zod";
 import { requireStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionState } from "@/lib/forms";
+import { friendlyError } from "@/lib/errors";
 
 const TILL_ROLES = ["owner", "manager", "cashier"] as const;
 const MANAGERS = ["owner", "manager"] as const;
@@ -15,7 +16,7 @@ export async function retryOrder(orderId: string): Promise<ActionState> {
   if (!z.uuid().safeParse(orderId).success) return { error: "Order not found." };
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("retry_online_order", { p_order_id: orderId });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
   revalidatePath("/app", "layout");
   return data === "confirmed"
     ? { success: "Sale created. The order is ready to hand over." }
@@ -33,7 +34,7 @@ export async function cancelOrder(_prev: ActionState, formData: FormData): Promi
     p_order_id: parsed.data.id,
     p_reason: parsed.data.text,
   });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
   revalidatePath("/app", "layout");
   return { success: "Order cancelled." };
 }
@@ -44,7 +45,7 @@ export async function markRefunded(_prev: ActionState, formData: FormData): Prom
   if (!parsed.success) return { error: "Say how the money was returned, e.g. Paystack refund." };
   const supabase = await createClient();
   const { error } = await supabase.rpc("mark_order_refunded", { p_order_id: parsed.data.id, p_note: parsed.data.text });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
   revalidatePath("/app", "layout");
   return { success: "Marked as refunded." };
 }

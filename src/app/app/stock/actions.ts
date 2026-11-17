@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { parseMoney } from "@/lib/money";
 import { itemPhoto } from "@/lib/products";
 import type { ActionState } from "@/lib/forms";
+import { friendlyError } from "@/lib/errors";
 
 export type SkuOption = {
   id: string;
@@ -82,8 +83,7 @@ export async function batchesAt(skuId: string, locationId: string) {
 }
 
 function dbError(error: { code?: string; message: string }) {
-  if (error.code === "42501") return error.message || "You don't have permission to do that.";
-  return error.message;
+  return friendlyError(error);
 }
 
 // ---------- Deliveries ----------

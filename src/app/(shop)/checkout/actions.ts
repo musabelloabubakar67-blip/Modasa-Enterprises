@@ -7,6 +7,7 @@ import { cartLines, getStorefront, toLineStock } from "@/lib/shop/data";
 import { expireUnpaidOrders } from "@/lib/shop/orders";
 import { paymentMode, startPayment } from "@/lib/shop/paystack";
 import { bestShopForDelivery, planForShops } from "@/lib/shop/plan";
+import { friendlyError } from "@/lib/errors";
 
 const orderSchema = z
   .object({
@@ -115,7 +116,7 @@ export async function placeOrder(input: OrderInput): Promise<OrderResult> {
   });
   // 22023 is the database turning the order down for a reason the customer can act on.
   if (error) {
-    if (error.code === "22023") return { ok: false, error: error.message, refresh: true };
+    if (error.code === "22023") return { ok: false, error: friendlyError(error), refresh: true };
     throw error;
   }
   const order = data as { id: string; number: string; token: string; reference: string; total_kobo: number };

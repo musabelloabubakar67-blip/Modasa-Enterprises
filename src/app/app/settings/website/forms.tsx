@@ -8,6 +8,7 @@ import { PRODUCT_IMAGES_BUCKET, productImageUrl } from "@/lib/products";
 import { resizeImage } from "@/lib/resize-image";
 import { createClient } from "@/lib/supabase/client";
 import { saveDeliveryArea, setHeroImage, updateWebsite } from "../actions";
+import { friendlyError } from "@/lib/errors";
 
 type WebsiteSettings = {
   storefront_enabled: boolean;
@@ -159,7 +160,9 @@ export function HeroPhoto({ image }: { image: string | null }) {
       const result = await setHeroImage(path);
       if (result.error) throw new Error(result.error);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Upload failed.");
+      setError(
+        friendlyError(e instanceof Error ? e : null, "The picture didn't upload. Try again, or try a smaller picture."),
+      );
     } finally {
       setBusy(false);
       if (inputRef.current) inputRef.current.value = "";

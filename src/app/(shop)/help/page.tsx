@@ -65,7 +65,8 @@ export default async function HelpPage() {
       <section id="returns" className="border-border mt-10 scroll-mt-40 border-t pt-8">
         <h2 className="font-serif text-2xl">Returns</h2>
         <p className="mt-3">
-          {shop.returnsNote ?? "Please contact us if something isn't right with your order and we will put it right."}
+          {shop.returnsNote ??
+            "We don't give cash refunds. Items in good condition can be exchanged at the shop, with your order number, for something of equal or higher value; you pay any difference."}
         </p>
         {whatsapp && (
           <a href={whatsapp} target="_blank" rel="noreferrer" className="shop-link mt-3 inline-block text-sm">
