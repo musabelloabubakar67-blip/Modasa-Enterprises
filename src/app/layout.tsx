@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { HydrationMarker } from "@/components/hydration-marker";
+import { TourLoader } from "@/tour/loader";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,6 +25,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col font-sans">
         {children}
         <HydrationMarker />
+        {/* The self-running demo tour, for recording a demo locally. Off unless switched on (see src/tour). */}
+        {process.env.NEXT_PUBLIC_DEMO_TOUR === "1" && <TourLoader />}
       </body>
     </html>
   );

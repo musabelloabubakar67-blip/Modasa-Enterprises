@@ -80,7 +80,13 @@ export default async function SalesPage({ searchParams }: PageProps<"/app/sales"
         </label>
         <label className="min-w-48 flex-1">
           <span className="label text-xs">Find a sale</span>
-          <input name="q" defaultValue={q} className="input" placeholder="Receipt no. (INV-…) or customer phone" />
+          <input
+            name="q"
+            data-tour="sale-search"
+            defaultValue={q}
+            className="input"
+            placeholder="Receipt no. (INV-…) or customer phone"
+          />
         </label>
         <button type="submit" className="btn btn-secondary">
           Show
@@ -102,7 +108,7 @@ export default async function SalesPage({ searchParams }: PageProps<"/app/sales"
         <p className="text-muted text-sm">Items returned on these sales: {formatMoney(refunds, currency)}</p>
       )}
 
-      <ul className="card divide-border divide-y">
+      <ul data-tour="sales-list" className="card divide-border divide-y">
         {sales.length === 0 && <li className="text-muted p-6 text-center text-sm">No sales found.</li>}
         {sales.map((s) => {
           const handover = HANDOVER[s.fulfilment];

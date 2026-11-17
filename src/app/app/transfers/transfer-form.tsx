@@ -95,7 +95,13 @@ export function TransferForm({
           <label htmlFor="from" className="label">
             From
           </label>
-          <select id="from" className="input" value={from} onChange={(e) => setFrom(e.target.value)}>
+          <select
+            id="from"
+            data-tour="transfer-from"
+            className="input"
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+          >
             <option value="" disabled>
               Choose…
             </option>
@@ -110,7 +116,7 @@ export function TransferForm({
           <label htmlFor="to" className="label">
             To
           </label>
-          <select id="to" className="input" value={to} onChange={(e) => setTo(e.target.value)}>
+          <select id="to" data-tour="transfer-to" className="input" value={to} onChange={(e) => setTo(e.target.value)}>
             <option value="" disabled>
               Choose…
             </option>
@@ -127,6 +133,7 @@ export function TransferForm({
           </label>
           <input
             id="note"
+            data-tour="transfer-note"
             className="input"
             value={note}
             onChange={(e) => setNote(e.target.value)}
@@ -149,7 +156,7 @@ export function TransferForm({
         {lines.length === 0 ? (
           <p className="card text-muted p-4 text-sm">No items yet.</p>
         ) : (
-          <ul className="card divide-border divide-y">
+          <ul data-tour="transfer-lines" className="card divide-border divide-y">
             {lines.map((line, i) => {
               const have = available[line.sku.id] ?? 0;
               const tooMany = Number(line.quantity) > have;
@@ -166,6 +173,7 @@ export function TransferForm({
                   <label className="w-24">
                     <span className="label text-xs">Qty ({line.sku.unit})</span>
                     <input
+                      data-tour={`transfer-qty-${i}`}
                       className="input text-right tabular-nums"
                       inputMode={line.sku.allows_decimal ? "decimal" : "numeric"}
                       value={line.quantity}
@@ -190,6 +198,7 @@ export function TransferForm({
 
       <button
         type="button"
+        data-tour="create-transfer"
         className="btn btn-primary"
         disabled={pending || !from || !to || lines.length === 0}
         onClick={submit}

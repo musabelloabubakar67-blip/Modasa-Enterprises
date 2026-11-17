@@ -22,6 +22,7 @@ export function TillIdleLock({ locationId }: { locationId: string }) {
     EVENTS.forEach((e) => window.addEventListener(e, touch, { passive: true, capture: true }));
     const timer = window.setInterval(() => {
       if (locking.current || Date.now() - last.current < TILL_IDLE_MINUTES * 60_000) return;
+      if (tourRunning()) return; // the demo tour's clicks aren't real taps
       locking.current = true;
       void lockTill(locationId);
     }, 5_000);
@@ -34,11 +35,19 @@ export function TillIdleLock({ locationId }: { locationId: string }) {
   return null;
 }
 
+function tourRunning() {
+  try {
+    return !!sessionStorage.getItem("modasa-tour");
+  } catch {
+    return false;
+  }
+}
+
 /** Locks the till now, for the next person. */
 export function SwitchCashierButton({ locationId, className }: { locationId: string; className?: string }) {
   return (
     <form action={lockTill.bind(null, locationId)}>
-      <button type="submit" className={className ?? "btn btn-secondary"}>
+      <button type="submit" data-tour="switch-cashier" className={className ?? "btn btn-secondary"}>
         Switch cashier
       </button>
     </form>

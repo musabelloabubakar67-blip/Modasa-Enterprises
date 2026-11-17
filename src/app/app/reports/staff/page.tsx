@@ -31,7 +31,7 @@ export default async function StaffReportPage({ searchParams }: PageProps<"/app/
         means the drawer was short.
       </p>
 
-      <section className="card overflow-x-auto p-4">
+      <section data-tour="staff-report" className="card overflow-x-auto p-4">
         <table className="w-full text-sm">
           <thead className="text-muted text-left">
             <tr>

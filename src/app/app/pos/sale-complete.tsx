@@ -22,7 +22,7 @@ export function SaleComplete({
   }, [saleId]);
 
   return (
-    <div className="mx-auto max-w-md space-y-4 py-8 text-center">
+    <div data-tour="sale-complete" className="mx-auto max-w-md space-y-4 py-8 text-center">
       <p className="text-success text-5xl" aria-hidden="true">
         ✓
       </p>
@@ -44,7 +44,13 @@ export function SaleComplete({
             Send receipt on WhatsApp
           </a>
         )}
-        <button type="button" className="btn btn-primary py-3 text-base" onClick={onNewSale} autoFocus>
+        <button
+          type="button"
+          data-tour="new-sale"
+          className="btn btn-primary py-3 text-base"
+          onClick={onNewSale}
+          autoFocus
+        >
           New sale
         </button>
         <Link href={`/app/sales/${saleId}`} className="text-muted text-sm hover:underline">
