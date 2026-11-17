@@ -67,7 +67,7 @@ export default async function StockOverviewPage({ searchParams }: PageProps<"/ap
   return (
     <div className="space-y-4">
       {stockValue && (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+        <div data-tour="stock-values" className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
           {locations.map((l) => (
             <div key={l.id} className="card p-3">
               <p className="text-muted truncate text-xs">{l.name}</p>
@@ -93,6 +93,7 @@ export default async function StockOverviewPage({ searchParams }: PageProps<"/ap
         <input
           name="q"
           defaultValue={q}
+          data-tour="stock-search"
           placeholder="Search name, code or barcode"
           className="input max-w-xs flex-1"
           aria-label="Search stock"
@@ -116,7 +117,7 @@ export default async function StockOverviewPage({ searchParams }: PageProps<"/ap
       </form>
 
       <div className="card overflow-x-auto">
-        <table className="w-full text-sm">
+        <table data-tour="stock-table" className="w-full text-sm">
           <thead className="text-muted border-border border-b text-left">
             <tr>
               <th className="p-3 font-medium">Item</th>

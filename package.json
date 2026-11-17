@@ -14,7 +14,8 @@
     "typecheck": "tsc --noEmit",
     "db:types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts && prettier --write src/lib/supabase/database.types.ts",
     "dev:users": "node scripts/dev-users.mjs",
-    "test:db": "node scripts/test-db-rules.mjs"
+    "test:db": "node scripts/test-db-rules.mjs",
+    "demo:reset": "supabase db reset && node scripts/demo-setup.mjs && node -e \"for (const d of ['.next/cache/fetch-cache','.next/dev/cache/fetch-cache']) require('fs').rmSync(d,{recursive:true,force:true})\""
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

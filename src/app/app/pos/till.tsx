@@ -294,7 +294,11 @@ export function Till({
       {/* Cart */}
       <section className="space-y-3">
         {exchange && (
-          <div className="card border-accent/40 bg-accent/5 space-y-1 p-4 text-sm" role="status">
+          <div
+            data-tour="exchange-banner"
+            className="card border-accent/40 bg-accent/5 space-y-1 p-4 text-sm"
+            role="status"
+          >
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <p className="font-semibold">
                 Exchange for {exchange.sale_number}: credit {formatMoney(credit, currency)}
@@ -354,7 +358,7 @@ export function Till({
         {draft.lines.length === 0 ? (
           <p className="card text-muted p-8 text-center text-sm">Scan a barcode or search to add items.</p>
         ) : (
-          <ul className="card divide-border divide-y">
+          <ul data-tour="cart" className="card divide-border divide-y">
             {draft.lines.map((l) => {
               const available = l.item.batches.find((b) => b.batch === l.batch)?.quantity ?? 0;
               const over = (inCart.get(`${l.item.id}|${l.batch}`) ?? 0) > available;
@@ -488,10 +492,11 @@ export function Till({
           </p>
         )}
 
-        <section className="card space-y-3 p-4">
+        <section data-tour="customer" className="card space-y-3 p-4">
           <h2 className="font-semibold">Customer</h2>
           <input
             className="input"
+            data-tour="customer-phone"
             placeholder="Phone number"
             inputMode="tel"
             value={draft.customer.phone}
@@ -519,6 +524,7 @@ export function Till({
           />
           <input
             className="input"
+            data-tour="customer-name"
             placeholder="Name"
             value={draft.customer.name}
             disabled={stage === "pay"}
@@ -604,8 +610,8 @@ export function Till({
           />
         </section>
 
-        <section className="card space-y-3 p-4">
-          <dl className="space-y-1 text-sm">
+        <section data-tour="checkout" className="card space-y-3 p-4">
+          <dl data-tour="totals" className="space-y-1 text-sm">
             <div className="flex justify-between">
               <dt className="text-muted">Items</dt>
               <dd className="tabular-nums">{formatMoney(subtotal, currency)}</dd>
@@ -636,6 +642,7 @@ export function Till({
             <div className="flex gap-2">
               <button
                 type="button"
+                data-tour="charge"
                 className="btn btn-primary flex-1 py-3 text-base"
                 disabled={draft.lines.length === 0}
                 onClick={startPayment}
@@ -669,7 +676,7 @@ export function Till({
                 const tendered = parseMoney(p.tendered);
                 const change = p.method === "cash" && tendered && tendered > amount ? tendered - amount : 0;
                 return (
-                  <div key={i} className="bg-background space-y-2 rounded-md p-3">
+                  <div key={i} data-tour={`payment-${i}`} className="bg-background space-y-2 rounded-md p-3">
                     <div className="grid grid-cols-3 gap-1">
                       {(Object.keys(METHOD_LABELS) as Payment["method"][]).map((m) => (
                         <button
@@ -685,6 +692,7 @@ export function Till({
                     <label className="block">
                       <span className="label text-xs">Amount</span>
                       <input
+                        data-tour={`pay-amount-${i}`}
                         className="input tabular-nums"
                         inputMode="decimal"
                         value={p.amount}
@@ -713,6 +721,7 @@ export function Till({
                       </label>
                     ) : (
                       <input
+                        data-tour={`pay-ref-${i}`}
                         className="input"
                         placeholder={p.method === "transfer" ? "Sender name / reference" : "Terminal ref (optional)"}
                         value={p.reference}
@@ -737,6 +746,7 @@ export function Till({
               {remaining > 0 && (
                 <button
                   type="button"
+                  data-tour="split-payment"
                   className="text-accent text-sm hover:underline"
                   onClick={() =>
                     setPayments((ps) => [
@@ -751,6 +761,7 @@ export function Till({
               <div className="flex gap-2">
                 <button
                   type="button"
+                  data-tour="complete-sale"
                   className="btn btn-primary flex-1 py-3 text-base"
                   disabled={pending}
                   onClick={complete}
@@ -794,6 +805,7 @@ function DiscountBox({
     return (
       <button
         type="button"
+        data-tour="add-discount"
         className="text-accent text-sm hover:underline"
         onClick={() => onChange({ type: "percent", value: "", reason: "" })}
       >
@@ -801,7 +813,7 @@ function DiscountBox({
       </button>
     );
   return (
-    <div className="bg-background space-y-2 rounded-md p-3 text-sm">
+    <div data-tour="discount" className="bg-background space-y-2 rounded-md p-3 text-sm">
       <div className="flex items-center justify-between gap-2">
         <span className="font-medium">Discount</span>
         <button type="button" className="text-danger text-xs hover:underline" onClick={() => onChange(null)}>
@@ -824,6 +836,7 @@ function DiscountBox({
           ))}
         </div>
         <input
+          data-tour="discount-value"
           className="input tabular-nums"
           inputMode="decimal"
           aria-label={discount.type === "percent" ? "Discount percentage" : "Discount amount"}
@@ -834,6 +847,7 @@ function DiscountBox({
       </div>
       <input
         className="input"
+        data-tour="discount-reason"
         aria-label="Discount reason"
         placeholder="Reason (required), e.g. loyal customer"
         value={discount.reason}

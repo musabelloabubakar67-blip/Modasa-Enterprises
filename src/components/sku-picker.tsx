@@ -112,6 +112,7 @@ export function SkuPicker({
         <input
           ref={inputRef}
           data-scan-target
+          data-tour="sku-search"
           className="input pr-24 pl-10"
           value={query}
           placeholder={placeholder}
@@ -161,6 +162,7 @@ export function SkuPicker({
         {open && query.trim() && (
           <ul
             id="sku-picker-results"
+            data-tour="sku-results"
             role="listbox"
             className="card absolute top-full z-20 mt-1 max-h-80 w-full overflow-y-auto py-1 shadow-lg"
           >

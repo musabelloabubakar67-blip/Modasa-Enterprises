@@ -43,7 +43,7 @@ export function LockScreen({ people, current }: { people: Person[]; current: str
   if (!chosen) {
     if (people.length === 0) return <p className="mt-6 text-sm">Nobody can use this till yet.</p>;
     return (
-      <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3">
+      <div data-tour="lock-people" className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3">
         {people.map((p) => {
           const usable = p.hasPin && !p.pinLocked;
           return (
@@ -85,7 +85,7 @@ export function LockScreen({ people, current }: { people: Person[]; current: str
       <p role="alert" className="text-danger mt-3 min-h-5 text-center text-sm">
         {pending ? "" : state.error}
       </p>
-      <div className="mt-2 grid grid-cols-3 gap-2">
+      <div data-tour="pin-pad" className="mt-2 grid grid-cols-3 gap-2">
         {KEYS.map((key, i) =>
           key ? (
             <button

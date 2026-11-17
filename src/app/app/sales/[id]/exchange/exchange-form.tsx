@@ -79,7 +79,7 @@ export function ExchangeForm({
           {error}
         </p>
       )}
-      <ul className="card divide-border divide-y">
+      <ul data-tour="return-lines" className="card divide-border divide-y">
         {lines.map((l, i) => (
           <li key={l.id} className="flex flex-wrap items-end gap-3 p-3">
             <div className="min-w-0 flex-1">
@@ -92,6 +92,7 @@ export function ExchangeForm({
             <label className="w-24">
               <span className="label text-xs">Returning</span>
               <input
+                data-tour={`return-qty-${i}`}
                 className="input text-right tabular-nums"
                 inputMode={l.allows_decimal ? "decimal" : "numeric"}
                 value={values[i].quantity}
@@ -116,6 +117,7 @@ export function ExchangeForm({
         <label className="block sm:col-span-2">
           <span className="label">Reason</span>
           <input
+            data-tour="return-reason"
             className="input"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
@@ -126,13 +128,15 @@ export function ExchangeForm({
           <p className="text-muted text-sm">
             The customer chooses replacement items worth at least this much, and tops up any difference.
           </p>
-          <p className="shrink-0 text-lg font-semibold">Credit {formatMoney(credit, currency)}</p>
+          <p data-tour="return-credit" className="shrink-0 text-lg font-semibold">
+            Credit {formatMoney(credit, currency)}
+          </p>
         </div>
       </section>
       <p className="text-muted text-xs">
         No cash refunds: returned items are exchanged for items of equal or higher value, chosen now.
       </p>
-      <button type="button" className="btn btn-primary" onClick={submit}>
+      <button type="button" data-tour="continue-to-till" className="btn btn-primary" onClick={submit}>
         Continue at the till →
       </button>
     </div>

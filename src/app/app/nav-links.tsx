@@ -11,7 +11,7 @@ export function NavLinks({ items, badges }: { items: NavItem[]; badges: Badges }
   const pathname = usePathname();
 
   return (
-    <nav className="flex gap-1 overflow-x-auto px-2 pb-2 md:flex-col md:pb-0">
+    <nav data-tour="nav" className="flex gap-1 overflow-x-auto px-2 pb-2 md:flex-col md:pb-0">
       {items.map((item) => {
         const active = item.href === "/app" ? pathname === "/app" : pathname.startsWith(item.href);
 

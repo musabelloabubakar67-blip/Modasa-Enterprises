@@ -45,7 +45,12 @@ export default async function PosPage({ searchParams }: PageProps<"/app/pos">) {
             <p className="text-muted text-sm">Which shop are you selling at?</p>
             <div className="grid gap-2 sm:grid-cols-3">
               {shops.map((s) => (
-                <Link key={s.id} href={`/app/pos?shop=${s.id}`} className="card hover:border-accent p-4 font-medium">
+                <Link
+                  key={s.id}
+                  data-tour="pos-shop"
+                  href={`/app/pos?shop=${s.id}`}
+                  className="card hover:border-accent p-4 font-medium"
+                >
                   {s.name}
                 </Link>
               ))}
@@ -94,7 +99,7 @@ export default async function PosPage({ searchParams }: PageProps<"/app/pos">) {
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+      <div data-tour="till-header" className="flex flex-wrap items-center justify-between gap-2 text-sm">
         <p className="text-muted">
           <strong className="text-foreground">{shop.name}</strong> · till opened {formatDateTime(shift.opened_at)} by{" "}
           {(shift.opened_by && names.get(shift.opened_by)) ?? "—"} · float{" "}

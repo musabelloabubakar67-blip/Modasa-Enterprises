@@ -25,7 +25,7 @@ export default async function StaffLayout({ children }: LayoutProps<"/app">) {
               <LogoMark className="text-accent h-5 w-auto" />
               <span className="truncate">{business.name}</span>
             </p>
-            <p className="text-muted truncate text-xs md:mt-1">
+            <p data-tour="whoami" className="text-muted truncate text-xs md:mt-1">
               {staff.fullName} · {ROLE_LABELS[staff.realRole]}
               {staff.tillOnly ? " (PIN)" : ""}
               {staff.locationName ? ` · ${staff.locationName}` : ""}

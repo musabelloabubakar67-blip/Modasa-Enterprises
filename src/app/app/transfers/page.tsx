@@ -64,7 +64,7 @@ export default async function TransfersPage({ searchParams }: PageProps<"/app/tr
     <div className="max-w-5xl space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-semibold">Transfers</h1>
-        <Link href="/app/transfers/new" className="btn btn-primary">
+        <Link href="/app/transfers/new" data-tour="new-transfer" className="btn btn-primary">
           New transfer
         </Link>
       </div>

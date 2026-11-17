@@ -42,7 +42,7 @@ export default async function SalesReportPage({ searchParams }: PageProps<"/app/
         {formatDate(f.from)} – {formatDate(f.to)} · {f.shop ? shown[0]?.name : "all shops"}
       </p>
 
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <section data-tour="report-totals" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat
           label="Net sales"
           value={money(gross - refunds)}

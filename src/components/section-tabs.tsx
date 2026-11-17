@@ -9,7 +9,7 @@ export function SectionTabs({ tabs }: { tabs: Tab[] }) {
   const pathname = usePathname();
 
   return (
-    <nav className="border-border mt-4 flex gap-1 overflow-x-auto overflow-y-hidden border-b">
+    <nav data-tour="tabs" className="border-border mt-4 flex gap-1 overflow-x-auto overflow-y-hidden border-b">
       {tabs.map((tab) => {
         const active = tab.exact ? pathname === tab.href : pathname.startsWith(tab.href);
         return (

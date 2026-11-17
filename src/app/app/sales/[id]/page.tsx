@@ -83,7 +83,7 @@ export default async function SalePage({ params }: PageProps<"/app/sales/[id]">)
           </a>
         )}
         {canReturn && (
-          <Link href={`/app/sales/${sale.id}/exchange`} className="btn btn-secondary">
+          <Link href={`/app/sales/${sale.id}/exchange`} data-tour="exchange-items" className="btn btn-secondary">
             Exchange items
           </Link>
         )}

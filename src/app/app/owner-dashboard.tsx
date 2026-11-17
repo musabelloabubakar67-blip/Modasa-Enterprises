@@ -74,7 +74,7 @@ export async function OwnerDashboard({ name }: { name: string }) {
         <p className="text-muted text-sm">{formatDate(today)} · all shops</p>
       </div>
 
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Today">
+      <section data-tour="dash-today" className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Today">
         <Tile label="Sales today" value={money(todayAll.total)}>
           <Change now={todayAll.total} before={lastWeekAll.total} label={`vs last ${weekday} by this time`} />
         </Tile>
@@ -93,7 +93,7 @@ export async function OwnerDashboard({ name }: { name: string }) {
       </section>
 
       <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
-        <section className="card overflow-x-auto p-4">
+        <section data-tour="dash-shops" className="card overflow-x-auto p-4">
           <h2 className="mb-3 font-semibold">Shops today</h2>
           <table className="w-full text-sm">
             <thead className="text-muted text-left">
@@ -144,7 +144,7 @@ export async function OwnerDashboard({ name }: { name: string }) {
           </table>
         </section>
 
-        <section className="card p-4">
+        <section data-tour="dash-attention" className="card p-4">
           <h2 className="mb-3 font-semibold">Needs attention</h2>
           {attention.every((a) => a.count === 0) ? (
             <p className="text-success text-sm">✓ Nothing waiting.</p>
