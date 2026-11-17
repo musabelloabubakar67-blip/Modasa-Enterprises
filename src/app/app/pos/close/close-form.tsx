@@ -48,7 +48,7 @@ export function CloseTillForm({
   };
 
   return (
-    <section className="card space-y-4 p-4">
+    <section data-tour="close-form" className="card space-y-4 p-4">
       {error && (
         <p role="alert" className="bg-danger/10 text-danger rounded-md px-3 py-2 text-sm">
           {error}
@@ -62,6 +62,7 @@ export function CloseTillForm({
               {labels[m][0]} ({currency})
             </span>
             <input
+              data-tour={`count-${m}`}
               className="input tabular-nums"
               inputMode="decimal"
               value={counted[m]}
@@ -87,10 +88,11 @@ export function CloseTillForm({
           className="input"
           value={note}
           onChange={(e) => setNote(e.target.value)}
+          data-tour="close-note"
           placeholder="Required if anything doesn't match"
         />
       </label>
-      <button type="button" className="btn btn-primary" disabled={pending} onClick={submit}>
+      <button type="button" data-tour="close-submit" className="btn btn-primary" disabled={pending} onClick={submit}>
         {pending ? "Closing…" : "Close till"}
       </button>
     </section>

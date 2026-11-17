@@ -99,7 +99,7 @@ export function ImportWizard() {
 
   if (imported !== null) {
     return (
-      <div className="card space-y-3 p-6">
+      <div data-tour="import-done" className="card space-y-3 p-6">
         <p role="status" className="bg-success/10 text-success rounded-md px-3 py-2 text-sm">
           Imported {imported} product{imported === 1 ? "" : "s"} from {fileName}.
         </p>
@@ -118,7 +118,7 @@ export function ImportWizard() {
   return (
     <div className="card space-y-4 p-6">
       <h2 className="font-semibold">2. Upload your file</h2>
-      <label className="btn btn-secondary">
+      <label data-tour="import-file" className="btn btn-secondary">
         {fileName ? "Choose a different file" : "Choose file (.csv or .xlsx)"}
         <input
           type="file"
@@ -144,7 +144,7 @@ export function ImportWizard() {
       {analysis && (
         <>
           <h2 className="pt-2 font-semibold">3. Check and import</h2>
-          <ul className="grid gap-2 text-sm sm:grid-cols-4">
+          <ul data-tour="import-summary" className="grid gap-2 text-sm sm:grid-cols-4">
             <li className="bg-background rounded-md p-3">
               <p className="text-lg font-semibold">{analysis.summary.newProducts}</p>new products
             </li>
@@ -216,7 +216,13 @@ export function ImportWizard() {
           {analysis.summary.errors > 0 ? (
             <p className="text-sm">Fix the rows marked as errors in your file, then choose it again.</p>
           ) : (
-            <button type="button" className="btn btn-primary" onClick={onImport} disabled={pending}>
+            <button
+              type="button"
+              data-tour="import-run"
+              className="btn btn-primary"
+              onClick={onImport}
+              disabled={pending}
+            >
               {pending ? "Importing…" : `Import ${analysis.rows.length} rows`}
             </button>
           )}

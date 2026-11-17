@@ -111,6 +111,7 @@ export function AdjustmentForm({
             </label>
             <select
               id="kind"
+              data-tour="adjust-kind"
               className="input"
               value={kind}
               disabled={lines.length > 0}
@@ -129,6 +130,7 @@ export function AdjustmentForm({
             </label>
             <select
               id="location"
+              data-tour="adjust-location"
               className="input"
               value={locationId}
               disabled={lines.length > 0 || locations.length === 1}
@@ -150,6 +152,7 @@ export function AdjustmentForm({
           </label>
           <input
             id="note"
+            data-tour="adjust-note"
             className="input"
             value={note}
             onChange={(e) => setNote(e.target.value)}
@@ -164,7 +167,7 @@ export function AdjustmentForm({
         {lines.length === 0 ? (
           <p className="card text-muted p-4 text-sm">No items yet. Search above or scan a barcode.</p>
         ) : (
-          <ul className="card divide-border divide-y">
+          <ul data-tour="adjust-lines" className="card divide-border divide-y">
             {lines.map((line, i) => {
               const available = line.batches.find((b) => b.batch === line.batch)?.quantity;
               return (
@@ -220,6 +223,7 @@ export function AdjustmentForm({
                         {kind === "damage" ? "Write off" : "Counted"} ({line.sku.unit})
                       </span>
                       <input
+                        data-tour={`adjust-qty-${i}`}
                         className="input text-right tabular-nums"
                         inputMode={line.sku.allows_decimal ? "decimal" : "numeric"}
                         value={line.quantity}
@@ -255,7 +259,13 @@ export function AdjustmentForm({
         )}
       </section>
 
-      <button type="button" className="btn btn-primary" disabled={pending || lines.length === 0} onClick={submit}>
+      <button
+        type="button"
+        data-tour="adjust-submit"
+        className="btn btn-primary"
+        disabled={pending || lines.length === 0}
+        onClick={submit}
+      >
         {pending ? "Working…" : needsApproval ? "Submit for approval" : "Apply to stock"}
       </button>
     </div>

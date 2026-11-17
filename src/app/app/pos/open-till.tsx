@@ -31,6 +31,7 @@ export function OpenTill({ shopId, currency }: { shopId: string; currency: strin
         </label>
         <input
           id="float"
+          data-tour="open-float"
           className="input text-lg tabular-nums"
           inputMode="decimal"
           value={float}
@@ -41,7 +42,7 @@ export function OpenTill({ shopId, currency }: { shopId: string; currency: strin
         />
         <p className="text-muted mt-1 text-xs">Enter 0 if the drawer is empty.</p>
       </div>
-      <button type="submit" className="btn btn-primary w-full" disabled={pending}>
+      <button type="submit" data-tour="open-till" className="btn btn-primary w-full" disabled={pending}>
         {pending ? "Opening…" : "Open till"}
       </button>
     </form>

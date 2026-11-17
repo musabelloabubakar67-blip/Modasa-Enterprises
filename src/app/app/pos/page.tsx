@@ -112,7 +112,7 @@ export default async function PosPage({ searchParams }: PageProps<"/app/pos">) {
           <Link href={`/app/sales?shop=${shop.id}`} className="btn btn-secondary">
             Today&apos;s sales
           </Link>
-          <Link href={`/app/pos/close?shop=${shop.id}`} className="btn btn-secondary">
+          <Link href={`/app/pos/close?shop=${shop.id}`} data-tour="close-till" className="btn btn-secondary">
             Close till
           </Link>
         </div>

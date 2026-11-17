@@ -75,7 +75,7 @@ export default async function SalePage({ params }: PageProps<"/app/sales/[id]">)
         {sale.note && <> · “{sale.note}”</>}
       </p>
 
-      <div className="flex flex-wrap gap-2">
+      <div data-tour="receipt-actions" className="flex flex-wrap gap-2">
         <ReceiptPrinter saleId={sale.id} copy />
         {share?.whatsapp_url && (
           <a href={share.whatsapp_url} target="_blank" rel="noopener" className="btn btn-secondary">

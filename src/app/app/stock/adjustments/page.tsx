@@ -44,7 +44,7 @@ export default async function AdjustmentsPage({ searchParams }: PageProps<"/app/
               Import opening stock
             </Link>
           )}
-          <Link href="/app/stock/adjustments/new?kind=count" className="btn btn-secondary">
+          <Link href="/app/stock/adjustments/new?kind=count" data-tour="new-count" className="btn btn-secondary">
             Stock count
           </Link>
           <Link href="/app/stock/adjustments/new?kind=damage" className="btn btn-primary">

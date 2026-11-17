@@ -17,7 +17,10 @@ export type Step =
   | { kind: "wait"; ms: number }
   | { kind: "waitFor"; target: Target; match?: string }
   | { kind: "wave" }
-  | { kind: "signInAs"; who: string };
+  | { kind: "signInAs"; who: string }
+  | { kind: "when"; target: Target; steps: Step[] }
+  | { kind: "upload"; target: Target; file: string }
+  | { kind: "typeFrom"; target: Target; source: Target; adjust?: number };
 
 export type Scene = { id: string; title: string; steps: Step[] };
 
@@ -50,6 +53,21 @@ export const waitFor = (target: Target, opts: Match = {}): Step => ({ kind: "wai
 export const wave = (): Step => ({ kind: "wave" });
 /** Off camera: makes sure this demo person is signed in (by password; reloads the page if it changes). */
 export const signInAs = (who: string): Step => ({ kind: "signInAs", who });
+
+/** Only if that is on the page (checked for a moment): runs these steps, otherwise skips them. */
+export const when = (target: Target, steps: Step[]): Step => ({ kind: "when", target, steps });
+/** Chooses a file in a file picker. `file` is one of the demo files in actions.ts (e.g. "product-workbook"). */
+export const upload = (target: Target, file: string): Step => ({ kind: "upload", target, file });
+/**
+ * Types the amount shown in `source` (e.g. what the till should hold), plus `adjust` naira, so a scene can
+ * count a drawer that matches, or comes up short, whatever was sold before it.
+ */
+export const typeFrom = (target: Target, source: Target, opts: { adjust?: number } = {}): Step => ({
+  kind: "typeFrom",
+  target,
+  source,
+  ...opts,
+});
 
 export const scene = (id: string, title: string, steps: Step[]): Scene => ({ id, title, steps });
 

@@ -25,7 +25,7 @@ export function MovementList({
 }) {
   if (movements.length === 0) return <p className="card text-muted mt-2 p-4 text-sm">No movements yet.</p>;
   return (
-    <div className="card mt-2 overflow-x-auto">
+    <div data-tour="movements" className="card mt-2 overflow-x-auto">
       <table className="w-full text-sm">
         <thead className="text-muted border-border border-b text-left">
           <tr>
