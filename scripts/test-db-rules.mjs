@@ -508,6 +508,16 @@ check("delivery fee comes from the delivery area", r.ok && r.data.total_kobo ===
 const third = r.data;
 r = await cashier("rpc/cancel_online_order", { p_order_id: third.id, p_reason: "x" });
 check("cashier can't cancel online orders", !r.ok, r.msg);
+// Cancelling an order that waits for warehouse stock also cancels the transfer requested for it.
+r = await order([{ sku_id: sku["CRUG-004"], quantity: 1 }]);
+const waiting = r.data;
+await site("mark_order_paid", { p_reference: waiting.reference, p_amount_kobo: waiting.total_kobo });
+const waitTransfer = () =>
+  owner(`transfers?select=status&to_location_id=eq.${loc.SH1}&note=like.*${waiting.number}*`).then((x) => x.data[0]);
+check("waiting order requested a transfer", (await waitTransfer())?.status === "requested");
+r = await owner("rpc/cancel_online_order", { p_order_id: waiting.id, p_reason: "Customer changed their mind" });
+check("owner cancels a waiting order", r.ok, r.msg);
+check("its transfer request is cancelled too", (await waitTransfer())?.status === "cancelled");
 await fetch(`${url}/rest/v1/online_orders?id=eq.${third.id}`, {
   method: "PATCH",
   headers: { apikey: env.SUPABASE_SECRET_KEY, Authorization: `Bearer ${env.SUPABASE_SECRET_KEY}`, "Content-Type": "application/json" },

@@ -49,9 +49,11 @@ export function AdjustmentForm({
     setLines((ls) => ls.map((l, j) => (j === i ? { ...l, ...patch } : l)));
 
   async function addSku(sku: SkuOption) {
-    const batches = sku.track_batches
-      ? (await batchesAt(sku.id, locationId)).map((b) => ({ batch: b.batch, quantity: Number(b.quantity) }))
-      : [];
+    // Batches to choose from, and for a write-off what is there to write off (every item, batches or not).
+    const batches =
+      sku.track_batches || kind === "damage"
+        ? (await batchesAt(sku.id, locationId)).map((b) => ({ batch: b.batch, quantity: Number(b.quantity) }))
+        : [];
     const inStock = batches.filter((b) => b.quantity > 0);
     setLines((ls) => [
       ...ls,
@@ -71,6 +73,18 @@ export function AdjustmentForm({
     if (noBatch) return setError(`Choose which batch of ${skuLabel(noBatch.sku)}.`);
     const noQty = lines.find((l) => l.quantity.trim() === "");
     if (noQty) return setError(`Enter a quantity for ${skuLabel(noQty.sku)}.`);
+    if (kind === "damage") {
+      // Checked again when it is applied; caught here so a write-off can't wait for approval and then fail.
+      const tooMany = lines.find(
+        (l) => Number(l.quantity) > (l.batches.find((b) => b.batch === l.batch)?.quantity ?? 0),
+      );
+      if (tooMany) {
+        const have = tooMany.batches.find((b) => b.batch === tooMany.batch)?.quantity ?? 0;
+        return setError(
+          `Only ${formatQty(have)} ${tooMany.sku.unit} of ${skuLabel(tooMany.sku)} ${tooMany.batch ? `(batch ${tooMany.batch}) ` : ""}in stock here.`,
+        );
+      }
+    }
     const message = needsApproval
       ? "Submit for a manager to approve? Stock changes once it's approved."
       : "Apply this now? Stock will change immediately.";
